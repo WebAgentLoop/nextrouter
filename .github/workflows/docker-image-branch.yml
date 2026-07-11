@@ -4,8 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: "Branch name to build (e.g. alpha, nightly)"
-        required: true
+        description: "Branch name to build (e.g. nextrouter, alpha, nightly)"
+        required: false
+        default: nextrouter
         type: string
 
 jobs:
