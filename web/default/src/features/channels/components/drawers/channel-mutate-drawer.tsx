@@ -4055,7 +4055,8 @@ export function ChannelMutateDrawer({
                             className='space-y-4 disabled:opacity-60'
                           >
                             <div className='divide-border space-y-0 divide-y border-y'>
-                              {currentType === 1 && (
+                              {(currentType === 1 ||
+                                currentType === CHANNEL_TYPE_ADVANCED_CUSTOM) && (
                                 <FormField
                                   control={form.control}
                                   name='force_format'
@@ -4067,7 +4068,7 @@ export function ChannelMutateDrawer({
                                         </FormLabel>
                                         <FormDescription>
                                           {t(
-                                            'Force format response to OpenAI standard (OpenAI channel only)'
+                                            'Force format response to OpenAI standard'
                                           )}
                                         </FormDescription>
                                       </div>

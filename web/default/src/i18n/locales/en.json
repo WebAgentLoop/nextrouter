@@ -2031,6 +2031,7 @@
     "Force a syntactically valid JSON response": "Force a syntactically valid JSON response",
     "Force AUTH LOGIN": "Force AUTH LOGIN",
     "Force Format": "Force Format",
+    "Force format response to OpenAI standard": "Force format response to OpenAI standard",
     "Force format response to OpenAI standard (OpenAI channel only)": "Force format response to OpenAI standard (OpenAI channel only)",
     "Force JSON object or schema-conforming output": "Force JSON object or schema-conforming output",
     "Force SMTP authentication using AUTH LOGIN method": "Force SMTP authentication using AUTH LOGIN method",
