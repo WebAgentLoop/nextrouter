@@ -21,7 +21,13 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import { ERROR_MESSAGES, MAX_AGENT_ITERATIONS } from '../constants'
-import { buildAgentPayload, getTool, listToolDefinitions } from '../lib'
+import {
+  applyAgentEdit,
+  buildAgentPayload,
+  computeRegenerateSeed,
+  getTool,
+  listToolDefinitions,
+} from '../lib'
 import type {
   AgentConfig,
   AgentMessage,
@@ -52,9 +58,9 @@ function isToolCallRound(result: StreamRoundResult): boolean {
 }
 
 /**
- * Orchestrates the agent loop: send -> stream -> if tool_calls, execute tools
- * and feed results back -> repeat until the model emits a final answer or the
- * iteration bound is hit.
+ * Orchestrates the agent loop. A shared `runLoop(seed)` drives the streaming
+ * tool-call cycle from a given starting history; `run`, `regenerate`, and
+ * edit-and-submit each compute a seed then invoke it.
  *
  * A local `roundMessages` array is the single source of truth for the duration
  * of a run; every mutation is committed to React state via `updateMessages`.
@@ -76,33 +82,15 @@ export function useAgentRun({
 
   const isGenerating = isRunning || status === 'running'
 
-  const run = useCallback(
-    async (userInput: string) => {
-      if (isRunningRef.current) {
-        return
-      }
-      const trimmed = userInput.trim()
-      if (!trimmed) {
-        return
-      }
-
+  const runLoop = useCallback(
+    async (seed: AgentMessage[]) => {
       const controller = new AbortController()
       abortControllerRef.current = controller
       isRunningRef.current = true
       setIsRunning(true)
       setStatus('running')
 
-      // Local source of truth for this run, seeded with the current
-      // conversation + the new user message.
-      let roundMessages: AgentMessage[] = [
-        ...messagesRef.current,
-        {
-          id: createId(),
-          role: 'user',
-          content: trimmed,
-          createdAt: Date.now(),
-        },
-      ]
+      let roundMessages: AgentMessage[] = seed
       const commit = () => {
         updateMessages(() => roundMessages)
       }
@@ -322,7 +310,66 @@ export function useAgentRun({
         abortControllerRef.current = null
       }
     },
-    [config, setStatus, streamOneRound, t, updateMessages, messagesRef]
+    [config, setStatus, streamOneRound, t, updateMessages]
+  )
+
+  const run = useCallback(
+    async (userInput: string) => {
+      if (isRunningRef.current) {
+        return
+      }
+      const trimmed = userInput.trim()
+      if (!trimmed) {
+        return
+      }
+      const seed: AgentMessage[] = [
+        ...messagesRef.current,
+        {
+          id: createId(),
+          role: 'user',
+          content: trimmed,
+          createdAt: Date.now(),
+        },
+      ]
+      await runLoop(seed)
+    },
+    [messagesRef, runLoop]
+  )
+
+  const regenerate = useCallback(
+    async (targetId: string) => {
+      if (isRunningRef.current) {
+        return
+      }
+      const seed = computeRegenerateSeed(messagesRef.current, targetId)
+      if (!seed) {
+        return
+      }
+      await runLoop(seed)
+    },
+    [messagesRef, runLoop]
+  )
+
+  const editMessage = useCallback(
+    async (targetId: string, content: string, submit: boolean) => {
+      if (isRunningRef.current) {
+        return
+      }
+      const result = applyAgentEdit(
+        messagesRef.current,
+        targetId,
+        content,
+        submit
+      )
+      if (!result) {
+        return
+      }
+      updateMessages(() => result.messages)
+      if (result.seed) {
+        await runLoop(result.seed)
+      }
+    },
+    [messagesRef, runLoop, updateMessages]
   )
 
   const stop = useCallback(() => {
@@ -330,5 +377,5 @@ export function useAgentRun({
     abortControllerRef.current?.abort()
   }, [closeStream])
 
-  return { run, stop, isGenerating }
+  return { run, regenerate, editMessage, stop, isGenerating }
 }

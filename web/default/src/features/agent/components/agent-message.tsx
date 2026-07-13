@@ -17,19 +17,71 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { TerminalIcon } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { useTranslation } from 'react-i18next'
 
+import { CodeBlock } from '@/components/ai-elements/code-block'
 import { Message, MessageContent } from '@/components/ai-elements/message'
 import { Markdown } from '@/components/ui/markdown'
 import { cn } from '@/lib/utils'
 
 import type { AgentMessage } from '../types'
-import { ToolCallCard } from './tool-call-card'
+import { AgentMessageActions } from './agent-message-actions'
+import { AgentMessageEditor } from './agent-message-editor'
+import { ToolCallGroup } from './tool-call-group'
+
+function AgentMessageBody({
+  message,
+  isSourceVisible,
+}: {
+  message: AgentMessage
+  isSourceVisible: boolean
+}): ReactNode {
+  const { t } = useTranslation()
+  if (!message.content) {
+    if (message.role === 'assistant' && message.isStreaming) {
+      return <span className='text-muted-foreground text-sm'>…</span>
+    }
+    return null
+  }
+  if (message.role === 'assistant' && isSourceVisible) {
+    return (
+      <CodeBlock
+        className='my-0 w-full max-w-[78ch]'
+        code={message.content}
+        collapsedLines={24}
+        defaultCollapsed={false}
+        language='markdown'
+        maxExpandedLines={48}
+        showLineNumbers
+        showToolbar
+        title={t('Raw response')}
+      />
+    )
+  }
+  return <Markdown>{message.content}</Markdown>
+}
 
 interface AgentMessageItemProps {
   message: AgentMessage
+  isSourceVisible: boolean
+  isGenerating: boolean
+  isEditing: boolean
+  alwaysVisible: boolean
+  editText: string
+  originalText: string
+  onToggleSource: (message: AgentMessage) => void
+  onEditTextChange: (text: string) => void
+  onRegenerate: (message: AgentMessage) => void
+  onEdit: (message: AgentMessage) => void
+  onDelete: (message: AgentMessage) => void
+  onSaveEdit: (content: string) => void
+  onSaveEditAndSubmit: (content: string) => void
+  onCancelEdit: () => void
 }
 
-export function AgentMessageItem({ message }: AgentMessageItemProps) {
+export function AgentMessageItem(props: AgentMessageItemProps) {
+  const { message } = props
   const isUser = message.role === 'user'
   const isAssistant = message.role === 'assistant'
   const isSystem = message.role === 'system'
@@ -39,9 +91,62 @@ export function AgentMessageItem({ message }: AgentMessageItemProps) {
   if (isSystem) {
     return (
       <div className='border-border/60 bg-muted/30 my-2 flex items-center gap-2 rounded-md border px-3 py-2 text-xs text-muted-foreground'>
-        <TerminalIcon className='size-3.5 shrink-0' aria-hidden='true' />
+        <TerminalIcon
+          aria-hidden='true'
+          className='size-3.5 shrink-0'
+        />
         <span>{message.content}</span>
       </div>
+    )
+  }
+
+  let mainBlock: ReactNode
+  if (isTool) {
+    mainBlock = (
+      <div className='bg-muted/30 rounded-md border px-3 py-2 text-xs'>
+        <div className='text-muted-foreground mb-1 flex items-center gap-1.5 font-medium'>
+          <TerminalIcon
+            aria-hidden='true'
+            className='size-3.5'
+          />
+          {message.toolCallName}
+        </div>
+        <pre
+          className={cn(
+            'overflow-x-auto whitespace-pre-wrap break-words',
+            message.isError && 'text-destructive'
+          )}
+        >
+          {message.content}
+        </pre>
+      </div>
+    )
+  } else if (props.isEditing) {
+    mainBlock = (
+      <AgentMessageEditor
+        editText={props.editText}
+        message={message}
+        onCancelEdit={props.onCancelEdit}
+        onEditTextChange={props.onEditTextChange}
+        onSaveEdit={props.onSaveEdit}
+        onSaveEditAndSubmit={props.onSaveEditAndSubmit}
+        originalText={props.originalText}
+      />
+    )
+  } else {
+    mainBlock = (
+      <MessageContent
+        variant={isAssistant ? 'flat' : 'contained'}
+        className={cn(
+          isAssistant && 'max-w-none px-0 py-0',
+          message.isError && 'text-destructive'
+        )}
+      >
+        <AgentMessageBody
+          isSourceVisible={props.isSourceVisible}
+          message={message}
+        />
+      </MessageContent>
     )
   }
 
@@ -51,54 +156,33 @@ export function AgentMessageItem({ message }: AgentMessageItemProps) {
       from={isUser ? 'user' : 'assistant'}
     >
       <div className='w-full min-w-0 flex-1 basis-full'>
-        {isTool ? (
-          <div className='bg-muted/30 rounded-md border px-3 py-2 text-xs'>
-            <div className='text-muted-foreground mb-1 flex items-center gap-1.5 font-medium'>
-              <TerminalIcon className='size-3.5' aria-hidden='true' />
-              {message.toolCallName}
-            </div>
-            <pre
-              className={cn(
-                'overflow-x-auto whitespace-pre-wrap break-words',
-                message.isError && 'text-destructive'
-              )}
-            >
-              {message.content}
-            </pre>
-          </div>
-        ) : (
-          <MessageContent
-            variant={isAssistant ? 'flat' : 'contained'}
-            className={cn(
-              isAssistant && 'max-w-none px-0 py-0',
-              message.isError && 'text-destructive'
-            )}
-          >
-            {message.content ? (
-              <Markdown>{message.content}</Markdown>
-            ) : (
-              isAssistant &&
-              message.isStreaming && (
-                <span className='text-muted-foreground text-sm'>
-                  …
-                </span>
-              )
-            )}
-          </MessageContent>
-        )}
+        {mainBlock}
 
-        {/* Tool calls attached to an assistant message. */}
+        {/* Tool calls attached to an assistant message (grouped). */}
         {isAssistant &&
           message.toolCalls &&
-          message.toolCalls.length > 0 && (
+          message.toolCalls.length > 0 &&
+          !props.isEditing && (
             <div className='mt-2'>
-              {message.toolCalls.map((toolCall) => (
-                <ToolCallCard
-                  key={toolCall.id}
-                  toolCall={toolCall}
-                />
-              ))}
+              <ToolCallGroup toolCalls={message.toolCalls} />
             </div>
+          )}
+
+        {/* Action toolbar (user & assistant only, hidden while streaming). */}
+        {(isUser || isAssistant) &&
+          !props.isEditing &&
+          !message.isStreaming && (
+            <AgentMessageActions
+              alwaysVisible={props.alwaysVisible}
+              className='mt-1.5'
+              isGenerating={props.isGenerating}
+              isSourceVisible={props.isSourceVisible}
+              message={message}
+              onDelete={props.onDelete}
+              onEdit={props.onEdit}
+              onRegenerate={props.onRegenerate}
+              onToggleSource={props.onToggleSource}
+            />
           )}
       </div>
     </Message>

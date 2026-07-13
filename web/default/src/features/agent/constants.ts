@@ -43,11 +43,21 @@ export const DEFAULT_AGENT_CONFIG: AgentConfig = {
   stream: true,
 }
 
-// IndexedDB layout for persisting the current conversation.
+// IndexedDB layout for persisting agent sessions. v2 adds the `sessions`
+// store keyed by session id (multi-conversation history); the legacy
+// `conversation` store is retained only to migrate the single `current`
+// record from v1 on first load.
 export const AGENT_DB_NAME = 'new-api-agent'
-export const AGENT_DB_VERSION = 1
+export const AGENT_DB_VERSION = 2
 export const AGENT_CONVERSATION_STORE = 'conversation'
 export const AGENT_CONVERSATION_KEY = 'current'
+export const AGENT_SESSIONS_STORE = 'sessions'
+
+// localStorage key holding the id of the session currently displayed.
+export const ACTIVE_SESSION_STORAGE_KEY = 'agent:active-session-id'
+
+// Soft cap on the number of persisted sessions; oldest are pruned on save.
+export const MAX_STORED_SESSIONS = 50
 
 // Error message keys. Values are English fallbacks identical to the i18n key.
 // Display sites MUST wrap these with t(); they are never shown verbatim.
@@ -62,4 +72,25 @@ export const ERROR_MESSAGES = {
   TOOL_ARGS_INVALID: 'Tool arguments are invalid',
   TOOL_NOT_FOUND: 'Tool not found',
   TOOL_EXECUTION_FAILED: 'Tool execution failed',
+} as const
+
+// Message action labels. Values are English fallbacks identical to the i18n
+// key. Display sites MUST wrap these with t(); they are never shown verbatim.
+export const MESSAGE_ACTION_LABELS = {
+  COPY: 'Copy',
+  COPIED: 'Copied!',
+  REGENERATE: 'Regenerate',
+  SHOW_PREVIEW: 'Show preview',
+  SHOW_SOURCE: 'Show source',
+  EDIT: 'Edit',
+  DELETE: 'Delete',
+  NO_CONTENT: 'No content to copy',
+  WAIT_GENERATION: 'Please wait for the current generation to complete',
+} as const
+
+// Message action button styles (mirrors the playground toolbar sizing).
+export const MESSAGE_ACTION_BUTTON_STYLES = {
+  BASE: 'size-7 text-muted-foreground hover:text-foreground',
+  DELETE: 'size-7 text-muted-foreground hover:text-destructive',
+  ICON: 'size-4',
 } as const

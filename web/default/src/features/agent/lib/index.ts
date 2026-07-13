@@ -45,7 +45,25 @@ export {
   repairMessageSequence,
 } from './stream/payload-builder'
 export {
-  clearConversation,
-  loadConversation,
-  saveConversation,
+  clearLegacyConversation,
+  deleteSession,
+  getSession,
+  listSessionSummaries,
+  listSessions,
+  loadLegacyConversation,
+  saveSession,
 } from './storage/agent-storage'
+export {
+  clearActiveSessionId,
+  getActiveSessionId,
+  setActiveSessionId,
+} from './storage/active-session'
+export {
+  applyAgentEdit,
+  computeRegenerateSeed,
+  createSessionId,
+  deriveSessionTitle,
+  removeMessageTurn,
+  DEFAULT_SESSION_TITLE,
+  type AgentEditResult,
+} from './message/agent-conversation-utils'
