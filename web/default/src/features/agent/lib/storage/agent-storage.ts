@@ -34,12 +34,14 @@ import type {
 
 let dbPromise: Promise<IDBPDatabase> | null = null
 
+const DB_OPEN_TIMEOUT_MS = 3000
+
 function getDB(): Promise<IDBPDatabase> {
   if (typeof indexedDB === 'undefined') {
     return Promise.reject(new Error('IndexedDB is not available'))
   }
   if (!dbPromise) {
-    dbPromise = openDB(AGENT_DB_NAME, AGENT_DB_VERSION, {
+    const openPromise = openDB(AGENT_DB_NAME, AGENT_DB_VERSION, {
       upgrade(db, oldVersion) {
         if (oldVersion < 1) {
           if (!db.objectStoreNames.contains(AGENT_CONVERSATION_STORE)) {
@@ -52,14 +54,37 @@ function getDB(): Promise<IDBPDatabase> {
           }
         }
       },
-    })
-    // A cached rejected promise would poison every subsequent call, so reset
-    // the cache on failure and let the next attempt re-open the database.
-    dbPromise.catch(() => {
-      if (dbPromise !== null) {
+      // Cooperate with other tabs: if our connection blocks a version upgrade
+      // elsewhere, close it so the other tab can proceed.
+      blocking() {
+        void openPromise.then((db) => db.close()).catch(() => {})
+      },
+      // Connection was forcibly closed (e.g. after another tab upgraded); drop
+      // the cache so the next call reopens.
+      terminated() {
         dbPromise = null
-      }
+      },
     })
+
+    // If the open is BLOCKED by a stale connection holding an older version
+    // (a very common dev pitfall after a version bump), idb's promise never
+    // settles. Race it against a timeout so callers degrade gracefully
+    // instead of hanging the UI forever.
+    const timeout = new Promise<IDBPDatabase>((_, reject) => {
+      const id = setTimeout(() => {
+        reject(new Error('IndexedDB open timed out'))
+      }, DB_OPEN_TIMEOUT_MS)
+      void openPromise.then(
+        () => clearTimeout(id),
+        () => clearTimeout(id)
+      )
+    })
+
+    dbPromise = Promise.race([openPromise, timeout])
+
+    // Do NOT reset on rejection: a blocked/broken DB should fail fast for
+    // every subsequent call this page load (avoids cascading timeouts). A
+    // page reload re-tries from scratch.
   }
   return dbPromise
 }

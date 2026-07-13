@@ -99,33 +99,52 @@ export function useAgentState() {
 
   // Load the active session on mount (migrating any legacy single-conversation
   // record, or creating a fresh empty session). Deferred so the initial empty
-  // state renders first (mirrors the playground pattern).
+  // state renders first (mirrors the playground pattern). Wrapped in try/catch
+  // with an in-memory fallback so a blocked/unavailable IndexedDB can never
+  // freeze the UI on the loading screen.
   useEffect(() => {
     let cancelled = false
 
+    const completeLoad = (opts: {
+      id: string
+      createdAt: number
+      title: string
+      messages: AgentMessage[]
+      customTitle: boolean
+    }) => {
+      latestMessagesRef.current = opts.messages
+      setMessages(opts.messages)
+      sessionTitleRef.current = opts.title
+      setSessionTitle(opts.title)
+      titleCustomRef.current = opts.customTitle
+      activateSession(opts.id, opts.createdAt)
+      hasLoadedRef.current = true
+      setIsLoadingMessages(false)
+    }
+
     const loadTimer = window.setTimeout(async () => {
-      const existingId = getActiveSessionId()
-      let chosenId: string | null = null
-
-      if (existingId) {
-        const session = await getSession(existingId)
-        if (cancelled) {
-          return
+      try {
+        const existingId = getActiveSessionId()
+        if (existingId) {
+          const session = await getSession(existingId)
+          if (cancelled) {
+            return
+          }
+          if (session) {
+            const sanitized = sanitizeMessages(session.messages)
+            const derived = deriveSessionTitle(sanitized)
+            completeLoad({
+              id: session.id,
+              createdAt: session.createdAt,
+              title: session.title,
+              messages: sanitized,
+              customTitle: session.title !== derived,
+            })
+            void reloadSessions()
+            return
+          }
         }
-        if (session) {
-          chosenId = session.id
-          const sanitized = sanitizeMessages(session.messages)
-          latestMessagesRef.current = sanitized
-          setMessages(sanitized)
-          const derived = deriveSessionTitle(sanitized)
-          sessionTitleRef.current = session.title
-          setSessionTitle(session.title)
-          titleCustomRef.current = session.title !== derived
-          activateSession(session.id, session.createdAt)
-        }
-      }
 
-      if (!chosenId) {
         const legacy = await loadLegacyConversation()
         if (cancelled) {
           return
@@ -146,17 +165,18 @@ export function useAgentState() {
           if (cancelled) {
             return
           }
-          chosenId = id
-          latestMessagesRef.current = sanitized
-          setMessages(sanitized)
-          sessionTitleRef.current = title
-          setSessionTitle(title)
-          titleCustomRef.current = false
-          activateSession(id, now)
+          completeLoad({
+            id,
+            createdAt: now,
+            title,
+            messages: sanitized,
+            customTitle: false,
+          })
+          void reloadSessions()
+          return
         }
-      }
 
-      if (!chosenId) {
+        // Fresh empty session.
         const now = Date.now()
         const id = createSessionId()
         const title = DEFAULT_SESSION_TITLE
@@ -170,26 +190,34 @@ export function useAgentState() {
         if (cancelled) {
           return
         }
-        chosenId = id
-        sessionTitleRef.current = title
-        setSessionTitle(title)
-        activateSession(id, now)
-      }
-
-      if (cancelled) {
+        completeLoad({
+          id,
+          createdAt: now,
+          title,
+          messages: [],
+          customTitle: false,
+        })
+        void reloadSessions()
+      } catch {
+        if (!cancelled) {
+          completeLoad({
+            id: createSessionId(),
+            createdAt: Date.now(),
+            title: DEFAULT_SESSION_TITLE,
+            messages: [],
+            customTitle: false,
+          })
+        }
         return
       }
-
-      hasLoadedRef.current = true
-      setIsLoadingMessages(false)
-      await reloadSessions()
     }, 0)
 
     return () => {
       cancelled = true
       window.clearTimeout(loadTimer)
     }
-  }, [activateSession, reloadSessions])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const persist = useCallback((messagesToSave: AgentMessage[]) => {
     if (!hasLoadedRef.current) {
