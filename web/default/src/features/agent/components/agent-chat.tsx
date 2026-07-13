@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import {
@@ -87,9 +87,31 @@ export function AgentChat({
     })
   }
 
+  // Tool results are already shown inside the preceding assistant message's
+  // ToolCallGroup (arguments + result + status), so rendering the standalone
+  // `tool` message blocks would duplicate them. Hide every `tool` message
+  // whose call id is covered by an assistant's toolCalls; keep orphans
+  // (no matching call) visible as a fallback so their content is never lost.
+  const visibleMessages = useMemo(() => {
+    const coveredToolCallIds = new Set<string>()
+    for (const message of messages) {
+      if (message.role === 'assistant' && message.toolCalls) {
+        for (const call of message.toolCalls) {
+          coveredToolCallIds.add(call.id)
+        }
+      }
+    }
+    return messages.filter(
+      (message) =>
+        message.role !== 'tool' ||
+        !message.toolCallId ||
+        !coveredToolCallIds.has(message.toolCallId)
+    )
+  }, [messages])
+
   const lastAssistantIndex = (() => {
-    for (let index = messages.length - 1; index >= 0; index--) {
-      if (messages[index].role === 'assistant') {
+    for (let index = visibleMessages.length - 1; index >= 0; index--) {
+      if (visibleMessages[index].role === 'assistant') {
         return index
       }
     }
@@ -98,7 +120,7 @@ export function AgentChat({
 
   let content: React.ReactNode = (
     <div className='divide-y divide-transparent'>
-      {messages.map((message, index) => (
+      {visibleMessages.map((message, index) => (
         <AgentMessageItem
           alwaysVisible={index === lastAssistantIndex}
           editText={editText}
