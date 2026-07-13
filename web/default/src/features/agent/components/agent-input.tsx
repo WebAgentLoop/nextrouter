@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { EraserIcon, SendIcon, SquareIcon } from 'lucide-react'
+import { SendIcon, SquareIcon } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -28,7 +28,6 @@ import {
   type PromptInputMessage,
 } from '@/components/ai-elements/prompt-input'
 import { ModelGroupSelector } from '@/components/model-group-selector'
-import { Button } from '@/components/ui/button'
 
 import type { AgentConfig, GroupOption, ModelOption } from '../types'
 
@@ -36,7 +35,6 @@ interface AgentInputProps {
   config: AgentConfig
   onSubmit: (text: string) => void
   onStop: () => void
-  onClear: () => void
   onModelChange: (value: string) => void
   onGroupChange: (value: string) => void
   onGroupChangeCommitted: (value: string) => void
@@ -44,14 +42,12 @@ interface AgentInputProps {
   isGenerating?: boolean
   models: ModelOption[]
   groups: GroupOption[]
-  hasMessages?: boolean
 }
 
 export function AgentInput({
   config,
   onSubmit,
   onStop,
-  onClear,
   onModelChange,
   onGroupChange,
   onGroupChangeCommitted,
@@ -59,7 +55,6 @@ export function AgentInput({
   isGenerating,
   models,
   groups,
-  hasMessages = false,
 }: AgentInputProps) {
   const { t } = useTranslation()
   const [text, setText] = useState('')
@@ -115,18 +110,6 @@ export function AgentInput({
             </div>
 
             <div className='flex items-center justify-between gap-2 md:justify-start'>
-              {hasMessages && (
-                <Button
-                  className='text-muted-foreground hover:text-destructive h-8 gap-1.5 px-2.5 text-xs font-medium'
-                  disabled={isGenerating}
-                  onClick={onClear}
-                  size='sm'
-                  variant='ghost'
-                >
-                  <EraserIcon className='size-4' />
-                  <span className='hidden sm:inline'>{t('Clear')}</span>
-                </Button>
-              )}
               <div className='flex items-center gap-1.5 md:hidden'>
                 {isGenerating ? (
                   <PromptInputButton

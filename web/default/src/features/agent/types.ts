@@ -46,7 +46,6 @@ export interface ToolCall {
   parsedArguments: unknown
   status: ToolCallStatus
   result?: string
-  errorMessage?: string
   isError?: boolean
 }
 
@@ -155,4 +154,22 @@ export interface ChatCompletionRequest {
   tools?: ToolDefinition[]
   temperature?: number
   max_tokens?: number
+}
+
+// ---- Sessions (history / archive) ----
+
+export interface AgentSession {
+  id: string
+  title: string
+  createdAt: number
+  updatedAt: number
+  messages: AgentMessage[]
+}
+
+export interface AgentSessionSummary {
+  id: string
+  title: string
+  createdAt: number
+  updatedAt: number
+  messageCount: number
 }
