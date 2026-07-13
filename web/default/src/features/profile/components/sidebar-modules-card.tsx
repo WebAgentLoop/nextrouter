@@ -67,6 +67,11 @@ export function SidebarModulesCard() {
           description: t('AI model testing environment'),
         },
         {
+          key: 'agent',
+          title: t('Agent'),
+          description: t('Tool-augmented agent that runs in the browser'),
+        },
+        {
           key: 'chat',
           title: t('Chat'),
           description: t('Chat session management'),
