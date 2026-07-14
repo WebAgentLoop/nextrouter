@@ -64,6 +64,7 @@ export {
   createSessionId,
   deriveSessionTitle,
   removeMessageTurn,
+  sanitizePersistedMessages,
   DEFAULT_SESSION_TITLE,
   type AgentEditResult,
 } from './message/agent-conversation-utils'

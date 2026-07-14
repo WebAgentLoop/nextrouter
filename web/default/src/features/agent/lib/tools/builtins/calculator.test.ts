@@ -44,8 +44,14 @@ describe('evaluateExpression', () => {
   })
 
   test('rejects unbalanced parentheses', () => {
-    assert.throws(() => evaluateExpression('(1 + 2'), /Missing closing parenthesis/)
-    assert.throws(() => evaluateExpression('1 + 2)'), /Unexpected trailing token/)
+    assert.throws(
+      () => evaluateExpression('(1 + 2'),
+      /Missing closing parenthesis/
+    )
+    assert.throws(
+      () => evaluateExpression('1 + 2)'),
+      /Unexpected trailing token/
+    )
   })
 
   test('rejects trailing tokens', () => {
@@ -70,10 +76,7 @@ describe('calculatorTool.execute', () => {
   })
 
   test('returns isError for malformed expressions', async () => {
-    const result = await calculatorTool.execute(
-      { expression: '1 /' },
-      signal
-    )
+    const result = await calculatorTool.execute({ expression: '1 /' }, signal)
     assert.equal(result.isError, true)
     assert.match(result.content, /Error:/)
   })
@@ -82,6 +85,15 @@ describe('calculatorTool.execute', () => {
     const result = await calculatorTool.execute({ wrong: 'field' }, signal)
     assert.equal(result.isError, true)
     assert.match(result.content, /Invalid arguments/)
+  })
+
+  test('rejects expressions large enough to block the browser parser', async () => {
+    const result = await calculatorTool.execute(
+      { expression: `${'1+'.repeat(600)}1` },
+      signal
+    )
+
+    assert.equal(result.isError, true)
   })
 
   test('exposes a valid OpenAI function definition', () => {

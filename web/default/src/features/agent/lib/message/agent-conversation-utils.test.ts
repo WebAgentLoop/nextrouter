@@ -8,6 +8,7 @@ import {
   createSessionId,
   deriveSessionTitle,
   removeMessageTurn,
+  sanitizePersistedMessages,
 } from './agent-conversation-utils'
 
 function userMessage(id: string, content: string): AgentMessage {
@@ -26,7 +27,11 @@ function assistantWithTools(
   return { id, role: 'assistant', content, toolCalls, createdAt: 0 }
 }
 
-function toolMessage(id: string, toolCallId: string, content: string): AgentMessage {
+function toolMessage(
+  id: string,
+  toolCallId: string,
+  content: string
+): AgentMessage {
   return { id, role: 'tool', content, toolCallId, createdAt: 0 }
 }
 
@@ -53,12 +58,17 @@ function multiTurnConversation(): AgentMessage[] {
 
 describe('deriveSessionTitle', () => {
   test('uses the first user message content', () => {
-    const title = deriveSessionTitle([assistantMessage('a1', 'hi'), userMessage('u1', 'Hello world')])
+    const title = deriveSessionTitle([
+      assistantMessage('a1', 'hi'),
+      userMessage('u1', 'Hello world'),
+    ])
     assert.equal(title, 'Hello world')
   })
 
   test('collapses whitespace', () => {
-    const title = deriveSessionTitle([userMessage('u1', '  hello\n\n  world  ')])
+    const title = deriveSessionTitle([
+      userMessage('u1', '  hello\n\n  world  '),
+    ])
     assert.equal(title, 'hello world')
   })
 
@@ -82,15 +92,55 @@ describe('createSessionId', () => {
   })
 })
 
+describe('sanitizePersistedMessages', () => {
+  test('settles interrupted streams and unfinished tools without mutating input', () => {
+    const messages: AgentMessage[] = [
+      {
+        ...assistantWithTools('a1', '', [
+          {
+            id: 'pending',
+            name: 'calculator',
+            argumentsRaw: '{}',
+            parsedArguments: {},
+            status: 'pending',
+          },
+          {
+            id: 'done',
+            name: 'calculator',
+            argumentsRaw: '{}',
+            parsedArguments: {},
+            status: 'done',
+          },
+        ]),
+        isStreaming: true,
+      },
+    ]
+
+    const sanitized = sanitizePersistedMessages(messages)
+
+    assert.equal(sanitized[0].isStreaming, false)
+    assert.equal(sanitized[0].toolCalls?.[0].status, 'cancelled')
+    assert.equal(sanitized[0].toolCalls?.[1].status, 'done')
+    assert.equal(messages[0].isStreaming, true)
+    assert.equal(messages[0].toolCalls?.[0].status, 'pending')
+  })
+})
+
 describe('computeRegenerateSeed', () => {
   test('user target keeps through the user and drops the rest', () => {
     const seed = computeRegenerateSeed(multiTurnConversation(), 'u1')
-    assert.deepEqual(seed?.map((m) => m.id), ['u1'])
+    assert.deepEqual(
+      seed?.map((m) => m.id),
+      ['u1']
+    )
   })
 
   test('assistant target drops the target and everything after', () => {
     const seed = computeRegenerateSeed(multiTurnConversation(), 'a1b')
-    assert.deepEqual(seed?.map((m) => m.id), ['u1', 'a1', 't1'])
+    assert.deepEqual(
+      seed?.map((m) => m.id),
+      ['u1', 'a1', 't1']
+    )
   })
 
   test('unknown id returns null', () => {
@@ -154,7 +204,10 @@ describe('applyAgentEdit', () => {
     )
     assert.equal(result?.messages[0].content, 'edited first question')
     assert.notEqual(result?.seed, null)
-    assert.deepEqual(result?.seed?.map((m) => m.id), ['u1'])
+    assert.deepEqual(
+      result?.seed?.map((m) => m.id),
+      ['u1']
+    )
   })
 
   test('user edit without submit mutates content only and returns no seed', () => {

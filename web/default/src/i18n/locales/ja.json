@@ -3514,6 +3514,7 @@
     "Priority order for tokens in the auto group. The system tries groups from top to bottom.": "auto グループのトークンの優先順位。システムは上から順にグループを試します。",
     "Privacy Policy": "プライバシーポリシー",
     "Private Deployment URL": "プライベートデプロイメントURL",
+    "Process": "プロセス",
     "Processing OAuth response...": "OAuth応答を処理中...",
     "Processing...": "処理中...",
     "Product": "商品",

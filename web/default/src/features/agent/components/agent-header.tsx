@@ -66,10 +66,12 @@ export function AgentHeader({
   }
 
   const displayTitle =
-    sessionTitle === DEFAULT_SESSION_TITLE ? t(DEFAULT_SESSION_TITLE) : sessionTitle
+    sessionTitle === DEFAULT_SESSION_TITLE
+      ? t(DEFAULT_SESSION_TITLE)
+      : sessionTitle
 
   return (
-    <div className='border-border/60 bg-background/95 supports-backdrop-filter:backdrop-blur relative z-10 flex h-12 shrink-0 items-center gap-2 border-b px-3'>
+    <div className='border-border/60 bg-background/95 relative z-10 flex h-12 shrink-0 items-center gap-2 border-b px-3 supports-backdrop-filter:backdrop-blur'>
       <div className='flex min-w-0 flex-1 items-center gap-1.5'>
         {isEditing ? (
           <>
@@ -107,7 +109,7 @@ export function AgentHeader({
           </>
         ) : (
           <button
-            className='group/title flex min-w-0 items-center gap-1.5 rounded px-1 py-0.5 text-left hover:bg-muted/60'
+            className='group/title hover:bg-muted/60 flex min-w-0 items-center gap-1.5 rounded px-1 py-0.5 text-left'
             onClick={() => setIsEditing(true)}
             title={t('Rename')}
             type='button'

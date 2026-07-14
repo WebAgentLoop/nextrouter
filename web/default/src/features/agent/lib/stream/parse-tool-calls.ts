@@ -75,9 +75,9 @@ export class ToolCallAccumulator {
   build(): ToolCall[] {
     const sorted = [...this.entries.entries()].sort(([a], [b]) => a - b)
 
-    return sorted.map(([, entry]) => ({
-      id: entry.id,
-      name: entry.name,
+    return sorted.map(([index, entry]) => ({
+      id: entry.id || `call_${index}`,
+      name: entry.name || 'unknown_tool',
       argumentsRaw: entry.argumentsRaw,
       parsedArguments: parseToolCallArguments(entry.argumentsRaw),
       status: 'pending' as const,

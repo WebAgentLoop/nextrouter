@@ -1,10 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, test } from 'node:test'
 
-import {
-  parseToolCallArguments,
-  ToolCallAccumulator,
-} from './parse-tool-calls'
+import { parseToolCallArguments, ToolCallAccumulator } from './parse-tool-calls'
 
 describe('parseToolCallArguments', () => {
   test('empty string yields empty object', () => {
@@ -37,9 +34,7 @@ describe('ToolCallAccumulator', () => {
       },
     ])
     // Subsequent chunks: only argument fragments.
-    acc.apply([
-      { index: 0, function: { arguments: '{"expression":' } },
-    ])
+    acc.apply([{ index: 0, function: { arguments: '{"expression":' } }])
     acc.apply([{ index: 0, function: { arguments: ' "1+1"}' } }])
 
     const result = acc.build()
@@ -56,8 +51,16 @@ describe('ToolCallAccumulator', () => {
     const acc = new ToolCallAccumulator()
 
     acc.apply([
-      { index: 1, id: 'call_b', function: { name: 'calculator', arguments: '{}' } },
-      { index: 0, id: 'call_a', function: { name: 'calculator', arguments: '{}' } },
+      {
+        index: 1,
+        id: 'call_b',
+        function: { name: 'calculator', arguments: '{}' },
+      },
+      {
+        index: 0,
+        id: 'call_a',
+        function: { name: 'calculator', arguments: '{}' },
+      },
     ])
 
     const result = acc.build()
@@ -70,9 +73,7 @@ describe('ToolCallAccumulator', () => {
   test('preserves first-seen id and name when later deltas omit them', () => {
     const acc = new ToolCallAccumulator()
 
-    acc.apply([
-      { index: 0, id: 'call_x', function: { name: 'calculator' } },
-    ])
+    acc.apply([{ index: 0, id: 'call_x', function: { name: 'calculator' } }])
     acc.apply([{ index: 0, function: { arguments: 'broken' } }])
 
     const result = acc.build()
@@ -94,12 +95,29 @@ describe('ToolCallAccumulator', () => {
 
   test('build can be called repeatedly producing fresh arrays', () => {
     const acc = new ToolCallAccumulator()
-    acc.apply([{ index: 0, id: 'c', function: { name: 'calculator', arguments: '{}' } }])
+    acc.apply([
+      { index: 0, id: 'c', function: { name: 'calculator', arguments: '{}' } },
+    ])
 
     const first = acc.build()
     const second = acc.build()
 
     assert.notEqual(first, second)
     assert.deepEqual(first, second)
+  })
+
+  test('supplies protocol-safe fallbacks when a provider omits id or name', () => {
+    const accumulator = new ToolCallAccumulator()
+    accumulator.apply([
+      {
+        index: 2,
+        function: { arguments: '{}' },
+      },
+    ])
+
+    const calls = accumulator.build()
+
+    assert.equal(calls[0].id, 'call_2')
+    assert.equal(calls[0].name, 'unknown_tool')
   })
 })

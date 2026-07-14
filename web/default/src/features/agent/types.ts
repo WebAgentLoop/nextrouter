@@ -20,12 +20,7 @@ For commercial licensing, please contact support@quantumnous.com
 export type AgentRole = 'user' | 'assistant' | 'system' | 'tool'
 
 // High-level run state of the agent loop.
-export type AgentRunStatus =
-  | 'idle'
-  | 'running'
-  | 'done'
-  | 'error'
-  | 'stopped'
+export type AgentRunStatus = 'idle' | 'running' | 'done' | 'error' | 'stopped'
 
 // Lifecycle of a single tool call within an assistant message.
 export type ToolCallStatus =

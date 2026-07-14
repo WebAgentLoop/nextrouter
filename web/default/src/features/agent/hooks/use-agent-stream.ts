@@ -62,7 +62,6 @@ export class AgentStreamError extends Error {
  */
 export function useAgentStream() {
   const sseSourceRef = useRef<SSE | null>(null)
-  const isCompleteRef = useRef(false)
 
   const closeStream = useCallback(() => {
     sseSourceRef.current?.close()
@@ -82,34 +81,39 @@ export function useAgentStream() {
         }
 
         sseSourceRef.current?.close()
-        isCompleteRef.current = false
-
         const accumulator = new ToolCallAccumulator()
         let lastFinishReason: string | null = null
+        let isComplete = false
+
+        const source = new SSE(API_ENDPOINTS.CHAT_COMPLETIONS, {
+          headers: getCommonHeaders(),
+          method: 'POST',
+          payload: JSON.stringify(payload),
+        })
+        sseSourceRef.current = source
 
         const teardown = () => {
-          const source = sseSourceRef.current
-          source?.close()
+          source.close()
           if (sseSourceRef.current === source) {
             sseSourceRef.current = null
           }
         }
 
         const finish = (result: StreamRoundResult) => {
-          if (isCompleteRef.current) {
+          if (isComplete) {
             return
           }
-          isCompleteRef.current = true
+          isComplete = true
           teardown()
           signal.removeEventListener('abort', onAbort)
           resolve(result)
         }
 
         const fail = (error: AgentStreamError) => {
-          if (isCompleteRef.current) {
+          if (isComplete) {
             return
           }
-          isCompleteRef.current = true
+          isComplete = true
           teardown()
           signal.removeEventListener('abort', onAbort)
           reject(error)
@@ -119,13 +123,6 @@ export function useAgentStream() {
           fail(new AgentStreamError(ERROR_MESSAGES.INTERRUPTED))
         }
         signal.addEventListener('abort', onAbort, { once: true })
-
-        const source = new SSE(API_ENDPOINTS.CHAT_COMPLETIONS, {
-          headers: getCommonHeaders(),
-          method: 'POST',
-          payload: JSON.stringify(payload),
-        })
-        sseSourceRef.current = source
 
         source.addEventListener('message', (event: MessageEvent) => {
           if (isStreamDoneMessage(event.data)) {
@@ -155,18 +152,15 @@ export function useAgentStream() {
           }
         })
 
-        source.addEventListener(
-          'error',
-          (event: Event & { data?: string }) => {
-            if (isStreamClosedReadyState(source.readyState)) {
-              return
-            }
-            const { errorCode, errorMessage } = parseStreamErrorDetails(
-              event.data
-            )
-            fail(new AgentStreamError(errorMessage, errorCode))
+        source.addEventListener('error', (event: Event & { data?: string }) => {
+          if (isStreamClosedReadyState(source.readyState)) {
+            return
           }
-        )
+          const { errorCode, errorMessage } = parseStreamErrorDetails(
+            event.data
+          )
+          fail(new AgentStreamError(errorMessage, errorCode))
+        })
 
         source.addEventListener(
           'readystatechange',

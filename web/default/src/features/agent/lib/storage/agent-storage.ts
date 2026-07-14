@@ -97,9 +97,7 @@ async function pruneOldSessions(db: IDBPDatabase): Promise<void> {
   const sorted = [...sessions].sort((a, b) => a.updatedAt - b.updatedAt)
   const removable = sorted.slice(0, sessions.length - MAX_STORED_SESSIONS)
   const tx = db.transaction(AGENT_SESSIONS_STORE, 'readwrite')
-  await Promise.all(
-    removable.map((session) => tx.store.delete(session.id))
-  )
+  await Promise.all(removable.map((session) => tx.store.delete(session.id)))
   await tx.done
 }
 
@@ -111,10 +109,7 @@ async function pruneOldSessions(db: IDBPDatabase): Promise<void> {
 export async function loadLegacyConversation(): Promise<AgentMessage[] | null> {
   try {
     const db = await getDB()
-    const value = await db.get(
-      AGENT_CONVERSATION_STORE,
-      AGENT_CONVERSATION_KEY
-    )
+    const value = await db.get(AGENT_CONVERSATION_STORE, AGENT_CONVERSATION_KEY)
     if (!Array.isArray(value)) {
       return null
     }
@@ -143,9 +138,7 @@ export async function listSessions(): Promise<AgentSession[]> {
   try {
     const db = await getDB()
     const all = (await db.getAll(AGENT_SESSIONS_STORE)) as AgentSession[]
-    return all
-      .filter(isSession)
-      .sort((a, b) => b.updatedAt - a.updatedAt)
+    return all.filter(isSession).sort((a, b) => b.updatedAt - a.updatedAt)
   } catch {
     return []
   }
