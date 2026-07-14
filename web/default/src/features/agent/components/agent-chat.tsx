@@ -26,8 +26,9 @@ import {
 } from '@/components/ai-elements/conversation'
 import { Loader } from '@/components/ai-elements/loader'
 
+import { groupTurns } from '../lib/message/turn-builder'
 import type { AgentMessage } from '../types'
-import { AgentMessageItem } from './agent-message'
+import { AgentMessageItem, AgentToolMessage, AgentTurnItem } from './agent-message'
 import { AgentEmptyState } from './empty-state'
 
 interface AgentChatProps {
@@ -87,31 +88,14 @@ export function AgentChat({
     })
   }
 
-  // Tool results are already shown inside the preceding assistant message's
-  // ToolCallGroup (arguments + result + status), so rendering the standalone
-  // `tool` message blocks would duplicate them. Hide every `tool` message
-  // whose call id is covered by an assistant's toolCalls; keep orphans
-  // (no matching call) visible as a fallback so their content is never lost.
-  const visibleMessages = useMemo(() => {
-    const coveredToolCallIds = new Set<string>()
-    for (const message of messages) {
-      if (message.role === 'assistant' && message.toolCalls) {
-        for (const call of message.toolCalls) {
-          coveredToolCallIds.add(call.id)
-        }
-      }
-    }
-    return messages.filter(
-      (message) =>
-        message.role !== 'tool' ||
-        !message.toolCallId ||
-        !coveredToolCallIds.has(message.toolCallId)
-    )
-  }, [messages])
+  // Fold the flat message list into turns. Tool messages fold into their ai-turn (their
+  // results already live on the preceding assistant's toolCalls), so no standalone tool
+  // blocks are ever rendered.
+  const turns = useMemo(() => groupTurns(messages), [messages])
 
-  const lastAssistantIndex = (() => {
-    for (let index = visibleMessages.length - 1; index >= 0; index--) {
-      if (visibleMessages[index].role === 'assistant') {
+  const lastAiTurnIndex = (() => {
+    for (let index = turns.length - 1; index >= 0; index--) {
+      if (turns[index].kind === 'ai-turn') {
         return index
       }
     }
@@ -120,26 +104,53 @@ export function AgentChat({
 
   let content: React.ReactNode = (
     <div className='divide-y divide-transparent'>
-      {visibleMessages.map((message, index) => (
-        <AgentMessageItem
-          alwaysVisible={index === lastAssistantIndex}
-          editText={editText}
-          isEditing={editingId === message.id}
-          isGenerating={isGenerating}
-          isSourceVisible={sourceMessageIds.has(message.id)}
-          key={message.id}
-          message={message}
-          onCancelEdit={onCancelEdit}
-          onDelete={onDelete}
-          onEdit={onEdit}
-          onEditTextChange={setEditText}
-          onRegenerate={onRegenerate}
-          onSaveEdit={onSaveEdit}
-          onSaveEditAndSubmit={onSaveEditAndSubmit}
-          onToggleSource={handleToggleSource}
-          originalText={originalText}
-        />
-      ))}
+      {turns.map((turn, index) => {
+        if (turn.kind === 'ai-turn') {
+          return (
+            <AgentTurnItem
+              alwaysVisible={index === lastAiTurnIndex}
+              isGenerating={isGenerating}
+              isSourceVisible={sourceMessageIds.has(turn.id)}
+              key={turn.id}
+              onDelete={onDelete}
+              onRegenerate={onRegenerate}
+              onToggleSource={handleToggleSource}
+              turn={turn}
+            />
+          )
+        }
+
+        if (turn.kind === 'tool') {
+          return (
+            <AgentToolMessage
+              key={turn.message.id}
+              message={turn.message}
+            />
+          )
+        }
+
+        const message = turn.message
+        return (
+          <AgentMessageItem
+            alwaysVisible={false}
+            editText={editText}
+            isEditing={editingId === message.id}
+            isGenerating={isGenerating}
+            isSourceVisible={sourceMessageIds.has(message.id)}
+            key={message.id}
+            message={message}
+            onCancelEdit={onCancelEdit}
+            onDelete={onDelete}
+            onEdit={onEdit}
+            onEditTextChange={setEditText}
+            onRegenerate={onRegenerate}
+            onSaveEdit={onSaveEdit}
+            onSaveEditAndSubmit={onSaveEditAndSubmit}
+            onToggleSource={handleToggleSource}
+            originalText={originalText}
+          />
+        )
+      })}
     </div>
   )
 
