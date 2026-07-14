@@ -30,10 +30,10 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Skeleton } from '@/components/ui/skeleton'
-import { formatLocalCurrencyAmount } from '@/lib/currency'
+import { formatPaymentAmount, formatTopupCredit } from '@/lib/currency'
 
 import { DEFAULT_DISCOUNT_RATE } from '../../constants'
-import { formatCurrency, getPaymentIcon } from '../../lib'
+import { getPaymentIcon } from '../../lib'
 import type { PaymentMethod } from '../../types'
 
 interface PaymentConfirmDialogProps {
@@ -46,7 +46,7 @@ interface PaymentConfirmDialogProps {
   calculating: boolean
   processing: boolean
   discountRate?: number
-  usdExchangeRate?: number
+  paymentCurrency?: string
 }
 
 export function PaymentConfirmDialog({
@@ -59,7 +59,7 @@ export function PaymentConfirmDialog({
   calculating,
   processing,
   discountRate = DEFAULT_DISCOUNT_RATE,
-  usdExchangeRate = 1,
+  paymentCurrency,
 }: PaymentConfirmDialogProps) {
   const { t } = useTranslation()
   const hasDiscount = discountRate > 0 && discountRate < 1 && paymentAmount > 0
@@ -84,7 +84,7 @@ export function PaymentConfirmDialog({
               {t('Topup Amount')}
             </span>
             <span className='text-lg font-semibold'>
-              {formatLocalCurrencyAmount(topupAmount * usdExchangeRate, {
+              {formatTopupCredit(topupAmount, {
                 digitsLarge: 2,
                 digitsSmall: 2,
                 abbreviate: false,
@@ -101,11 +101,11 @@ export function PaymentConfirmDialog({
             ) : (
               <div className='flex items-baseline gap-2'>
                 <span className='text-2xl font-semibold'>
-                  {formatCurrency(paymentAmount)}
+                  {formatPaymentAmount(paymentAmount, paymentCurrency)}
                 </span>
                 {hasDiscount && (
                   <span className='text-muted-foreground text-sm line-through'>
-                    {formatCurrency(originalAmount)}
+                    {formatPaymentAmount(originalAmount, paymentCurrency)}
                   </span>
                 )}
               </div>
@@ -117,7 +117,7 @@ export function PaymentConfirmDialog({
               <div className='flex items-center justify-between text-sm'>
                 <span className='text-muted-foreground'>{t('You save')}</span>
                 <span className='font-semibold text-green-600'>
-                  {formatCurrency(discountAmount)}
+                  {formatPaymentAmount(discountAmount, paymentCurrency)}
                 </span>
               </div>
             </div>

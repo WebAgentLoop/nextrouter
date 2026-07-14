@@ -95,6 +95,16 @@ func GetTopUpInfo(c *gin.Context) {
 		}
 	}
 
+	// Resolve the current user's topup group ratio so the frontend preset
+	// card can show an accurate price preview (matches getPayMoney /
+	// getWaffoPancakePayMoney which multiply by this ratio server-side).
+	userId := c.GetInt("id")
+	userGroup, _ := model.GetUserGroup(userId, true)
+	topupGroupRatio := common.GetTopupGroupRatio(userGroup)
+	if topupGroupRatio == 0 {
+		topupGroupRatio = 1
+	}
+
 	data := gin.H{
 		"enable_online_topup":              isEpayTopUpEnabled(),
 		"enable_stripe_topup":              isStripeTopUpEnabled(),
@@ -116,8 +126,11 @@ func GetTopUpInfo(c *gin.Context) {
 		"stripe_min_topup":        setting.StripeMinTopUp,
 		"waffo_min_topup":         setting.WaffoMinTopUp,
 		"waffo_pancake_min_topup": setting.WaffoPancakeMinTopUp,
+		"waffo_pancake_unit_price": setting.WaffoPancakeUnitPrice,
+		"waffo_pancake_currency":   setting.WaffoPancakeCurrency,
 		"amount_options":          operation_setting.GetPaymentSetting().AmountOptions,
 		"discount":                operation_setting.GetPaymentSetting().AmountDiscount,
+		"topup_group_ratio":       topupGroupRatio,
 		"topup_link":              common.TopUpLink,
 	}
 	common.ApiSuccess(c, data)

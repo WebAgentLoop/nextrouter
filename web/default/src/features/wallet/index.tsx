@@ -21,7 +21,6 @@ import { useTranslation } from 'react-i18next'
 
 import { SectionPageLayout } from '@/components/layout'
 import { useStatus } from '@/hooks/use-status'
-import { useSystemConfig } from '@/hooks/use-system-config'
 import { getSelf } from '@/lib/api'
 
 import { AffiliateRewardsCard } from './components/affiliate-rewards-card'
@@ -77,15 +76,8 @@ export function Wallet(props: WalletProps) {
   const [showSubscriptionPanel, setShowSubscriptionPanel] = useState(true)
 
   const { status } = useStatus()
-  const { currency } = useSystemConfig()
   const { topupInfo, presetAmounts, loading: topupLoading } = useTopupInfo()
 
-  // Calculate effective exchange rate - when display type is USD, use rate of 1
-  const effectiveUsdExchangeRate = useMemo(() => {
-    return currency?.quotaDisplayType === 'USD'
-      ? 1
-      : currency?.usdExchangeRate || 1
-  }, [currency?.quotaDisplayType, currency?.usdExchangeRate])
   const {
     amount: paymentAmount,
     calculating,
@@ -252,6 +244,22 @@ export function Wallet(props: WalletProps) {
     return topupInfo?.discount?.[topupAmount] || DEFAULT_DISCOUNT_RATE
   }, [topupInfo, topupAmount])
 
+  // Resolve the active gateway's pricing so the preset card and confirm
+  // dialog show the CORRECT charge (different gateways use different unit
+  // prices and currencies — e.g. Waffo Pancake uses its own UnitPrice + USD,
+  // not the generic priceRatio / display currency).
+  const activePaymentType = useMemo(
+    () => selectedPaymentMethod?.type || getDefaultPaymentType(topupInfo),
+    [selectedPaymentMethod?.type, topupInfo]
+  )
+  const isPancakeActive = isWaffoPancakePayment(activePaymentType)
+  const paymentUnitPrice = isPancakeActive
+    ? (topupInfo?.waffo_pancake_unit_price ?? 1)
+    : (status?.price as number) || 1
+  const paymentCurrency = isPancakeActive
+    ? topupInfo?.waffo_pancake_currency
+    : undefined
+
   const handleSubscriptionAvailabilityChange = useCallback(
     (available: boolean) => {
       setShowSubscriptionPanel(available)
@@ -292,8 +300,9 @@ export function Wallet(props: WalletProps) {
                   redeeming={redeeming}
                   topupLink={topupInfo?.topup_link}
                   loading={topupLoading}
-                  priceRatio={(status?.price as number) || 1}
-                  usdExchangeRate={effectiveUsdExchangeRate}
+                  paymentUnitPrice={paymentUnitPrice}
+                  paymentCurrency={paymentCurrency}
+                  topupGroupRatio={topupInfo?.topup_group_ratio ?? 1}
                   onOpenBilling={() => setBillingDialogOpen(true)}
                   creemProducts={topupInfo?.creem_products}
                   enableCreemTopup={topupInfo?.enable_creem_topup}
@@ -339,7 +348,7 @@ export function Wallet(props: WalletProps) {
         calculating={calculating}
         processing={processing || pancakeProcessing}
         discountRate={getDiscountRate()}
-        usdExchangeRate={effectiveUsdExchangeRate}
+        paymentCurrency={paymentCurrency}
       />
 
       <TransferDialog

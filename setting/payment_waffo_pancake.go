@@ -12,4 +12,8 @@ var (
 	WaffoPancakeMinTopUp   int     = 1
 	WaffoPancakeStoreID    string
 	WaffoPancakeProductID  string
+	// WaffoPancakeCurrency is the ISO 4217 currency code that the Pancake
+	// store charges in (e.g. "USD", "EUR"). Defaults to "USD". The frontend
+	// uses this to label the payment amount shown to the user.
+	WaffoPancakeCurrency string = "USD"
 )
