@@ -26,6 +26,20 @@ export interface AgentEditResult {
   seed: AgentMessage[] | null
 }
 
+export function sanitizePersistedMessages(
+  messages: AgentMessage[]
+): AgentMessage[] {
+  return messages.map((message) => ({
+    ...message,
+    isStreaming: false,
+    toolCalls: message.toolCalls?.map((call) =>
+      call.status === 'pending' || call.status === 'running'
+        ? { ...call, status: 'cancelled' }
+        : call
+    ),
+  }))
+}
+
 export function createSessionId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
 }
@@ -47,10 +61,7 @@ export function deriveSessionTitle(messages: AgentMessage[]): string {
  * `messages.length` when none follows. A user message marks the start of a new
  * turn, so everything between two user messages belongs to a single turn.
  */
-function nextUserBoundary(
-  messages: AgentMessage[],
-  fromIndex: number
-): number {
+function nextUserBoundary(messages: AgentMessage[], fromIndex: number): number {
   for (let index = fromIndex + 1; index < messages.length; index++) {
     if (messages[index].role === 'user') {
       return index

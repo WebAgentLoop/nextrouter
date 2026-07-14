@@ -63,31 +63,25 @@ export type TurnDisplayItem =
  * (an orphan) is kept as a standalone item so its content is never silently dropped.
  */
 export function groupTurns(messages: AgentMessage[]): TurnItem[] {
-  // Every tool-call id issued by some assistant message. A `tool` message is "covered"
-  // (already represented by that assistant's toolCalls[].result) only when its id is here.
-  const coveredToolCallIds = new Set<string>()
-  for (const message of messages) {
-    if (message.role === 'assistant' && message.toolCalls) {
-      for (const call of message.toolCalls) {
-        coveredToolCallIds.add(call.id)
-      }
-    }
-  }
-
   const items: TurnItem[] = []
   for (const message of messages) {
     if (message.role === 'tool') {
-      if (!message.toolCallId || !coveredToolCallIds.has(message.toolCallId)) {
-        // Orphan tool result — render standalone so the content is visible.
-        items.push({ kind: 'tool', message })
-        continue
-      }
       const previous = items.at(-1)
-      if (previous && previous.kind === 'ai-turn') {
+      const matchesPreviousTurn =
+        message.toolCallId &&
+        previous?.kind === 'ai-turn' &&
+        previous.messages.some(
+          (turnMessage) =>
+            turnMessage.role === 'assistant' &&
+            turnMessage.toolCalls?.some(
+              (call) => call.id === message.toolCallId
+            )
+        )
+      if (matchesPreviousTurn && previous?.kind === 'ai-turn') {
         previous.messages.push(message)
         continue
       }
-      // Covered but no ai-turn to attach to — keep visible rather than dropping it.
+      // Orphan or misplaced tool result: keep its content visible.
       items.push({ kind: 'tool', message })
       continue
     }

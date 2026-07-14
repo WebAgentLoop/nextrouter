@@ -17,17 +17,13 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import type { ToolDefinition } from '../../types'
-
 import { calculatorTool, type ToolExecuteResult } from './builtins/calculator'
 
 export type { ToolExecuteResult, ToolExecutor } from './builtins/calculator'
 
 interface RegisteredTool {
   definition: ToolDefinition
-  execute: (
-    args: unknown,
-    signal: AbortSignal
-  ) => Promise<ToolExecuteResult>
+  execute: (args: unknown, signal: AbortSignal) => Promise<ToolExecuteResult>
 }
 
 // Static, deterministic registry of built-in tools. Add new tools here.

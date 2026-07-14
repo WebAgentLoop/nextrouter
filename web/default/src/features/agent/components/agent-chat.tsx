@@ -28,7 +28,11 @@ import { Loader } from '@/components/ai-elements/loader'
 
 import { groupTurns } from '../lib/message/turn-builder'
 import type { AgentMessage } from '../types'
-import { AgentMessageItem, AgentToolMessage, AgentTurnItem } from './agent-message'
+import {
+  AgentMessageItem,
+  AgentToolMessage,
+  AgentTurnItem,
+} from './agent-message'
 import { AgentEmptyState } from './empty-state'
 
 interface AgentChatProps {
@@ -88,9 +92,8 @@ export function AgentChat({
     })
   }
 
-  // Fold the flat message list into turns. Tool messages fold into their ai-turn (their
-  // results already live on the preceding assistant's toolCalls), so no standalone tool
-  // blocks are ever rendered.
+  // Fold covered tool results into their AI turn. Orphan or misplaced tool messages stay
+  // standalone so malformed and legacy histories never lose visible content.
   const turns = useMemo(() => groupTurns(messages), [messages])
 
   const lastAiTurnIndex = (() => {
@@ -116,16 +119,14 @@ export function AgentChat({
               onRegenerate={onRegenerate}
               onToggleSource={handleToggleSource}
               turn={turn}
+              turnInProgress={isGenerating && index === turns.length - 1}
             />
           )
         }
 
         if (turn.kind === 'tool') {
           return (
-            <AgentToolMessage
-              key={turn.message.id}
-              message={turn.message}
-            />
+            <AgentToolMessage key={turn.message.id} message={turn.message} />
           )
         }
 

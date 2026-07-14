@@ -18,12 +18,12 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { useEffect, useRef, useState } from 'react'
 
-import { useAgentRun, useAgentState } from './hooks'
-import type { AgentMessage } from './types'
 import { AgentChat } from './components/agent-chat'
 import { AgentHeader } from './components/agent-header'
 import { AgentHistorySheet } from './components/agent-history-sheet'
 import { AgentInput } from './components/agent-input'
+import { useAgentRun, useAgentState } from './hooks'
+import type { AgentMessage } from './types'
 
 export function Agent() {
   const {
@@ -144,7 +144,9 @@ export function Agent() {
         isGenerating={isGenerating}
         onHistoryOpenChange={handleOpenHistory}
         onNewSession={handleNewSession}
-        onRenameActive={(title) => handleRenameSession(activeSessionId ?? '', title)}
+        onRenameActive={(title) =>
+          handleRenameSession(activeSessionId ?? '', title)
+        }
         sessionTitle={sessionTitle}
       />
 

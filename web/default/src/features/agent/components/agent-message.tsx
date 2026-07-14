@@ -95,17 +95,11 @@ export interface AgentMessageItemProps {
  */
 export function AgentToolMessage({ message }: { message: AgentMessage }) {
   return (
-    <Message
-      className='group py-2.5'
-      from='assistant'
-    >
+    <Message className='group py-2.5' from='assistant'>
       <div className='w-full min-w-0 flex-1 basis-full'>
         <div className='bg-muted/30 rounded-md border px-3 py-2 text-xs'>
           <div className='text-muted-foreground mb-1 flex items-center gap-1.5 font-medium'>
-            <TerminalIcon
-              aria-hidden='true'
-              className='size-3.5'
-            />
+            <TerminalIcon aria-hidden='true' className='size-3.5' />
             {message.toolCallName}
           </div>
           <pre
@@ -132,11 +126,8 @@ export function AgentMessageItem(props: AgentMessageItemProps) {
 
   if (message.role === 'system') {
     return (
-      <div className='border-border/60 bg-muted/30 my-2 flex items-center gap-2 rounded-md border px-3 py-2 text-xs text-muted-foreground'>
-        <TerminalIcon
-          aria-hidden='true'
-          className='size-3.5 shrink-0'
-        />
+      <div className='border-border/60 bg-muted/30 text-muted-foreground my-2 flex items-center gap-2 rounded-md border px-3 py-2 text-xs'>
+        <TerminalIcon aria-hidden='true' className='size-3.5 shrink-0' />
         <span>{message.content}</span>
       </div>
     )
@@ -170,10 +161,7 @@ export function AgentMessageItem(props: AgentMessageItemProps) {
   }
 
   return (
-    <Message
-      className='group flex-row-reverse py-2.5'
-      from='user'
-    >
+    <Message className='group flex-row-reverse py-2.5' from='user'>
       <div className='w-full min-w-0 flex-1 basis-full'>
         {mainBlock}
         {!props.isEditing && !message.isStreaming && (
@@ -196,6 +184,7 @@ export function AgentMessageItem(props: AgentMessageItemProps) {
 
 export interface AgentTurnItemProps {
   turn: Extract<TurnItem, { kind: 'ai-turn' }>
+  turnInProgress: boolean
   isSourceVisible: boolean
   isGenerating: boolean
   alwaysVisible: boolean
@@ -229,10 +218,7 @@ export function AgentTurnItem(props: AgentTurnItemProps) {
   }
 
   return (
-    <Message
-      className='group flex-row-reverse py-2.5'
-      from='assistant'
-    >
+    <Message className='group flex-row-reverse py-2.5' from='assistant'>
       <div className='w-full min-w-0 flex-1 basis-full'>
         {props.isSourceVisible && turnView.content ? (
           <CodeBlock
@@ -251,12 +237,14 @@ export function AgentTurnItem(props: AgentTurnItemProps) {
             {displayItems.map((item, index) => (
               <div
                 className={index > 0 ? 'mt-2' : undefined}
-                key={item.kind === 'process' ? `process-${index}` : item.message.id}
+                key={
+                  item.kind === 'process' ? `process-${index}` : item.message.id
+                }
               >
                 {item.kind === 'process' ? (
                   <ProcessGroup
                     items={item.items}
-                    turnInProgress={props.isGenerating}
+                    turnInProgress={props.turnInProgress}
                   />
                 ) : (
                   <MessageContent

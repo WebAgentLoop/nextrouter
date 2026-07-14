@@ -30,8 +30,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/components/ui/sheet'
-import { cn } from '@/lib/utils'
 import dayjs from '@/lib/dayjs'
+import { cn } from '@/lib/utils'
 
 import { DEFAULT_SESSION_TITLE } from '../lib'
 import type { AgentSessionSummary } from '../types'
@@ -87,19 +87,14 @@ export function AgentHistorySheet({
 
   const handleDelete = (session: AgentSessionSummary) => {
     if (
-      window.confirm(
-        t('Are you sure you want to delete this conversation?')
-      )
+      window.confirm(t('Are you sure you want to delete this conversation?'))
     ) {
       onDeleteSession(session.id)
     }
   }
 
   return (
-    <Sheet
-      onOpenChange={onOpenChange}
-      open={open}
-    >
+    <Sheet onOpenChange={onOpenChange} open={open}>
       <SheetContent className='w-full sm:max-w-md'>
         <SheetHeader>
           <SheetTitle>{t('History')}</SheetTitle>
@@ -179,12 +174,12 @@ export function AgentHistorySheet({
                             {displayTitle}
                           </span>
                           <span className='text-muted-foreground flex items-center gap-1.5 text-xs'>
-                            <span>
-                              {dayjs(session.updatedAt).fromNow()}
-                            </span>
+                            <span>{dayjs(session.updatedAt).fromNow()}</span>
                             <span aria-hidden='true'>·</span>
                             <span>
-                              {t('{{count}} messages', { count: session.messageCount })}
+                              {t('{{count}} messages', {
+                                count: session.messageCount,
+                              })}
                             </span>
                           </span>
                         </button>

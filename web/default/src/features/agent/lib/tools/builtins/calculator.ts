@@ -35,7 +35,7 @@ export type ToolExecutor = (
 ) => Promise<ToolExecuteResult>
 
 export const calculatorArgsSchema = z.object({
-  expression: z.string().min(1),
+  expression: z.string().min(1).max(1024),
 })
 
 export type CalculatorArgs = z.infer<typeof calculatorArgsSchema>

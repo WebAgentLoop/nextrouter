@@ -59,7 +59,10 @@ export function AgentInput({
   const { t } = useTranslation()
   const [text, setText] = useState('')
 
-  const canSubmit = !disabled && text.trim().length > 0
+  const hasAvailableSelection =
+    groups.some((group) => group.value === config.group) &&
+    models.some((model) => model.value === config.model)
+  const canSubmit = !disabled && hasAvailableSelection && text.trim().length > 0
   const isSelectorDisabled = Boolean(disabled) || isGenerating
 
   const handleSubmit = (message: PromptInputMessage) => {

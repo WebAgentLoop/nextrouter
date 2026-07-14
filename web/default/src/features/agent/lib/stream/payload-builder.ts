@@ -84,7 +84,11 @@ export function repairMessageSequence(
   for (let i = 0; i < messages.length; i++) {
     const message = messages[i]
 
-    if (message.role === 'assistant' && message.toolCalls && message.toolCalls.length > 0) {
+    if (
+      message.role === 'assistant' &&
+      message.toolCalls &&
+      message.toolCalls.length > 0
+    ) {
       const expectedIds = message.toolCalls.map((call) => call.id)
       const toolMessages: AgentMessage[] = []
       let j = i + 1
@@ -94,7 +98,14 @@ export function repairMessageSequence(
       }
 
       const answeredIds = new Set(toolMessages.map((m) => m.toolCallId))
-      const fullyAnswered = expectedIds.every((id) => answeredIds.has(id))
+      const hasValidCallIds =
+        expectedIds.every(Boolean) &&
+        new Set(expectedIds).size === expectedIds.length
+      const fullyAnswered =
+        hasValidCallIds &&
+        toolMessages.length === expectedIds.length &&
+        answeredIds.size === expectedIds.length &&
+        expectedIds.every((id) => answeredIds.has(id))
 
       if (fullyAnswered) {
         result.push(message)

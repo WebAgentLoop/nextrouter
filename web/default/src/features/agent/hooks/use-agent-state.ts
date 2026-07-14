@@ -32,6 +32,7 @@ import {
   listSessionSummaries,
   loadLegacyConversation,
   removeMessageTurn,
+  sanitizePersistedMessages,
   saveSession,
   setActiveSessionId,
 } from '../lib'
@@ -45,10 +46,6 @@ import type {
 } from '../types'
 
 const SAVE_DEBOUNCE_MS = 500
-
-function sanitizeMessages(messages: AgentMessage[]): AgentMessage[] {
-  return messages.map((message) => ({ ...message, isStreaming: false }))
-}
 
 /**
  * Owns all agent conversation state. The active conversation is one entry in a
@@ -66,7 +63,9 @@ export function useAgentState() {
   const [activeSessionId, setActiveSessionIdState] = useState<string | null>(
     null
   )
-  const [sessionTitle, setSessionTitle] = useState<string>(DEFAULT_SESSION_TITLE)
+  const [sessionTitle, setSessionTitle] = useState<string>(
+    DEFAULT_SESSION_TITLE
+  )
   const [sessions, setSessions] = useState<AgentSessionSummary[]>([])
 
   const saveTimerRef = useRef<number | null>(null)
@@ -77,6 +76,7 @@ export function useAgentState() {
   const titleCustomRef = useRef(false)
   const sessionTitleRef = useRef<string>(DEFAULT_SESSION_TITLE)
   const statusRef = useRef<AgentRunStatus>(status)
+  const modelRequestIdRef = useRef(0)
 
   useEffect(() => {
     statusRef.current = status
@@ -87,15 +87,12 @@ export function useAgentState() {
     setSessions(summaries)
   }, [])
 
-  const activateSession = useCallback(
-    (id: string, createdAt: number) => {
-      activeSessionIdRef.current = id
-      sessionCreatedAtRef.current = createdAt
-      setActiveSessionIdState(id)
-      setActiveSessionId(id)
-    },
-    []
-  )
+  const activateSession = useCallback((id: string, createdAt: number) => {
+    activeSessionIdRef.current = id
+    sessionCreatedAtRef.current = createdAt
+    setActiveSessionIdState(id)
+    setActiveSessionId(id)
+  }, [])
 
   // Load the active session on mount (migrating any legacy single-conversation
   // record, or creating a fresh empty session). Deferred so the initial empty
@@ -114,7 +111,7 @@ export function useAgentState() {
         }
         if (session) {
           chosenId = session.id
-          const sanitized = sanitizeMessages(session.messages)
+          const sanitized = sanitizePersistedMessages(session.messages)
           latestMessagesRef.current = sanitized
           setMessages(sanitized)
           const derived = deriveSessionTitle(sanitized)
@@ -131,7 +128,7 @@ export function useAgentState() {
           return
         }
         if (legacy && legacy.length > 0) {
-          const sanitized = sanitizeMessages(legacy)
+          const sanitized = sanitizePersistedMessages(legacy)
           const now = Date.now()
           const id = createSessionId()
           const title = deriveSessionTitle(sanitized)
@@ -257,9 +254,12 @@ export function useAgentState() {
   }, [])
 
   // Flush pending saves on unmount.
-  useEffect(() => () => {
-    flushPendingSave()
-  }, [flushPendingSave])
+  useEffect(
+    () => () => {
+      flushPendingSave()
+    },
+    [flushPendingSave]
+  )
 
   const updateMessages = useCallback(
     (updater: (prev: AgentMessage[]) => AgentMessage[]) => {
@@ -297,7 +297,13 @@ export function useAgentState() {
     sessionTitleRef.current = title
     setSessionTitle(title)
     activateSession(id, now)
-    void saveSession({ id, title, createdAt: now, updatedAt: now, messages: [] })
+    void saveSession({
+      id,
+      title,
+      createdAt: now,
+      updatedAt: now,
+      messages: [],
+    })
     void reloadSessions()
   }, [activateSession, flushPendingSave, reloadSessions])
 
@@ -306,12 +312,15 @@ export function useAgentState() {
       if (statusRef.current === 'running') {
         return
       }
+      if (id === activeSessionIdRef.current) {
+        return
+      }
       flushPendingSave()
       const session = await getSession(id)
       if (!session) {
         return
       }
-      const sanitized = sanitizeMessages(session.messages)
+      const sanitized = sanitizePersistedMessages(session.messages)
       latestMessagesRef.current = sanitized
       setMessages(sanitized)
       setStatus('idle')
@@ -326,8 +335,13 @@ export function useAgentState() {
 
   const deleteSessionById = useCallback(
     async (id: string) => {
+      const isActive = id === activeSessionIdRef.current
+      if (isActive && saveTimerRef.current !== null) {
+        window.clearTimeout(saveTimerRef.current)
+        saveTimerRef.current = null
+      }
       await deleteSession(id)
-      if (id === activeSessionIdRef.current) {
+      if (isActive) {
         clearActiveSessionId()
         const now = Date.now()
         const newId = createSessionId()
@@ -378,7 +392,11 @@ export function useAgentState() {
       } else {
         const session = await getSession(id)
         if (session) {
-          await saveSession({ ...session, title: trimmed, updatedAt: Date.now() })
+          await saveSession({
+            ...session,
+            title: trimmed,
+            updatedAt: Date.now(),
+          })
         }
       }
       await reloadSessions()
@@ -396,36 +414,44 @@ export function useAgentState() {
   // Load groups + models on mount.
   useEffect(() => {
     let cancelled = false
+    const requestId = ++modelRequestIdRef.current
 
     void (async () => {
-      const loadedGroups = await getUserGroups()
-      if (cancelled) {
-        return
-      }
-      setGroups(loadedGroups)
-
-      const group = loadedGroups.some((g) => g.value === DEFAULT_GROUP)
-        ? DEFAULT_GROUP
-        : (loadedGroups[0]?.value ?? DEFAULT_GROUP)
-
-      const loadedModels = await getUserModels(group)
-      if (cancelled) {
-        return
-      }
-      setModels(loadedModels)
-
-      setConfig((prev) => {
-        const modelStillAvailable = loadedModels.some(
-          (m) => m.value === prev.model
-        )
-        return {
-          ...prev,
-          group,
-          model: modelStillAvailable
-            ? prev.model
-            : (loadedModels[0]?.value ?? prev.model),
+      try {
+        const loadedGroups = await getUserGroups()
+        if (cancelled) {
+          return
         }
-      })
+        setGroups(loadedGroups)
+
+        const group = loadedGroups.some((g) => g.value === DEFAULT_GROUP)
+          ? DEFAULT_GROUP
+          : (loadedGroups[0]?.value ?? DEFAULT_GROUP)
+
+        const loadedModels = await getUserModels(group)
+        if (cancelled || requestId !== modelRequestIdRef.current) {
+          return
+        }
+        setModels(loadedModels)
+
+        setConfig((prev) => {
+          const modelStillAvailable = loadedModels.some(
+            (m) => m.value === prev.model
+          )
+          return {
+            ...prev,
+            group,
+            model: modelStillAvailable
+              ? prev.model
+              : (loadedModels[0]?.value ?? prev.model),
+          }
+        })
+      } catch {
+        if (!cancelled && requestId === modelRequestIdRef.current) {
+          setGroups([])
+          setModels([])
+        }
+      }
     })()
 
     return () => {
@@ -435,8 +461,20 @@ export function useAgentState() {
 
   // Reload the model list whenever the user picks a different group.
   const reloadModels = useCallback(async (group: string) => {
+    const requestId = ++modelRequestIdRef.current
     setModels([])
-    const loaded = await getUserModels(group)
+    let loaded: ModelOption[]
+    try {
+      loaded = await getUserModels(group)
+    } catch {
+      if (requestId === modelRequestIdRef.current) {
+        setModels([])
+      }
+      return
+    }
+    if (requestId !== modelRequestIdRef.current) {
+      return
+    }
     setModels(loaded)
     setConfig((prev) => {
       const modelStillAvailable = loaded.some((m) => m.value === prev.model)

@@ -69,7 +69,7 @@ export function ToolCallRow({ toolCall }: ToolCallRowProps) {
     >
       <CollapsibleTrigger className='group/row hover:bg-muted/40 flex w-full items-center gap-2 rounded px-2 py-1.5 text-left'>
         <StatusIcon status={toolCall.status} />
-        <span className='text-sm font-medium truncate'>{toolCall.name}</span>
+        <span className='truncate text-sm font-medium'>{toolCall.name}</span>
         <ChevronDownIcon
           aria-hidden='true'
           className='text-muted-foreground ml-auto size-3.5 shrink-0 transition-transform group-data-[panel-open]/row:rotate-180'

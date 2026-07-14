@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
@@ -54,7 +54,21 @@ function createId(): string {
 }
 
 function isToolCallRound(result: StreamRoundResult): boolean {
-  return result.finishReason === 'tool_calls' && result.toolCalls.length > 0
+  return result.toolCalls.length > 0
+}
+
+function cancelIncompleteToolCalls(message: AgentMessage): AgentMessage {
+  if (!message.toolCalls) {
+    return message
+  }
+  return {
+    ...message,
+    toolCalls: message.toolCalls.map((call) =>
+      call.status === 'pending' || call.status === 'running'
+        ? { ...call, status: 'cancelled' }
+        : call
+    ),
+  }
 }
 
 /**
@@ -168,14 +182,15 @@ export function useAgentRun({
               error instanceof AgentStreamError
                 ? error.message
                 : ERROR_MESSAGES.API_REQUEST_ERROR
+            const displayMessage = t(message)
             updateAssistant((current) => ({
               ...current,
               isStreaming: false,
               isError: true,
-              content: current.content || message,
+              content: current.content || displayMessage,
             }))
             setStatus('error')
-            toast.error(t(message))
+            toast.error(displayMessage)
             return
           }
 
@@ -186,7 +201,7 @@ export function useAgentRun({
             toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
           }))
 
-          // No tool calls (or non-tool_calls finish_reason) -> terminal answer.
+          // No emitted tool calls means this round produced the terminal answer.
           if (!isToolCallRound(result)) {
             setStatus('done')
             return
@@ -196,14 +211,7 @@ export function useAgentRun({
           // message, so the next round carries the full contract.
           for (const call of toolCalls) {
             if (controller.signal.aborted) {
-              updateAssistant((current) => ({
-                ...current,
-                toolCalls: (current.toolCalls ?? []).map((item) =>
-                  item.id === call.id
-                    ? { ...item, status: 'cancelled' }
-                    : item
-                ),
-              }))
+              updateAssistant(cancelIncompleteToolCalls)
               setStatus('stopped')
               return
             }
@@ -241,14 +249,7 @@ export function useAgentRun({
             }
 
             if (controller.signal.aborted) {
-              updateAssistant((current) => ({
-                ...current,
-                toolCalls: (current.toolCalls ?? []).map((item) =>
-                  item.id === call.id
-                    ? { ...item, status: 'cancelled' }
-                    : item
-                ),
-              }))
+              updateAssistant(cancelIncompleteToolCalls)
               setStatus('stopped')
               return
             }
@@ -373,9 +374,17 @@ export function useAgentRun({
   )
 
   const stop = useCallback(() => {
-    closeStream()
     abortControllerRef.current?.abort()
+    closeStream()
   }, [closeStream])
+
+  useEffect(
+    () => () => {
+      abortControllerRef.current?.abort()
+      closeStream()
+    },
+    [closeStream]
+  )
 
   return { run, regenerate, editMessage, stop, isGenerating }
 }

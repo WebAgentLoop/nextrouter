@@ -56,7 +56,11 @@ function assistantWithTools(
   return { id, role: 'assistant', content, toolCalls, createdAt: 0 }
 }
 
-function toolMessage(id: string, toolCallId: string, content: string): AgentMessage {
+function toolMessage(
+  id: string,
+  toolCallId: string,
+  content: string
+): AgentMessage {
   return { id, role: 'tool', content, toolCallId, createdAt: 0 }
 }
 
@@ -138,10 +142,16 @@ describe('groupTurns', () => {
       assistantWithTools('a1', '', [toolCall('call-1')]),
       toolMessage('t1', 'call-1', '2'),
     ])
-    assert.deepEqual(items.map((item) => item.kind), ['ai-turn'])
+    assert.deepEqual(
+      items.map((item) => item.kind),
+      ['ai-turn']
+    )
     const turn = items[0]
     if (turn.kind !== 'ai-turn') return
-    assert.deepEqual(turn.messages.map((m) => m.id), ['a1', 't1'])
+    assert.deepEqual(
+      turn.messages.map((m) => m.id),
+      ['a1', 't1']
+    )
   })
 
   test('orphan tool message (no matching assistant) is a standalone item', () => {
@@ -149,7 +159,10 @@ describe('groupTurns', () => {
       assistantMessage('a1', 'answer'),
       toolMessage('t-orphan', 'call-missing', 'leftover'),
     ])
-    assert.deepEqual(items.map((item) => item.kind), ['ai-turn', 'tool'])
+    assert.deepEqual(
+      items.map((item) => item.kind),
+      ['ai-turn', 'tool']
+    )
     const orphan = items[1]
     if (orphan.kind !== 'tool') return
     assert.equal(orphan.message.id, 't-orphan')
@@ -162,14 +175,34 @@ describe('groupTurns', () => {
 
   test('orphan tool with no preceding assistant is standalone', () => {
     const items = groupTurns([toolMessage('t1', 'call-x', 'r')])
-    assert.deepEqual(items.map((item) => item.kind), ['tool'])
+    assert.deepEqual(
+      items.map((item) => item.kind),
+      ['tool']
+    )
+  })
+
+  test('tool result covered in another turn stays visible as misplaced', () => {
+    const items = groupTurns([
+      assistantWithTools('a1', '', [toolCall('call-1')]),
+      userMessage('u1', 'next'),
+      assistantMessage('a2', 'answer'),
+      toolMessage('t1', 'call-1', 'late result'),
+    ])
+
+    assert.deepEqual(
+      items.map((item) => item.kind),
+      ['ai-turn', 'user', 'ai-turn', 'tool']
+    )
   })
 })
 
 describe('buildTurnDisplayItems', () => {
   test('single assistant text -> one text item, no process panel', () => {
     const items = buildTurnDisplayItems([assistantMessage('a1', 'hello')])
-    assert.deepEqual(items.map((item) => item.kind), ['text'])
+    assert.deepEqual(
+      items.map((item) => item.kind),
+      ['text']
+    )
   })
 
   test('reasoning + tools flush before the following text', () => {
@@ -187,7 +220,10 @@ describe('buildTurnDisplayItems', () => {
       assistantMessage('a1b', 'the answer is 2'),
     ]
     const items = buildTurnDisplayItems(messages)
-    assert.deepEqual(items.map((item) => item.kind), ['process', 'text'])
+    assert.deepEqual(
+      items.map((item) => item.kind),
+      ['process', 'text']
+    )
     const panel = items[0]
     assert.equal(panel.kind, 'process')
     if (panel.kind !== 'process') return
@@ -203,7 +239,10 @@ describe('buildTurnDisplayItems', () => {
     ]
     const items = buildTurnDisplayItems(messages)
     // No assistant text -> only the trailing process panel (tools).
-    assert.deepEqual(items.map((item) => item.kind), ['process'])
+    assert.deepEqual(
+      items.map((item) => item.kind),
+      ['process']
+    )
   })
 
   test('multi-round turn interleaves process panels between text segments', () => {
@@ -214,20 +253,15 @@ describe('buildTurnDisplayItems', () => {
       assistantMessage('a2b', 'final answer'),
     ]
     const items = buildTurnDisplayItems(messages)
-    assert.deepEqual(items.map((item) => item.kind), [
-      'process',
-      'text',
-      'process',
-      'text',
-    ])
+    assert.deepEqual(
+      items.map((item) => item.kind),
+      ['process', 'text', 'process', 'text']
+    )
   })
 
   test('empty turn produces nothing', () => {
     assert.deepEqual(buildTurnDisplayItems([]), [])
-    assert.deepEqual(
-      buildTurnDisplayItems([assistantMessage('a1', '')]),
-      []
-    )
+    assert.deepEqual(buildTurnDisplayItems([assistantMessage('a1', '')]), [])
   })
 })
 
@@ -309,7 +343,12 @@ describe('processGroupStatus', () => {
   test('done when everything settled', () => {
     assert.equal(
       processGroupStatus([
-        { kind: 'reasoning', messageId: 'a1', content: 'x', isStreaming: false },
+        {
+          kind: 'reasoning',
+          messageId: 'a1',
+          content: 'x',
+          isStreaming: false,
+        },
         { kind: 'tools', toolCalls: [toolCall('c1', 'done')] },
       ]),
       'done'

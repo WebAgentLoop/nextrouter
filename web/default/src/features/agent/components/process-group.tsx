@@ -36,8 +36,8 @@ import {
   processGroupStatus,
   type ProcessItem,
 } from '../lib/message/turn-builder'
-import { StatusIcon, ToolCallRow } from './tool-call-group'
 import type { ToolCallStatus } from '../types'
+import { StatusIcon, ToolCallRow } from './tool-call-group'
 
 const STATUS_LABEL_KEY: Record<ToolCallStatus, string> = {
   pending: 'Pending',
@@ -68,19 +68,17 @@ export function ProcessGroup({ items, turnInProgress }: ProcessGroupProps) {
   const { t } = useTranslation()
   const status = processGroupStatus(items)
   const [open, setOpen] = useState(status !== 'done' || turnInProgress)
-  // Track whether the panel was ever in flight, so auto-close only happens after the panel
-  // genuinely settles. Auto-close is additionally suppressed while `turnInProgress` is true:
-  // in a multi-round turn each round's items settle between rounds, but the panel must stay
-  // open until the whole turn finishes.
-  const wasActiveRef = useRef(status !== 'done')
+  const wasTurnInProgressRef = useRef(turnInProgress)
   const autoClosedRef = useRef(false)
 
+  // Local items settle between tool rounds, so only the whole turn becoming terminal
+  // may fold the panel. Historical panels have no running transition and stay user-controlled.
   useEffect(() => {
-    if (status !== 'done') {
-      wasActiveRef.current = true
+    if (turnInProgress) {
+      wasTurnInProgressRef.current = true
       return
     }
-    if (!wasActiveRef.current || autoClosedRef.current || turnInProgress) {
+    if (!wasTurnInProgressRef.current || autoClosedRef.current) {
       return
     }
     const timer = window.setTimeout(() => {
@@ -88,11 +86,14 @@ export function ProcessGroup({ items, turnInProgress }: ProcessGroupProps) {
       autoClosedRef.current = true
     }, AUTO_CLOSE_DELAY)
     return () => window.clearTimeout(timer)
-  }, [status, turnInProgress])
+  }, [turnInProgress])
 
   const thoughtCount = items.filter((item) => item.kind === 'reasoning').length
   const toolCount = items
-    .filter((item): item is Extract<ProcessItem, { kind: 'tools' }> => item.kind === 'tools')
+    .filter(
+      (item): item is Extract<ProcessItem, { kind: 'tools' }> =>
+        item.kind === 'tools'
+    )
     .reduce((sum, item) => sum + item.toolCalls.length, 0)
 
   return (
@@ -128,10 +129,7 @@ export function ProcessGroup({ items, turnInProgress }: ProcessGroupProps) {
           )}
         </div>
         <div className='flex items-center gap-2'>
-          <Badge
-            className='gap-1.5 text-xs'
-            variant='secondary'
-          >
+          <Badge className='gap-1.5 text-xs' variant='secondary'>
             <StatusIcon status={status} />
             {t(STATUS_LABEL_KEY[status])}
           </Badge>
@@ -142,7 +140,7 @@ export function ProcessGroup({ items, turnInProgress }: ProcessGroupProps) {
         </div>
       </CollapsibleTrigger>
       <CollapsibleContent className='outline-none'>
-        <div className='divide-y divide-border/50 border-t'>
+        <div className='divide-border/50 divide-y border-t'>
           {items.flatMap((item) => {
             if (item.kind === 'reasoning') {
               return [
@@ -158,10 +156,7 @@ export function ProcessGroup({ items, turnInProgress }: ProcessGroupProps) {
               ]
             }
             return item.toolCalls.map((toolCall) => (
-              <ToolCallRow
-                key={toolCall.id}
-                toolCall={toolCall}
-              />
+              <ToolCallRow key={toolCall.id} toolCall={toolCall} />
             ))
           })}
         </div>

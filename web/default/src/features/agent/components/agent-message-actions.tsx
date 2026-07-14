@@ -196,10 +196,7 @@ export function AgentMessageActions({
             <MoreHorizontal className='size-4' />
             <span className='sr-only'>{t('Open menu')}</span>
           </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align='end'
-            className='w-44'
-          >
+          <DropdownMenuContent align='end' className='w-44'>
             {actions.map((action) => {
               const Icon = action.icon
 

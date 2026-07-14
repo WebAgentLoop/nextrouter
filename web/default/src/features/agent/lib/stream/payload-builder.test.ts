@@ -100,7 +100,10 @@ describe('repairMessageSequence', () => {
 
     assert.equal(repaired.length, 2)
     assert.equal(repaired[1].role, 'assistant')
-    assert.equal(repaired.find((m) => m.role === 'tool'), undefined)
+    assert.equal(
+      repaired.find((m) => m.role === 'tool'),
+      undefined
+    )
   })
 
   test('strips tool_calls when only some results are present', () => {
@@ -131,7 +134,43 @@ describe('repairMessageSequence', () => {
     // tool message becomes orphan and is dropped too.
     assert.equal(repaired.length, 2)
     assert.equal(repaired[1].toolCalls, undefined)
-    assert.equal(repaired.find((m) => m.role === 'tool'), undefined)
+    assert.equal(
+      repaired.find((m) => m.role === 'tool'),
+      undefined
+    )
+  })
+
+  test('strips tool_calls when results contain duplicate or unexpected ids', () => {
+    const call = {
+      id: 'call_1',
+      name: 'calculator',
+      argumentsRaw: '{}',
+      parsedArguments: {},
+      status: 'done' as const,
+    }
+    const duplicate = repairMessageSequence([
+      userMessage('hi'),
+      assistantWithTools('', [call]),
+      toolMessage('call_1', 'first'),
+      toolMessage('call_1', 'duplicate'),
+    ])
+    const unexpected = repairMessageSequence([
+      userMessage('hi'),
+      assistantWithTools('', [call]),
+      toolMessage('call_1', 'answer'),
+      toolMessage('call_2', 'unexpected'),
+    ])
+
+    assert.equal(duplicate[1].toolCalls, undefined)
+    assert.equal(unexpected[1].toolCalls, undefined)
+    assert.equal(
+      duplicate.some((message) => message.role === 'tool'),
+      false
+    )
+    assert.equal(
+      unexpected.some((message) => message.role === 'tool'),
+      false
+    )
   })
 })
 
@@ -156,9 +195,7 @@ describe('buildAgentPayload', () => {
     assert.equal(payload.max_tokens, 4096)
     assert.ok(Array.isArray(payload.tools))
     assert.ok(
-      (payload.tools ?? []).some(
-        (tool) => tool.function.name === 'calculator'
-      )
+      (payload.tools ?? []).some((tool) => tool.function.name === 'calculator')
     )
     assert.equal(payload.messages.length, 2)
     assert.equal(payload.messages[0].role, 'user')
