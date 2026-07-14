@@ -113,6 +113,7 @@ func InitOptionMap() {
 	common.OptionMap["WaffoPancakePrivateKey"] = setting.WaffoPancakePrivateKey
 	common.OptionMap["WaffoPancakeReturnURL"] = setting.WaffoPancakeReturnURL
 	common.OptionMap["WaffoPancakeUnitPrice"] = strconv.FormatFloat(setting.WaffoPancakeUnitPrice, 'f', -1, 64)
+	common.OptionMap["WaffoPancakeCurrency"] = setting.WaffoPancakeCurrency
 	common.OptionMap["WaffoPancakeMinTopUp"] = strconv.Itoa(setting.WaffoPancakeMinTopUp)
 	common.OptionMap["WaffoPancakeStoreID"] = setting.WaffoPancakeStoreID
 	common.OptionMap["WaffoPancakeProductID"] = setting.WaffoPancakeProductID
@@ -204,7 +205,42 @@ func SyncOptions(frequency int) {
 	}
 }
 
+// isValidCurrencyCode checks that s is exactly three uppercase ASCII letters.
+// It is intentionally a structural check (not a full ISO 4217 whitelist); the
+// frontend formatPaymentAmount additionally wraps Intl.NumberFormat in a
+// try/catch so that even a structurally-valid-but-unknown code cannot crash
+// the page.
+func isValidCurrencyCode(s string) bool {
+	if len(s) != 3 {
+		return false
+	}
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if c < 'A' || c > 'Z' {
+			return false
+		}
+	}
+	return true
+}
+
+// normalizeOptionValue sanitizes specific option values before persistence.
+// Currently handles WaffoPancakeCurrency: uppercases and validates the
+// 3-letter code, falling back to "USD" when the input is malformed.
+func normalizeOptionValue(key, value string) string {
+	switch key {
+	case "WaffoPancakeCurrency":
+		v := strings.ToUpper(strings.TrimSpace(value))
+		if isValidCurrencyCode(v) {
+			return v
+		}
+		common.SysLog("WaffoPancakeCurrency invalid value " + value + ", fallback to USD")
+		return "USD"
+	}
+	return value
+}
+
 func UpdateOption(key string, value string) error {
+	value = normalizeOptionValue(key, value)
 	// Save to database first
 	option := Option{
 		Key: key,
@@ -231,6 +267,7 @@ func UpdateOptionsBulk(values map[string]string) error {
 	}
 	err := DB.Transaction(func(tx *gorm.DB) error {
 		for k, v := range values {
+			v = normalizeOptionValue(k, v)
 			option := Option{Key: k}
 			if err := tx.FirstOrCreate(&option, Option{Key: k}).Error; err != nil {
 				return err
@@ -254,6 +291,7 @@ func UpdateOptionsBulk(values map[string]string) error {
 }
 
 func updateOptionMap(key string, value string) (err error) {
+	value = normalizeOptionValue(key, value)
 	common.OptionMapRWMutex.Lock()
 	defer common.OptionMapRWMutex.Unlock()
 	common.OptionMap[key] = value
@@ -466,6 +504,8 @@ func updateOptionMap(key string, value string) (err error) {
 		setting.WaffoPancakeProductID = value
 	case "WaffoPancakeUnitPrice":
 		setting.WaffoPancakeUnitPrice, _ = strconv.ParseFloat(value, 64)
+	case "WaffoPancakeCurrency":
+		setting.WaffoPancakeCurrency = value
 	case "WaffoPancakeMinTopUp":
 		setting.WaffoPancakeMinTopUp, _ = strconv.Atoi(value)
 	case "TopupGroupRatio":

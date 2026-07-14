@@ -505,6 +505,45 @@ export function formatQuotaWithCurrency(
 }
 
 /**
+ * Convert a topup amount to its USD equivalent.
+ *
+ * Topup amounts have different units depending on the display type:
+ * - USD/CNY/CUSTOM: the value is already in USD (e.g., 10)
+ * - TOKENS: the value is a raw token count (e.g., 500000) and must be
+ *   divided by `quotaPerUnit` to obtain USD — matching the backend's
+ *   `getPayMoney` / `getWaffoPancakePayMoney` token normalization.
+ *
+ * @param amount - Topup amount as entered by the user
+ * @returns USD equivalent
+ */
+export function topupAmountToUSD(amount: number): number {
+  const { config, meta } = getCurrencyDisplay()
+  if (meta.kind === 'tokens' && config.quotaPerUnit > 0) {
+    return amount / config.quotaPerUnit
+  }
+  return amount
+}
+
+/**
+ * Format the "credits received" display for a topup amount.
+ *
+ * Wraps `formatCurrencyFromUSD` with the correct TOKENS-mode normalization
+ * so that a token-count input (e.g., 500000) is not double-multiplied by
+ * `quotaPerUnit`.
+ *
+ * @param amount - Topup amount as entered by the user
+ * @param options - Optional formatting configuration
+ * @returns Formatted string in the configured display currency/token unit
+ */
+export function formatTopupCredit(
+  amount: number | null | undefined,
+  options?: CurrencyFormatOptions
+): string {
+  if (amount == null || Number.isNaN(amount)) return '-'
+  return formatCurrencyFromUSD(topupAmountToUSD(amount), options)
+}
+
+/**
  * Get the current currency label for UI display.
  *
  * Returns a simple string label representing the current display currency.
@@ -614,4 +653,57 @@ export function formatLocalCurrencyAmount(
   const merged = mergeOptions(options)
 
   return formatCurrencyValue(amount, merged, meta)
+}
+
+/**
+ * Format a payment amount in a specific ISO currency (e.g. "USD", "EUR").
+ *
+ * Use this for gateway charge amounts whose currency is known and may differ
+ * from the admin-configured display currency. When `currencyCode` is omitted,
+ * falls back to `formatLocalCurrencyAmount` (display currency) — appropriate
+ * for gateways whose currency matches the display setting (e.g. epay/CNY).
+ *
+ * @param amount - Charge amount already in the target currency
+ * @param currencyCode - ISO 4217 code (e.g. "USD"); omit to use display currency
+ * @param options - Optional formatting configuration
+ *
+ * @example
+ * // Waffo Pancake charges in USD
+ * formatPaymentAmount(10, 'USD') → "$10"
+ *
+ * @example
+ * // epay whose currency matches display currency
+ * formatPaymentAmount(70) → "¤70" (or "¥70" for CNY display)
+ */
+export function formatPaymentAmount(
+  amount: number | null | undefined,
+  currencyCode?: string,
+  options?: CurrencyFormatOptions
+): string {
+  if (amount == null || Number.isNaN(amount)) return '-'
+
+  if (!currencyCode) {
+    return formatLocalCurrencyAmount(amount, options)
+  }
+
+  const merged = mergeOptions(options)
+  const digits = Math.abs(amount) >= 1 ? merged.digitsLarge : merged.digitsSmall
+
+  try {
+    return new Intl.NumberFormat(merged.locale, {
+      style: 'currency',
+      currency: currencyCode,
+      currencyDisplay: 'narrowSymbol',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: merged.compact ? 1 : digits,
+      notation: merged.compact ? 'compact' : 'standard',
+    }).format(amount)
+  } catch {
+    // Invalid or unsupported currency code — fall back to a plain number
+    // so the page never crashes.
+    return new Intl.NumberFormat(merged.locale, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: digits,
+    }).format(amount)
+  }
 }

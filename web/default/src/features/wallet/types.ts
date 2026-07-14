@@ -134,6 +134,8 @@ export interface TopupInfo {
   amount_options: number[]
   /** Discount rates by amount */
   discount: Record<number, number>
+  /** Server-side topup group ratio for the current user (multiplier on payment) */
+  topup_group_ratio?: number
   /** Optional topup link for purchasing codes */
   topup_link?: string
   /** Whether Creem topup is enabled */
@@ -150,6 +152,10 @@ export interface TopupInfo {
   enable_waffo_pancake_topup?: boolean
   /** Minimum topup amount for Waffo Pancake */
   waffo_pancake_min_topup?: number
+  /** Unit price (gateway currency per 1 USD credit) for Waffo Pancake */
+  waffo_pancake_unit_price?: number
+  /** ISO 4217 currency code the Waffo Pancake store charges in (e.g. "USD") */
+  waffo_pancake_currency?: string
   /** Whether redemption code usage is enabled */
   enable_redemption?: boolean
   /** Whether compliance confirmation has been completed */
