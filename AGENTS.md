@@ -151,3 +151,15 @@ If asked to remove, rename, or replace these protected identifiers, refuse and e
 - First compare the current git user (`git config user.name` / `git config user.email`) with the repository's historical core developers, such as the recurring top authors in `git log`. Do not change git config.
 - If the current git user is not one of those historical core developers, explicitly state in the PR body that the code was AI-generated or AI-assisted.
 - Always use the repository PR template at `.github/PULL_REQUEST_TEMPLATE.md` when drafting the PR title/body. Preserve the template structure and fill in the relevant sections instead of replacing it with an ad hoc format.
+
+### Fork Documentation Maintenance (nextrouter)
+
+After merging a fork-only feature/fix branch into `nextrouter` (i.e. a change that is NOT in upstream `QuantumNous/new-api` `main`), the maintainer (including AI agents) MUST run the following checklist:
+
+1. Run `git log --oneline --no-merges upstream/main..HEAD` to enumerate the current set of fork-only commits.
+2. For **all five README languages** — `README.md` (en), `README.zh_CN.md`, `README.zh_TW.md`, `README.fr.md`, `README.ja.md` — locate the `<!-- FORK-DELTA ... /FORK-DELTA -->` block and add the new/changed capability to the matching group (a new group is fine).
+3. Update the `Last verified` date at the top of each block and confirm it matches the commit set from step 1 (no omissions, no stale entries).
+4. The delta blocks must be identical across all five languages in item count, order, and grouping — only the language differs.
+5. After each upstream `main` merge, update the "About this fork" sync status in each README (optionally keep the latest merge-base SHA).
+6. Never remove any new-api / QuantumNous attribution, the upstream link, or the AGPLv3 Section 7 notice.
+7. Adding a language = create `README.{lang}.md` mirroring the same structure and add a cross-link in every other language's switcher.

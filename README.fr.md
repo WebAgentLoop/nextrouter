@@ -2,9 +2,9 @@
 
 ![new-api](/web/default/public/logo.png)
 
-# New API
+# NextRouter
 
-🍥 **Passerelle de modèles étendus de nouvelle génération et système de gestion d'actifs d'IA**
+🍥 **Un fork amélioré en publication roulante de [new-api](https://github.com/QuantumNous/new-api) — passerelle LLM + boucle d'agent côté navigateur**
 
 <p align="center">
   <a href="./README.zh_CN.md">简体中文</a> |
@@ -15,106 +15,105 @@
 </p>
 
 <p align="center">
-  <a href="https://raw.githubusercontent.com/Calcium-Ion/new-api/main/LICENSE">
-    <img src="https://img.shields.io/github/license/Calcium-Ion/new-api?color=brightgreen" alt="licence">
+  <a href="./LICENSE">
+    <img src="https://img.shields.io/badge/license-AGPLv3-brightgreen" alt="licence">
   </a><!--
-  --><a href="https://github.com/Calcium-Ion/new-api/releases/latest">
-    <img src="https://img.shields.io/github/v/release/Calcium-Ion/new-api?color=brightgreen&include_prereleases" alt="version">
+  --><a href="https://hub.docker.com/r/webagentloop/nextrouter">
+    <img src="https://img.shields.io/badge/docker-webagentloop%2Fnextrouter-blue" alt="docker">
   </a><!--
-  --><a href="https://hub.docker.com/r/CalciumIon/new-api">
-    <img src="https://img.shields.io/badge/docker-dockerHub-blue" alt="docker">
-  </a><!--
-  --><a href="https://goreportcard.com/report/github.com/Calcium-Ion/new-api">
-    <img src="https://goreportcard.com/badge/github.com/Calcium-Ion/new-api" alt="GoReportCard">
+  --><a href="https://github.com/QuantumNous/new-api">
+    <img src="https://img.shields.io/badge/fork%20of-QuantumNous%2Fnew--api-orange" alt="fork de QuantumNous/new-api">
   </a>
 </p>
 
 <p align="center">
-  <a href="https://trendshift.io/repositories/20180" target="_blank">
-    <img src="https://trendshift.io/api/badge/repositories/20180" alt="QuantumNous%2Fnew-api | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/>
-  </a>
-  <br>
-  <a href="https://hellogithub.com/repository/QuantumNous/new-api" target="_blank">
-    <img src="https://api.hellogithub.com/v1/widgets/recommend.svg?rid=539ac4217e69431684ad4a0bab768811&claim_uid=tbFPfKIDHpc4TzR" alt="Featured｜HelloGitHub" style="width: 250px; height: 54px;" width="250" height="54" />
-  </a><!--
-  --><a href="https://www.producthunt.com/products/new-api/launches/new-api?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-new-api" target="_blank" rel="noopener noreferrer">
-    <img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1047693&theme=light&t=1769577875005" alt="New API - All-in-one AI asset management gateway. | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" />
-  </a>
-</p>
-
-<p align="center">
-  <a href="#-démarrage-rapide">Démarrage rapide</a> •
-  <a href="#-fonctionnalités-clés">Fonctionnalités clés</a> •
-  <a href="#-déploiement">Déploiement</a> •
-  <a href="#-documentation">Documentation</a> •
-  <a href="#-aide-support">Aide</a>
+  <a href="#-quest-ce-que-nextrouter">À propos</a> •
+  <a href="#-les-nouveautés-de-nextrouter">Nouveautés</a> •
+  <a href="#-démarrage-rapide">Démarrage</a> •
+  <a href="#-maintenance-suivi-de-lupstream">Maintenance</a> •
+  <a href="#-licence">Licence</a>
 </p>
 
 </div>
 
-## 📝 Description du projet
+> 🔄 **Mises à jour roulantes, suivi de l'amont.** NextRouter fusionne en continu le `main` de [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api). Le tag d'image roulant **`nextrouter`** pointe toujours vers la dernière construction (amont + modifications du fork) — un `docker pull` vous maintient à jour ; épinglez un tag daté pour des déploiements reproductibles.
 
 > [!IMPORTANT]
 > - Ce projet est exclusivement destiné aux scénarios de passerelle API d'IA légalement autorisés, d'authentification organisationnelle, de gestion multi-modèles, d'analyse d'utilisation, de comptabilisation des coûts et de déploiement privé.
 > - Les utilisateurs doivent obtenir légalement les clés API, comptes, services de modèles et autorisations d'interface en amont, et doivent respecter les conditions d'utilisation en amont et les lois et réglementations applicables.
-> - Les utilisateurs doivent s'assurer que leur utilisation est conforme aux conditions d'utilisation en amont et aux lois et réglementations applicables.
 > - Lors de la fourniture de services d'IA générative au public, les utilisateurs doivent se conformer aux exigences réglementaires applicables et remplir toutes les obligations d'enregistrement, de licence, de sécurité du contenu, de vérification d'identité, de conservation des journaux, de fiscalité et d'autorisation en amont requises par leur juridiction.
 
 ---
 
-## 🤝 Partenaires de confiance
+## 🧭 Qu'est-ce que NextRouter
 
-<p align="center">
-  <em>Sans ordre particulier</em>
-</p>
+**NextRouter** est un fork communautaire de [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api) qui suit de près la branche `main` amont. Il conserve tout ce que new-api propose — agrégation de plus de 40 fournisseurs d'IA en amont (OpenAI, Claude, Gemini, Azure, AWS Bedrock, …) derrière une API unifiée, ainsi que gestion des utilisateurs, facturation, limitation de débit et tableau de bord d'administration — et ajoute un ensemble ciblé d'améliorations de passerelle et d'interface (voir [Les nouveautés](#-les-nouveautés-de-nextrouter)).
 
-<p align="center">
-  <a href="https://www.cherry-ai.com/" target="_blank">
-    <img src="./docs/images/cherry-studio.png" alt="Cherry Studio" height="80" />
-  </a><!--
-  --><a href="https://github.com/iOfficeAI/AionUi/" target="_blank">
-    <img src="./docs/images/aionui.png" alt="Aion UI" height="80" />
-  </a><!--
-  --><a href="https://bda.pku.edu.cn/" target="_blank">
-    <img src="./docs/images/pku.png" alt="Université de Pékin" height="80" />
-  </a><!--
-  --><a href="https://www.compshare.cn/?ytag=GPU_yy_gh_newapi" target="_blank">
-    <img src="./docs/images/ucloud.png" alt="UCloud" height="80" />
-  </a><!--
-  --><a href="https://www.aliyun.com/" target="_blank">
-    <img src="./docs/images/aliyun.png" alt="Alibaba Cloud" height="80" />
-  </a><!--
-  --><a href="https://io.net/" target="_blank">
-    <img src="./docs/images/io-net.png" alt="IO.NET" height="80" />
-  </a>
-</p>
+Pour l'ensemble des fonctionnalités, la prise en charge des modèles, les formats d'API et la configuration, reportez-vous à la **documentation amont** : <https://docs.newapi.pro/en/docs>.
 
 ---
 
-## 🙏 Remerciements spéciaux
+## 🌱 À propos de ce fork et de sa relation avec l'amont
 
-<p align="center">
-  <a href="https://www.jetbrains.com/?from=new-api" target="_blank">
-    <img src="https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.png" alt="JetBrains Logo" width="120" />
-  </a>
-</p>
+NextRouter est **basé sur [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api)** (AGPLv3), lui-même basé sur [One API](https://github.com/songquanpeng/one-api) (MIT). Ce fork :
 
-<p align="center">
-  <strong>Merci à <a href="https://www.jetbrains.com/?from=new-api">JetBrains</a> pour avoir fourni une licence de développement open-source gratuite pour ce projet</strong>
-</p>
+- Suit en continu la branche `main` amont. Les modifications spécifiques au fork sont autonomes et listées ci-dessous.
+- Est responsable de ses propres modifications et les signale conformément à la section 7(c) de l'AGPLv3.
+- **Préserve la mention d'attribution requise :** `Frontend design and development by New API contributors.`
+- **Préserve un lien visible vers le projet original :** <https://github.com/QuantumNous/new-api>
+
+Voir [Licence](#-licence) et [`NOTICE`](./NOTICE) pour les conditions complètes.
+
+---
+
+<!-- FORK-DELTA: NextRouter changes vs upstream QuantumNous/new-api.
+     Update after merging any fork-only branch.
+     Completeness check: git log --oneline --no-merges upstream/main..HEAD
+     Last verified: 2026-07-15 -->
+
+## ✨ Les nouveautés de NextRouter
+
+> La liste ci-dessous ne couvre que les différences avec l'amont. Pour les fonctionnalités amont, consultez la documentation officielle.
+
+### 🤖 Boucle d'agent côté navigateur
+
+Un nouveau module de barre latérale **Agent** (`/agent`, à activer sous *Profile → Sidebar modules*) implémente une boucle de conversation d'agent complète qui s'exécute entièrement dans le navigateur.
+
+- Réutilise le relais playground `/pg/chat/completions` avec le format OpenAI function-calling ; fournit un registre d'outils intégré et un outil **calculatrice** (évaluation sûre d'expressions).
+- Analyse en flux les appels d'outils ; agrège chaque tour de l'assistant en une seule carte avec un panneau **Process** repliable.
+- Actions sur les messages : copier / régénérer / éditer (avec ou sans renvoi) / supprimer.
+- Historique multi-sessions persisté dans **IndexedDB** (jusqu'à 50 sessions), avec renommer / basculer / supprimer.
+- Un plafond d'itérations empêche les boucles d'appels d'outils incontrôlées ; traduit dans 7 langues.
+
+### ⚡ Améliorations des canaux et du Relay
+
+- **Force Stream** (paramètre de canal) : pour les amonts qui ne prennent en charge *que* le streaming, lorsqu'un client envoie une requête non streamée, la passerelle met en mémoire tampon le flux SSE et renvoie une seule réponse JSON non streamée (logique de mise en tampon côté backend + tests unitaires).
+- Les commutateurs **Force Format / Force Stream** sont désormais disponibles pour les canaux **Advanced Custom** (auparavant uniquement pour le canal OpenAI).
+- `/pg/chat/completions` est désormais proposé comme option de chemin entrant pour Advanced Custom.
+
+### 🧩 Gestion des modèles
+
+- **Boîte de dialogue de gestion des vendeurs** : liste tous les vendeurs de modèles avec édition / suppression / ajout (auparavant uniquement la création), avec réessai en cas d'erreur.
+- **Fusion du modèle d'endpoints** : l'enregistrement fusionne désormais au lieu de tout remplacer ; un JSON d'endpoints existant invalide déclenche un avertissement avant la fusion.
+
+### 💰 Portefeuille et paiements
+
+- Correction de l'affichage du montant du portefeuille pour le mode de devise personnalisée (CUSTOM) et le fournisseur de paiement Waffo Pancake.
+
+<!-- /FORK-DELTA -->
 
 ---
 
 ## 🚀 Démarrage rapide
 
-### Utilisation de Docker Compose (recommandé)
+### Avec Docker Compose (recommandé)
 
 ```bash
-# Cloner le projet
-git clone https://github.com/QuantumNous/new-api.git
-cd new-api
+# Cloner le fork
+git clone https://github.com/WebAgentLoop/nextrouter.git
+cd nextrouter
 
-# Modifier la configuration docker-compose.yml
+# Éditer la configuration docker-compose.yml
 nano docker-compose.yml
 
 # Démarrer le service
@@ -122,329 +121,90 @@ docker-compose up -d
 ```
 
 <details>
-<summary><strong>Utilisation des commandes Docker</strong></summary>
+<summary><strong>Avec les commandes Docker</strong></summary>
 
 ```bash
-# Tirer la dernière image
-docker pull calciumion/new-api:latest
+# Récupérer la dernière image
+docker pull webagentloop/nextrouter:nextrouter
 
-# Utilisation de SQLite (par défaut)
-docker run --name new-api -d --restart always \
+# Avec SQLite (par défaut)
+docker run --name nextrouter -d --restart always \
   -p 3000:3000 \
   -e TZ=Asia/Shanghai \
   -v ./data:/data \
-  calciumion/new-api:latest
+  webagentloop/nextrouter:nextrouter
 
-# Utilisation de MySQL
-docker run --name new-api -d --restart always \
+# Avec MySQL
+docker run --name nextrouter -d --restart always \
   -p 3000:3000 \
   -e SQL_DSN="root:123456@tcp(localhost:3306)/oneapi" \
   -e TZ=Asia/Shanghai \
   -v ./data:/data \
-  calciumion/new-api:latest
+  webagentloop/nextrouter:nextrouter
 ```
 
-> **💡 Astuce:** `-v ./data:/data` sauvegardera les données dans le dossier `data` du répertoire actuel, vous pouvez également le changer en chemin absolu comme `-v /your/custom/path:/data`
+> **💡 Astuce :** `-v ./data:/data` enregistre les données dans le dossier `data` du répertoire courant ; utilisez un chemin absolu comme `-v /votre/chemin/perso:/data` si vous préférez.
 
 </details>
 
+Après le déploiement, visitez `http://localhost:3000` pour commencer.
+
 ---
 
-🎉 Après le déploiement, visitez `http://localhost:3000` pour commencer à utiliser!
+## 📦 Images et déploiement
+
+| Composant | Prérequis |
+|------|------|
+| **Image** | `webagentloop/nextrouter:nextrouter` |
+| **Base de données locale** | SQLite (Docker doit monter le répertoire `/data`) |
+| **Base de données distante** | MySQL ≥ 5.7.8 ou PostgreSQL ≥ 9.6 |
+| **Moteur de conteneurs** | Docker / Docker Compose |
+| **Architecture** | 64 bits uniquement (amd64 / arm64) ; 32 bits non pris en charge |
+
+> [!TIP]
+> `nextrouter` est un **tag roulant** qui suit toujours la dernière construction de la branche `nextrouter`. Pour des déploiements reproductibles, épinglez un tag daté tel que `webagentloop/nextrouter:nextrouter-20260715-911a101`.
 
 > [!WARNING]
-> Lorsque vous exploitez ce projet en tant que service public d'IA générative ou service de revente d'API, les utilisateurs doivent d'abord remplir toutes les obligations requises en matière d'enregistrement, de licence, de sécurité du contenu, de vérification d'identité, de conservation des journaux, de fiscalité, de paiement et d'autorisation en amont.
+> Pour un déploiement multi-machines, vous **devez** définir `SESSION_SECRET` (sinon l'état de connexion est incohérent), et un Redis partagé **doit** définir `CRYPTO_SECRET` (sinon les données ne peuvent pas être déchiffrées).
 
-📖 Pour plus de méthodes de déploiement, veuillez vous référer à [Guide de déploiement](https://docs.newapi.pro/en/docs/installation)
+📖 Pour toutes les variables d'environnement et méthodes de déploiement, consultez les guides amont [Variables d'environnement](https://docs.newapi.pro/en/docs/installation/config-maintenance/environment-variables) et [Installation](https://docs.newapi.pro/en/docs/installation) — ils s'appliquent également à ce fork.
 
 ---
 
 ## 📚 Documentation
 
-<div align="center">
-
-### 📖 [Documentation officielle](https://docs.newapi.pro/en/docs) | [![Demander à DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/QuantumNous/new-api)
-
-</div>
-
-**Navigation rapide:**
+La documentation amont couvre l'ensemble des fonctionnalités, la référence API et la configuration, et s'applique à NextRouter :
 
 | Catégorie | Lien |
 |------|------|
-| 🚀 Guide de déploiement | [Documentation d'installation](https://docs.newapi.pro/en/docs/installation) |
-| ⚙️ Configuration de l'environnement | [Variables d'environnement](https://docs.newapi.pro/en/docs/installation/config-maintenance/environment-variables) |
-| 📡 Documentation de l'API | [Documentation de l'API](https://docs.newapi.pro/en/docs/api) |
+| 🚀 Guide de déploiement | [Installation](https://docs.newapi.pro/en/docs/installation) |
+| ⚙️ Configuration | [Variables d'environnement](https://docs.newapi.pro/en/docs/installation/config-maintenance/environment-variables) |
+| 📡 Documentation API | [Référence API](https://docs.newapi.pro/en/docs/api) |
 | ❓ FAQ | [FAQ](https://docs.newapi.pro/en/docs/support/faq) |
-| 💬 Interaction avec la communauté | [Canaux de communication](https://docs.newapi.pro/en/docs/support/community-interaction) |
 
 ---
 
-## ✨ Fonctionnalités clés
+## 🔧 Maintenance : suivi de l'amont
 
-> Pour les fonctionnalités détaillées, veuillez vous référer à [Présentation des fonctionnalités](https://docs.newapi.pro/en/docs/guide/wiki/basic-concepts/features-introduction) |
+NextRouter maintient une branche longue durée `nextrouter` qui fusionne en continu `upstream/main`. Les fonctionnalités spécifiques au fork sont développées sur des branches de fonctionnalité (par ex. `feat/frontend-agent-loop`) puis fusionnées dans `nextrouter`.
 
-### 🎨 Fonctions principales
-
-| Fonctionnalité | Description |
-|------|------|
-| 🎨 Nouvelle interface utilisateur | Conception d'interface utilisateur moderne |
-| 🌍 Multilingue | Prend en charge le chinois simplifié, le chinois traditionnel, l'anglais, le français et le japonais |
-| 🔄 Compatibilité des données | Complètement compatible avec la base de données originale de One API |
-| 📈 Tableau de bord des données | Console visuelle et analyse statistique |
-| 🔒 Gestion des permissions | Regroupement de jetons, restrictions de modèles, gestion des utilisateurs |
-
-### 💰 Comptabilisation et facturation des usages autorisés
-
-- ✅ Rechargement interne et allocation de quotas pour les scénarios légalement autorisés (EPay, Stripe)
-- ✅ Comptabilisation des coûts par requête, par utilisation et par hit de cache au niveau organisationnel
-- ✅ Statistiques de facturation du cache pour OpenAI, Azure, DeepSeek, Claude, Qwen et les modèles pris en charge
-- ✅ Politiques de facturation flexibles pour la gestion interne ou les clients entreprise autorisés
-
-### 🔐 Autorisation et sécurité
-
-- 😈 Connexion par autorisation Discord
-- 🤖 Connexion par autorisation LinuxDO
-- 📱 Connexion par autorisation Telegram
-- 🔑 Authentification unifiée OIDC
-- 🔍 Requête de quota d'utilisation de clé (avec [new-api-key-tool](https://github.com/Calcium-Ion/new-api-key-tool))
-
-### 🚀 Fonctionnalités avancées
-
-**Prise en charge des formats d'API:**
-- ⚡ [OpenAI Responses](https://docs.newapi.pro/en/docs/api/ai-model/chat/openai/create-response)
-- ⚡ [OpenAI Realtime API](https://docs.newapi.pro/en/docs/api/ai-model/realtime/create-realtime-session) (y compris Azure)
-- ⚡ [Claude Messages](https://docs.newapi.pro/en/docs/api/ai-model/chat/create-message)
-- ⚡ [Google Gemini](https://doc.newapi.pro/en/api/google-gemini-chat)
-- 🔄 [Modèles Rerank](https://docs.newapi.pro/en/docs/api/ai-model/rerank/create-rerank) (Cohere, Jina)
-
-**Routage intelligent:**
-- ⚖️ Sélection aléatoire pondérée des canaux
-- 🔄 Nouvelle tentative automatique en cas d'échec
-- 🚦 Limitation du débit du modèle pour les utilisateurs
-
-**Conversion de format:**
-- 🔄 **OpenAI Compatible ⇄ Claude Messages**
-- 🔄 **OpenAI Compatible → Google Gemini**
-- 🔄 **Google Gemini → OpenAI Compatible** - Texte uniquement, les appels de fonction ne sont pas encore pris en charge
-- 🚧 **OpenAI Compatible ⇄ OpenAI Responses** - En développement
-- 🔄 **Fonctionnalité de la pensée au contenu**
-
-**Prise en charge de l'effort de raisonnement:**
-
-<details>
-<summary>Voir la configuration détaillée</summary>
-
-**Modèles de la série OpenAI :**
-- `o3-mini-high` - Effort de raisonnement élevé
-- `o3-mini-medium` - Effort de raisonnement moyen
-- `o3-mini-low` - Effort de raisonnement faible
-- `gpt-5-high` - Effort de raisonnement élevé
-- `gpt-5-medium` - Effort de raisonnement moyen
-- `gpt-5-low` - Effort de raisonnement faible
-
-**Modèles de pensée de Claude:**
-- `claude-3-7-sonnet-20250219-thinking` - Activer le mode de pensée
-
-**Modèles de la série Google Gemini:**
-- `gemini-2.5-flash-thinking` - Activer le mode de pensée
-- `gemini-2.5-flash-nothinking` - Désactiver le mode de pensée
-- `gemini-2.5-pro-thinking` - Activer le mode de pensée
-- `gemini-2.5-pro-thinking-128` - Activer le mode de pensée avec budget de pensée de 128 tokens
-- Vous pouvez également ajouter les suffixes `-low`, `-medium` ou `-high` aux modèles Gemini pour fixer le niveau d’effort de raisonnement (sans suffixe de budget supplémentaire).
-
-</details>
-
----
-
-## 🤖 Prise en charge des modèles
-
-> Pour les détails, veuillez vous référer à [Documentation de l'API - Interface de passerelle](https://docs.newapi.pro/en/docs/api)
-
-| Type de modèle | Description | Documentation |
-|---------|------|------|
-| 🤖 OpenAI-Compatible | Modèles compatibles OpenAI | [Documentation](https://docs.newapi.pro/en/docs/api/ai-model/chat/openai/createchatcompletion) |
-| 🤖 OpenAI Responses | Format OpenAI Responses | [Documentation](https://docs.newapi.pro/en/docs/api/ai-model/chat/openai/createresponse) |
-| 🎨 Midjourney-Proxy | [Midjourney-Proxy(Plus)](https://github.com/novicezk/midjourney-proxy) | [Documentation](https://doc.newapi.pro/api/midjourney-proxy-image) |
-| 🎵 Suno-API | [Suno API](https://github.com/Suno-API/Suno-API) | [Documentation](https://doc.newapi.pro/api/suno-music) |
-| 🔄 Rerank | Cohere, Jina | [Documentation](https://docs.newapi.pro/en/docs/api/ai-model/rerank/creatererank) |
-| 💬 Claude | Format Messages | [Documentation](https://docs.newapi.pro/en/docs/api/ai-model/chat/createmessage) |
-| 🌐 Gemini | Format Google Gemini | [Documentation](https://docs.newapi.pro/en/docs/api/ai-model/chat/gemini/geminirelayv1beta) |
-| 🔧 Dify | Mode ChatFlow | - |
-| 🎯 Amont personnalisé | Configuration des points d'accès amont légalement autorisés | - |
-
-### 📡 Interfaces prises en charge
-
-<details>
-<summary>Voir la liste complète des interfaces</summary>
-
-- [Interface de discussion (Chat Completions)](https://docs.newapi.pro/en/docs/api/ai-model/chat/openai/createchatcompletion)
-- [Interface de réponse (Responses)](https://docs.newapi.pro/en/docs/api/ai-model/chat/openai/createresponse)
-- [Interface d'image (Image)](https://docs.newapi.pro/en/docs/api/ai-model/images/openai/post-v1-images-generations)
-- [Interface audio (Audio)](https://docs.newapi.pro/en/docs/api/ai-model/audio/openai/create-transcription)
-- [Interface vidéo (Video)](https://docs.newapi.pro/en/docs/api/ai-model/audio/openai/createspeech)
-- [Interface d'incorporation (Embeddings)](https://docs.newapi.pro/en/docs/api/ai-model/embeddings/createembedding)
-- [Interface de rerank (Rerank)](https://docs.newapi.pro/en/docs/api/ai-model/rerank/creatererank)
-- [Conversation en temps réel (Realtime)](https://docs.newapi.pro/en/docs/api/ai-model/realtime/createrealtimesession)
-- [Discussion Claude](https://docs.newapi.pro/en/docs/api/ai-model/chat/createmessage)
-- [Discussion Google Gemini](https://docs.newapi.pro/en/docs/api/ai-model/chat/gemini/geminirelayv1beta)
-
-</details>
-
----
-
-## 🚢 Déploiement
-
-> [!TIP]
-> **Dernière image Docker:** `calciumion/new-api:latest`
-
-### 📋 Exigences de déploiement
-
-| Composant | Exigence |
-|------|------|
-| **Base de données locale** | SQLite (Docker doit monter le répertoire `/data`)|
-| **Base de données distante | MySQL ≥ 5.7.8 ou PostgreSQL ≥ 9.6 |
-| **Moteur de conteneur** | Docker / Docker Compose |
-| **Architecture système** | 64 bits uniquement (amd64 / arm64) ; les systèmes 32 bits ne sont pas pris en charge |
-
-### ⚙️ Configuration des variables d'environnement
-
-<details>
-<summary>Configuration courante des variables d'environnement</summary>
-
-| Nom de variable | Description | Valeur par défaut |
-|--------|------|--------|
-| `SESSION_SECRET` | Secret de session (requis pour le déploiement multi-machines) |
-| `CRYPTO_SECRET` | Secret de chiffrement (requis pour Redis) | - |
-| `SQL_DSN` | Chaine de connexion à la base de données | - |
-| `REDIS_CONN_STRING` | Chaine de connexion Redis | - |
-| `STREAMING_TIMEOUT` | Délai d'expiration du streaming (secondes) | `300` |
-| `STREAM_SCANNER_MAX_BUFFER_MB` | Taille max du buffer par ligne (Mo) pour le scanner SSE ; à augmenter quand les sorties image/base64 sont très volumineuses (ex. images 4K) | `64` |
-| `MAX_REQUEST_BODY_MB` | Taille maximale du corps de requête (Mo, comptée **après décompression** ; évite les requêtes énormes/zip bombs qui saturent la mémoire). Dépassement ⇒ `413` | `32` |
-| `AZURE_DEFAULT_API_VERSION` | Version de l'API Azure | `2025-04-01-preview` |
-| `ERROR_LOG_ENABLED` | Interrupteur du journal d'erreurs | `false` |
-| `PYROSCOPE_URL` | Adresse du serveur Pyroscope | - |
-| `PYROSCOPE_APP_NAME` | Nom de l'application Pyroscope | `new-api` |
-| `PYROSCOPE_BASIC_AUTH_USER` | Utilisateur Basic Auth Pyroscope | - |
-| `PYROSCOPE_BASIC_AUTH_PASSWORD` | Mot de passe Basic Auth Pyroscope | - |
-| `PYROSCOPE_MUTEX_RATE` | Taux d'échantillonnage mutex Pyroscope | `5` |
-| `PYROSCOPE_BLOCK_RATE` | Taux d'échantillonnage block Pyroscope | `5` |
-| `HOSTNAME` | Nom d'hôte tagué pour Pyroscope | `new-api` |
-
-📖 **Configuration complète:** [Documentation des variables d'environnement](https://docs.newapi.pro/en/docs/installation/config-maintenance/environment-variables)
-
-</details>
-
-### 🔧 Méthodes de déploiement
-
-<details>
-<summary><strong>Méthode 1: Docker Compose (recommandé)</strong></summary>
+Lors de la fusion d'une branche spécifique au fork, la section [Les nouveautés](#-les-nouveautés-de-nextrouter) doit être mise à jour. Le delta exact est toujours dérivable via :
 
 ```bash
-# Cloner le projet
-git clone https://github.com/QuantumNous/new-api.git
-cd new-api
-
-# Modifier la configuration
-nano docker-compose.yml
-
-# Démarrer le service
-docker-compose up -d
+git log --oneline --no-merges upstream/main..HEAD
 ```
 
-</details>
-
-<details>
-<summary><strong>Méthode 2: Commandes Docker</strong></summary>
-
-**Utilisation de SQLite:**
-```bash
-docker run --name new-api -d --restart always \
-  -p 3000:3000 \
-  -e TZ=Asia/Shanghai \
-  -v ./data:/data \
-  calciumion/new-api:latest
-```
-
-**Utilisation de MySQL:**
-```bash
-docker run --name new-api -d --restart always \
-  -p 3000:3000 \
-  -e SQL_DSN="root:123456@tcp(localhost:3306)/oneapi" \
-  -e TZ=Asia/Shanghai \
-  -v ./data:/data \
-  calciumion/new-api:latest
-```
-
-> **💡 Explication du chemin:**
-> - `./data:/data` - Chemin relatif, données sauvegardées dans le dossier data du répertoire actuel
-> - Vous pouvez également utiliser un chemin absolu, par exemple : `/your/custom/path:/data`
-
-</details>
-
-<details>
-<summary><strong>Méthode 3: Panneau BaoTa</strong></summary>
-
-1. Installez le panneau BaoTa (version ≥ 9.2.0)
-2. Recherchez **New-API** dans le magasin d'applications
-3. Installation en un clic
-
-📖 [Tutoriel avec des images](./docs/BT.md)
-
-</details>
-
-### ⚠️ Considérations sur le déploiement multi-machines
-
-> [!WARNING]
-> - **Doit définir** `SESSION_SECRET` - Sinon l'état de connexion sera incohérent sur plusieurs machines
-> - **Redis partagé doit définir** `CRYPTO_SECRET` - Sinon les données ne pourront pas être déchiffrées
-
-### 🔄 Nouvelle tentative de canal et cache
-
-**Configuration de la nouvelle tentative:** `Paramètres → Paramètres de fonctionnement → Paramètres généraux → Nombre de tentatives en cas d'échec`
-
-**Configuration du cache:**
-- `REDIS_CONN_STRING`: Cache Redis (recommandé)
-- `MEMORY_CACHE_ENABLED`: Cache mémoire
+Voir `AGENTS.md` → *Fork Documentation Maintenance* pour la liste de vérification complète de mise à jour multilingue.
 
 ---
 
-## 🔗 Projets connexes
+## 🤝 Contribuer
 
-### Projets en amont
+Les contributions sont les bienvenues ! Lors de l'ouverture d'une PR qui ajoute ou modifie une fonctionnalité spécifique au fork :
 
-| Projet | Description |
-|------|------|
-| [One API](https://github.com/songquanpeng/one-api) | Base du projet original |
-| [Midjourney-Proxy](https://github.com/novicezk/midjourney-proxy) | Prise en charge de l'interface Midjourney |
-
-### Outils d'accompagnement
-
-| Projet | Description |
-|------|------|
-| [new-api-key-tool](https://github.com/Calcium-Ion/new-api-key-tool) | Outil de recherche de quota d'utilisation avec une clé |
-| [new-api-horizon](https://github.com/Calcium-Ion/new-api-horizon) | Version optimisée haute performance de New API |
-
----
-
-## 💬 Aide et support
-
-### 📖 Ressources de documentation
-
-| Ressource | Lien |
-|------|------|
-| 📘 FAQ | [FAQ](https://docs.newapi.pro/en/docs/support/faq) |
-| 💬 Interaction avec la communauté | [Canaux de communication](https://docs.newapi.pro/en/docs/support/community-interaction) |
-| 🐛 Commentaires sur les problèmes | [Commentaires sur les problèmes](https://docs.newapi.pro/en/docs/support/feedback-issues) |
-| 📚 Documentation complète | [Documentation officielle](https://docs.newapi.pro/en/docs) |
-
-### 🤝 Guide de contribution
-
-Bienvenue à toutes les formes de contribution!
-
-- 🐛 Signaler des bogues
-- 💡 Proposer de nouvelles fonctionnalités
-- 📝 Améliorer la documentation
-- 🔧 Soumettre du code
+1. Mettez à jour le bloc `<!-- FORK-DELTA -->` dans **toutes** les langues du README (`README.md`, `README.zh_CN.md`, `README.zh_TW.md`, `README.fr.md`, `README.ja.md`) — même structure, seule la langue diffère.
+2. Mettez à jour la date `Last verified` dans chaque bloc.
+3. Conservez toutes les attributions new-api / QuantumNous, le lien amont et la mention Section 7 AGPLv3.
 
 ---
 
@@ -452,17 +212,21 @@ Bienvenue à toutes les formes de contribution!
 
 Ce projet est sous licence [GNU Affero General Public License v3.0 (AGPLv3)](./LICENSE).
 
-Il s'agit d'un projet open-source développé sur la base de [One API](https://github.com/songquanpeng/one-api) (licence MIT).
+Des termes additionnels s'appliquent au titre de la Section 7 de l'AGPLv3 (voir [`NOTICE`](./NOTICE)). Les versions modifiées **doivent préserver** la mention d'attribution `Frontend design and development by New API contributors.` dans les mentions légales appropriées et dans tout emplacement visible « à propos », légal, pied de page ou attribution présenté par l'interface utilisateur.
 
-Si les politiques de votre organisation ne permettent pas l'utilisation de logiciels sous licence AGPLv3, ou si vous souhaitez éviter les obligations open-source de l'AGPLv3, veuillez nous contacter à : [support@quantumnous.com](mailto:support@quantumnous.com)
+Les versions modifiées qui présentent une interface utilisateur doivent également préserver un lien visible vers le projet original : <https://github.com/QuantumNous/new-api>.
+
+Il s'agit d'un projet open source basé sur [One API](https://github.com/songquanpeng/one-api) (licence MIT).
 
 ---
 
-## 🌟 Historique des étoiles
+## 🙏 Remerciements
+
+NextRouter s'appuie sur le travail des contributeurs de **[new-api](https://github.com/QuantumNous/new-api)** et de **[One API](https://github.com/songquanpeng/one-api)**. Merci à eux.
 
 <div align="center">
 
-[![Graphique de l'historique des étoiles](https://api.star-history.com/svg?repos=Calcium-Ion/new-api&type=Date)](https://star-history.com/#Calcium-Ion/new-api&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=WebAgentLoop/nextrouter&type=Date)](https://star-history.com/#WebAgentLoop/nextrouter&Date)
 
 </div>
 
@@ -470,12 +234,6 @@ Si les politiques de votre organisation ne permettent pas l'utilisation de logic
 
 <div align="center">
 
-### 💖 Merci d'utiliser New API
-
-Si ce projet vous est utile, bienvenue à nous donner une ⭐️ Étoile！
-
-**[Documentation officielle](https://docs.newapi.pro/en/docs)** • **[Commentaires sur les problèmes](https://github.com/Calcium-Ion/new-api/issues)** • **[Dernière version](https://github.com/Calcium-Ion/new-api/releases)**
-
-<sub>Construit avec ❤️ par QuantumNous</sub>
+<sub>Construit sur [QuantumNous/new-api](https://github.com/QuantumNous/new-api) · Frontend design and development by New API contributors.</sub>
 
 </div>

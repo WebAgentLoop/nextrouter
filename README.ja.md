@@ -2,9 +2,9 @@
 
 ![new-api](/web/default/public/logo.png)
 
-# New API
+# NextRouter
 
-🍥 **次世代大規模モデルゲートウェイとAI資産管理システム**
+🍥 **[new-api](https://github.com/QuantumNous/new-api) のローリングリリース拡張 Fork — LLM ゲートウェイ + ブラウザ側エージェントループ**
 
 <p align="center">
   <a href="./README.zh_CN.md">简体中文</a> |
@@ -15,106 +15,105 @@
 </p>
 
 <p align="center">
-  <a href="https://raw.githubusercontent.com/Calcium-Ion/new-api/main/LICENSE">
-    <img src="https://img.shields.io/github/license/Calcium-Ion/new-api?color=brightgreen" alt="license">
+  <a href="./LICENSE">
+    <img src="https://img.shields.io/badge/license-AGPLv3-brightgreen" alt="license">
   </a><!--
-  --><a href="https://github.com/Calcium-Ion/new-api/releases/latest">
-    <img src="https://img.shields.io/github/v/release/Calcium-Ion/new-api?color=brightgreen&include_prereleases" alt="release">
+  --><a href="https://hub.docker.com/r/webagentloop/nextrouter">
+    <img src="https://img.shields.io/badge/docker-webagentloop%2Fnextrouter-blue" alt="docker">
   </a><!--
-  --><a href="https://hub.docker.com/r/CalciumIon/new-api">
-    <img src="https://img.shields.io/badge/docker-dockerHub-blue" alt="docker">
-  </a><!--
-  --><a href="https://goreportcard.com/report/github.com/Calcium-Ion/new-api">
-    <img src="https://goreportcard.com/badge/github.com/Calcium-Ion/new-api" alt="GoReportCard">
+  --><a href="https://github.com/QuantumNous/new-api">
+    <img src="https://img.shields.io/badge/fork%20of-QuantumNous%2Fnew--api-orange" alt="QuantumNous/new-api の fork">
   </a>
 </p>
 
 <p align="center">
-  <a href="https://trendshift.io/repositories/20180" target="_blank">
-    <img src="https://trendshift.io/api/badge/repositories/20180" alt="QuantumNous%2Fnew-api | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/>
-  </a>
-  <br>
-  <a href="https://hellogithub.com/repository/QuantumNous/new-api" target="_blank">
-    <img src="https://api.hellogithub.com/v1/widgets/recommend.svg?rid=539ac4217e69431684ad4a0bab768811&claim_uid=tbFPfKIDHpc4TzR" alt="Featured｜HelloGitHub" style="width: 250px; height: 54px;" width="250" height="54" />
-  </a><!--
-  --><a href="https://www.producthunt.com/products/new-api/launches/new-api?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-new-api" target="_blank" rel="noopener noreferrer">
-    <img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1047693&theme=light&t=1769577875005" alt="New API - All-in-one AI asset management gateway. | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" />
-  </a>
-</p>
-
-<p align="center">
+  <a href="#-nextrouter-とは">概要</a> •
+  <a href="#-nextrouter-の新機能">新機能</a> •
   <a href="#-クイックスタート">クイックスタート</a> •
-  <a href="#-主な機能">主な機能</a> •
-  <a href="#-デプロイ">デプロイ</a> •
-  <a href="#-ドキュメント">ドキュメント</a> •
-  <a href="#-ヘルプサポート">ヘルプ</a>
+  <a href="#-メンテナンス上流の追跡">メンテナンス</a> •
+  <a href="#-ライセンス">ライセンス</a>
 </p>
 
 </div>
 
-## 📝 プロジェクト説明
+> 🔄 **ローリングアップデート、上流を追跡。** NextRouter は [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api) の `main` を継続的にマージします。ローリングイメージタグ **`nextrouter`** は常に最新ビルド（上流 + fork の変更）を指します — `docker pull` で最新を維持し、再現可能なデプロイには日付付きタグで固定してください。
 
 > [!IMPORTANT]
 > - 本プロジェクトは、合法的に許可された AI API ゲートウェイ、組織レベルの認証、マルチモデル管理、利用量分析、コスト管理、プライベートデプロイのシナリオのみを対象としています。
 > - ユーザーは、上流の API キー、アカウント、モデルサービス、インターフェース権限を合法的に取得し、上流のサービス利用規約および適用される法律法規を遵守する必要があります。
-> - ユーザーは、利用方法が上流のサービス利用規約および適用される法律法規に準拠していることを確認してください。
 > - 生成 AI サービスを公衆に提供する場合、ユーザーは適用される規制要件を遵守し、管轄区域で求められる届出、ライセンス、コンテンツセキュリティ、本人確認、ログ保持、税務、上流認可などのすべての義務を履行してください。
 
 ---
 
-## 🤝 信頼できるパートナー
+## 🧭 NextRouter とは
 
-<p align="center">
-  <em>順不同</em>
-</p>
+**NextRouter** は [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api) のコミュニティ Fork で、上流の `main` を継続的に追跡します。new-api が提供するすべての機能—統一 API の背後での 40 以上の上流 AI プロバイダー（OpenAI、Claude、Gemini、Azure、AWS Bedrock など）の集約、ユーザー管理、課金、レート制限、管理ダッシュボード—を維持しつつ、ゲートウェイとフロントエンドに焦点を当てた一連の機能強化を追加します（[新機能](#-nextrouter-の新機能) を参照）。
 
-<p align="center">
-  <a href="https://www.cherry-ai.com/" target="_blank">
-    <img src="./docs/images/cherry-studio.png" alt="Cherry Studio" height="80" />
-  </a><!--
-  --><a href="https://github.com/iOfficeAI/AionUi/" target="_blank">
-    <img src="./docs/images/aionui.png" alt="Aion UI" height="80" />
-  </a><!--
-  --><a href="https://bda.pku.edu.cn/" target="_blank">
-    <img src="./docs/images/pku.png" alt="北京大学" height="80" />
-  </a><!--
-  --><a href="https://www.compshare.cn/?ytag=GPU_yy_gh_newapi" target="_blank">
-    <img src="./docs/images/ucloud.png" alt="UCloud 優刻得" height="80" />
-  </a><!--
-  --><a href="https://www.aliyun.com/" target="_blank">
-    <img src="./docs/images/aliyun.png" alt="Alibaba Cloud" height="80" />
-  </a><!--
-  --><a href="https://io.net/" target="_blank">
-    <img src="./docs/images/io-net.png" alt="IO.NET" height="80" />
-  </a>
-</p>
+完全な機能セット、モデルサポート、API 形式、設定については、**上流ドキュメント**を参照してください：<https://docs.newapi.pro/en/docs>。
 
 ---
 
-## 🙏 特別な感謝
+## 🌓 本 Fork について・上流との関係
 
-<p align="center">
-  <a href="https://www.jetbrains.com/?from=new-api" target="_blank">
-    <img src="https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.png" alt="JetBrains Logo" width="120" />
-  </a>
-</p>
+NextRouter は [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api)（AGPLv3）をベースにしており、これはさらに [One API](https://github.com/songquanpeng/one-api)（MIT）をベースとしています。本 Fork は次の通りです：
 
-<p align="center">
-  <strong>感謝 <a href="https://www.jetbrains.com/?from=new-api">JetBrains</a> が本プロジェクトに無料のオープンソース開発ライセンスを提供してくれたことに感謝します</strong>
-</p>
+- 上流の `main` を継続的に追跡します。Fork 固有の変更は自己完結しており、以下に列挙します。
+- 自身の変更に責任を持ち、AGPLv3 第 7(c) 条に従って変更を明示します。
+- **必須の帰属表示を保持します：** `Frontend design and development by New API contributors.`
+- **オリジナルプロジェクトへの可視リンクを保持します：** <https://github.com/QuantumNous/new-api>
+
+完全な条件は [ライセンス](#-ライセンス) と [`NOTICE`](./NOTICE) を参照してください。
+
+---
+
+<!-- FORK-DELTA: NextRouter changes vs upstream QuantumNous/new-api.
+     Update after merging any fork-only branch.
+     Completeness check: git log --oneline --no-merges upstream/main..HEAD
+     Last verified: 2026-07-15 -->
+
+## ✨ NextRouter の新機能
+
+> 以下は上流との差分のみを扱います。上流の機能については公式ドキュメントを参照してください。
+
+### 🤖 ブラウザ側エージェントループ
+
+新しい **Agent** サイドバーモジュール（`/agent`、*Profile → Sidebar modules* で切替可能）は、完全にブラウザ内で動作するエージェント会話ループを実装します。
+
+- playground relay `/pg/chat/completions` を OpenAI function-calling 形式で再利用し、ビルトインのツールレジストリと**電卓**ツール（安全な式評価）を同梱。
+- ツール呼び出しをストリーミング解析し、各アシスタントターンを折りたたみ可能な **Process** パネル付きの 1 枚のカードに集約。
+- メッセージ操作：コピー / 再生成 / 編集（再送の有無を選択可） / 削除。
+- 複数セッションの履歴を **IndexedDB** に永続化（最大 50 セッション）、リネーム / 切替 / 削除に対応。
+- 反復回数の上限がツール呼び出しの無限ループを防止し、7 言語にローカライズ。
+
+### ⚡ チャネル・Relay の強化
+
+- **Force Stream**（チャネル設定）：ストリーミングのみをサポートする上流向けに、クライアントが非ストリーミングリクエストを送信した際、ゲートウェイが SSE ストリームをバッファリングして単一の非ストリーミング JSON レスポンスを返します（バックエンドのバッファリングロジック + ユニットテスト付き）。
+- **Force Format / Force Stream** の切替が **Advanced Custom** チャネルでも利用可能になりました（以前は OpenAI チャネルのみ）。
+- `/pg/chat/completions` が Advanced Custom の受信パスオプションとして追加されました。
+
+### 🧩 モデル管理
+
+- **ベンダー管理ダイアログ**：全モデルベンダーを一覧表示し、編集 / 削除 / 追加に対応（以前は作成のみ）、エラー時のリトライ付き。
+- **エンドポイントテンプレートのマージ**：保存時にすべて置換ではなくマージするよう変更し、既存のエンドポイント JSON が不正な場合はマージ前に警告します。
+
+### 💰 ウォレットと決済
+
+- カスタム通貨（CUSTOM）モードと Waffo Pancake 決済プロバイダーのウォレット金額表示を修正。
+
+<!-- /FORK-DELTA -->
 
 ---
 
 ## 🚀 クイックスタート
 
-### Docker Composeを使用（推奨）
+### Docker Compose を使う（推奨）
 
 ```bash
-# プロジェクトをクローン
-git clone https://github.com/QuantumNous/new-api.git
-cd new-api
+# Fork をクローン
+git clone https://github.com/WebAgentLoop/nextrouter.git
+cd nextrouter
 
-# docker-compose.yml 設定を編集
+# docker-compose.yml の設定を編集
 nano docker-compose.yml
 
 # サービスを起動
@@ -122,347 +121,112 @@ docker-compose up -d
 ```
 
 <details>
-<summary><strong>Dockerコマンドを使用</strong></summary>
+<summary><strong>Docker コマンドを使う</strong></summary>
 
 ```bash
-# 最新のイメージをプル
-docker pull calciumion/new-api:latest
+# 最新イメージを取得
+docker pull webagentloop/nextrouter:nextrouter
 
-# SQLiteを使用（デフォルト）
-docker run --name new-api -d --restart always \
+# SQLite を使う場合（デフォルト）
+docker run --name nextrouter -d --restart always \
   -p 3000:3000 \
   -e TZ=Asia/Shanghai \
   -v ./data:/data \
-  calciumion/new-api:latest
+  webagentloop/nextrouter:nextrouter
 
-# MySQLを使用
-docker run --name new-api -d --restart always \
+# MySQL を使う場合
+docker run --name nextrouter -d --restart always \
   -p 3000:3000 \
   -e SQL_DSN="root:123456@tcp(localhost:3306)/oneapi" \
   -e TZ=Asia/Shanghai \
   -v ./data:/data \
-  calciumion/new-api:latest
+  webagentloop/nextrouter:nextrouter
 ```
 
-> **💡 ヒント:** `-v ./data:/data` は現在のディレクトリの `data` フォルダにデータを保存します。絶対パスに変更することもできます：`-v /your/custom/path:/data`
+> **💡 ヒント：** `-v ./data:/data` はデータを現在のディレクトリの `data` フォルダに保存します。`-v /your/custom/path:/data` のように絶対パスも使用できます。
 
 </details>
 
+デプロイ完了後、`http://localhost:3000` にアクセスして利用を開始します。
+
 ---
 
-🎉 デプロイが完了したら、`http://localhost:3000` にアクセスして使用を開始してください！
+## 📦 イメージとデプロイ
+
+| コンポーネント | 要件 |
+|------|------|
+| **イメージ** | `webagentloop/nextrouter:nextrouter` |
+| **ローカルデータベース** | SQLite（Docker は `/data` ディレクトリをマウント必須） |
+| **リモートデータベース** | MySQL ≥ 5.7.8 または PostgreSQL ≥ 9.6 |
+| **コンテナエンジン** | Docker / Docker Compose |
+| **アーキテクチャ** | 64 ビットのみ（amd64 / arm64）、32 ビットは非対応 |
+
+> [!TIP]
+> `nextrouter` は `nextrouter` ブランチの最新ビルドを常に追跡する**ローリングタグ**です。再現可能なデプロイには、`webagentloop/nextrouter:nextrouter-20260715-911a101` のような日付付きタグで固定してください。
 
 > [!WARNING]
-> 本プロジェクトを公衆向け生成 AI サービスまたは API 再販サービスとして運営する場合、ユーザーは届出、コンテンツセキュリティ、本人確認、ログ保持、税務、決済、上流認可などの必要なコンプライアンス義務を先に完了してください。
+> マルチマシンデプロイでは `SESSION_SECRET` を**必ず**設定してください（そうしないとログイン状態が不整合になります）。共有 Redis では `CRYPTO_SECRET` を**必ず**設定してください（そうしないとデータを復号できません）。
 
-📖 その他のデプロイ方法については[デプロイガイド](https://docs.newapi.pro/ja/docs/installation)を参照してください。
+📖 すべての環境変数とデプロイ方法については、上流の [環境変数](https://docs.newapi.pro/en/docs/installation/config-maintenance/environment-variables) および [インストール](https://docs.newapi.pro/en/docs/installation) ガイドを参照してください—これらは本 Fork にも適用されます。
 
 ---
 
 ## 📚 ドキュメント
 
-<div align="center">
-
-### 📖 [公式ドキュメント](https://docs.newapi.pro/ja/docs) | [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/QuantumNous/new-api)
-
-</div>
-
-**クイックナビゲーション:**
+上流ドキュメントは完全な機能セット、API リファレンス、設定を網羅しており、NextRouter にも適用されます：
 
 | カテゴリ | リンク |
 |------|------|
-| 🚀 デプロイガイド | [インストールドキュメント](https://docs.newapi.pro/ja/docs/installation) |
-| ⚙️ 環境設定 | [環境変数](https://docs.newapi.pro/ja/docs/installation/config-maintenance/environment-variables) |
-| 📡 APIドキュメント | [APIドキュメント](https://docs.newapi.pro/ja/docs/api) |
-| ❓ よくある質問 | [FAQ](https://docs.newapi.pro/ja/docs/support/faq) |
-| 💬 コミュニティ交流 | [交流チャネル](https://docs.newapi.pro/ja/docs/support/community-interaction) |
+| 🚀 デプロイガイド | [インストール](https://docs.newapi.pro/en/docs/installation) |
+| ⚙️ 環境設定 | [環境変数](https://docs.newapi.pro/en/docs/installation/config-maintenance/environment-variables) |
+| 📡 API ドキュメント | [API リファレンス](https://docs.newapi.pro/en/docs/api) |
+| ❓ FAQ | [FAQ](https://docs.newapi.pro/en/docs/support/faq) |
 
 ---
 
-## ✨ 主な機能
+## 🔧 メンテナンス：上流の追跡
 
-> 詳細な機能については[機能説明](https://docs.newapi.pro/ja/docs/guide/wiki/basic-concepts/features-introduction)を参照してください。
+NextRouter は `upstream/main` を継続的にマージする長期ブランチ `nextrouter` を維持します。Fork 固有の機能は feature ブランチ（例：`feat/frontend-agent-loop`）で開発され、`nextrouter` にマージされます。
 
-### 🎨 コア機能
-
-| 機能 | 説明 |
-|------|------|
-| 🎨 新しいUI | モダンなユーザーインターフェースデザイン |
-| 🌍 多言語 | 簡体字中国語、繁体字中国語、英語、フランス語、日本語をサポート |
-| 🔄 データ互換性 | オリジナルのOne APIデータベースと完全に互換性あり |
-| 📈 データダッシュボード | ビジュアルコンソールと統計分析 |
-| 🔒 権限管理 | トークングループ化、モデル制限、ユーザー管理 |
-
-### 💰 認可済み利用量とコスト管理
-
-- ✅ 合法的に許可されたシナリオでの内部チャージとクォータ割り当て（EPay、Stripe）
-- ✅ 組織レベルのリクエスト単位、使用量ベース、キャッシュヒットのコスト会計
-- ✅ OpenAI、Azure、DeepSeek、Claude、Qwen などのモデルのキャッシュ課金統計
-- ✅ 内部管理または認可済み企業顧客向けの柔軟な課金ポリシー
-
-### 🔐 認証とセキュリティ
-
-- 😈 Discord認証ログイン
-- 🤖 LinuxDO認証ログイン
-- 📱 Telegram認証ログイン
-- 🔑 OIDC統一認証
-- 🔍 Key使用量クォータ照会（[new-api-key-tool](https://github.com/Calcium-Ion/new-api-key-tool)と併用）
-
-
-
-### 🚀 高度な機能
-
-**APIフォーマットサポート:**
-- ⚡ [OpenAI Responses](https://docs.newapi.pro/ja/docs/api/ai-model/chat/openai/create-response)
-- ⚡ [OpenAI Realtime API](https://docs.newapi.pro/ja/docs/api/ai-model/realtime/create-realtime-session)（Azureを含む）
-- ⚡ [Claude Messages](https://docs.newapi.pro/ja/docs/api/ai-model/chat/create-message)
-- ⚡ [Google Gemini](https://doc.newapi.pro/ja/api/google-gemini-chat)
-- 🔄 [Rerankモデル](https://docs.newapi.pro/ja/docs/api/ai-model/rerank/create-rerank)（Cohere、Jina）
-
-**インテリジェントルーティング:**
-- ⚖️ チャネル重み付けランダム
-- 🔄 失敗自動リトライ
-- 🚦 ユーザーレベルモデルレート制限
-
-**フォーマット変換:**
-- 🔄 **OpenAI Compatible ⇄ Claude Messages**
-- 🔄 **OpenAI Compatible → Google Gemini**
-- 🔄 **Google Gemini → OpenAI Compatible** - テキストのみ、関数呼び出しはまだサポートされていません
-- 🚧 **OpenAI Compatible ⇄ OpenAI Responses** - 開発中
-- 🔄 **思考からコンテンツへの機能**
-
-**Reasoning Effort サポート:**
-
-<details>
-<summary>詳細設定を表示</summary>
-
-**OpenAIシリーズモデル:**
-- `o3-mini-high` - 高思考努力
-- `o3-mini-medium` - 中思考努力
-- `o3-mini-low` - 低思考努力
-- `gpt-5-high` - 高思考努力
-- `gpt-5-medium` - 中思考努力
-- `gpt-5-low` - 低思考努力
-
-**Claude思考モデル:**
-- `claude-3-7-sonnet-20250219-thinking` - 思考モードを有効にする
-
-**Google Geminiシリーズモデル:**
-- `gemini-2.5-flash-thinking` - 思考モードを有効にする
-- `gemini-2.5-flash-nothinking` - 思考モードを無効にする
-- `gemini-2.5-pro-thinking` - 思考モードを有効にする
-- `gemini-2.5-pro-thinking-128` - 思考モードを有効にし、思考予算を128トークンに設定する
-- Gemini モデル名の末尾に `-low` / `-medium` / `-high` を付けることで推論強度を直接指定できます（追加の思考予算サフィックスは不要です）。
-
-</details>
-
----
-
-## 🤖 モデルサポート
-
-> 詳細については[APIドキュメント - ゲートウェイインターフェース](https://docs.newapi.pro/ja/docs/api)
-
-| モデルタイプ | 説明 | ドキュメント |
-|---------|------|------|
-| 🤖 OpenAI-Compatible | OpenAI互換モデル | [ドキュメント](https://docs.newapi.pro/ja/docs/api/ai-model/chat/openai/createchatcompletion) |
-| 🤖 OpenAI Responses | OpenAI Responsesフォーマット | [ドキュメント](https://docs.newapi.pro/ja/docs/api/ai-model/chat/openai/createresponse) |
-| 🎨 Midjourney-Proxy | [Midjourney-Proxy(Plus)](https://github.com/novicezk/midjourney-proxy) | [ドキュメント](https://doc.newapi.pro/api/midjourney-proxy-image) |
-| 🎵 Suno-API | [Suno API](https://github.com/Suno-API/Suno-API) | [ドキュメント](https://doc.newapi.pro/api/suno-music) |
-| 🔄 Rerank | Cohere、Jina | [ドキュメント](https://docs.newapi.pro/ja/docs/api/ai-model/rerank/creatererank) |
-| 💬 Claude | Messagesフォーマット | [ドキュメント](https://docs.newapi.pro/ja/docs/api/ai-model/chat/createmessage) |
-| 🌐 Gemini | Google Geminiフォーマット | [ドキュメント](https://docs.newapi.pro/ja/docs/api/ai-model/chat/gemini/geminirelayv1beta) |
-| 🔧 Dify | ChatFlowモード | - |
-| 🎯 カスタム上流 | 合法的に許可された上流エンドポイントの設定をサポート | - |
-
-### 📡 サポートされているインターフェース
-
-<details>
-<summary>完全なインターフェースリストを表示</summary>
-
-- [チャットインターフェース (Chat Completions)](https://docs.newapi.pro/ja/docs/api/ai-model/chat/openai/createchatcompletion)
-- [レスポンスインターフェース (Responses)](https://docs.newapi.pro/ja/docs/api/ai-model/chat/openai/createresponse)
-- [イメージインターフェース (Image)](https://docs.newapi.pro/ja/docs/api/ai-model/images/openai/post-v1-images-generations)
-- [オーディオインターフェース (Audio)](https://docs.newapi.pro/ja/docs/api/ai-model/audio/openai/create-transcription)
-- [ビデオインターフェース (Video)](https://docs.newapi.pro/ja/docs/api/ai-model/audio/openai/createspeech)
-- [エンベッドインターフェース (Embeddings)](https://docs.newapi.pro/ja/docs/api/ai-model/embeddings/createembedding)
-- [再ランク付けインターフェース (Rerank)](https://docs.newapi.pro/ja/docs/api/ai-model/rerank/creatererank)
-- [リアルタイム対話インターフェース (Realtime)](https://docs.newapi.pro/ja/docs/api/ai-model/realtime/createrealtimesession)
-- [Claudeチャット](https://docs.newapi.pro/ja/docs/api/ai-model/chat/createmessage)
-- [Google Geminiチャット](https://docs.newapi.pro/ja/docs/api/ai-model/chat/gemini/geminirelayv1beta)
-
-</details>
-
----
-
-## 🚢 デプロイ
-
-> [!TIP]
-> **最新のDockerイメージ:** `calciumion/new-api:latest`
-
-### 📋 デプロイ要件
-
-| コンポーネント | 要件 |
-|------|------|
-| **ローカルデータベース** | SQLite（Dockerは `/data` ディレクトリをマウントする必要があります）|
-| **リモートデータベース** | MySQL ≥ 5.7.8 または PostgreSQL ≥ 9.6 |
-| **コンテナエンジン** | Docker / Docker Compose |
-| **システムアーキテクチャ** | 64ビットのみ対応（amd64 / arm64）。32ビットシステムは非対応 |
-
-### ⚙️ 環境変数設定
-
-<details>
-<summary>一般的な環境変数設定</summary>
-
-| 変数名 | 説明 | デフォルト値 |
-|--------|------|--------|
-| `SESSION_SECRET` | セッションシークレット（マルチマシンデプロイに必須） | - |
-| `CRYPTO_SECRET` | 暗号化シークレット（Redisに必須） | - |
-| `SQL_DSN** | データベース接続文字列 | - |
-| `REDIS_CONN_STRING` | Redis接続文字列 | - |
-| `STREAMING_TIMEOUT` | ストリーミング応答のタイムアウト時間（秒） | `300` |
-| `STREAM_SCANNER_MAX_BUFFER_MB` | ストリームスキャナの1行あたりバッファ上限（MB）。4K画像など巨大なbase64 `data:` ペイロードを扱う場合は値を増加させてください | `64` |
-| `MAX_REQUEST_BODY_MB` | リクエストボディ最大サイズ（MB、**解凍後**に計測。巨大リクエスト/zip bomb によるメモリ枯渇を防止）。超過時は `413` | `32` |
-| `AZURE_DEFAULT_API_VERSION` | Azure APIバージョン | `2025-04-01-preview` |
-| `ERROR_LOG_ENABLED` | エラーログスイッチ | `false` |
-| `PYROSCOPE_URL` | Pyroscopeサーバーのアドレス | - |
-| `PYROSCOPE_APP_NAME` | Pyroscopeアプリ名 | `new-api` |
-| `PYROSCOPE_BASIC_AUTH_USER` | Pyroscope Basic Authユーザー | - |
-| `PYROSCOPE_BASIC_AUTH_PASSWORD` | Pyroscope Basic Authパスワード | - |
-| `PYROSCOPE_MUTEX_RATE` | Pyroscope mutexサンプリング率 | `5` |
-| `PYROSCOPE_BLOCK_RATE` | Pyroscope blockサンプリング率 | `5` |
-| `HOSTNAME` | Pyroscope用のホスト名タグ | `new-api` |
-
-📖 **完全な設定:** [環境変数ドキュメント](https://docs.newapi.pro/ja/docs/installation/config-maintenance/environment-variables)
-
-</details>
-
-### 🔧 デプロイ方法
-
-<details>
-<summary><strong>方法 1: Docker Compose（推奨）</strong></summary>
+Fork 専用ブランチをマージする際、[新機能](#-nextrouter-の新機能) セクションを更新する必要があります。正確な差分は常に以下から導出できます：
 
 ```bash
-# プロジェクトをクローン
-git clone https://github.com/QuantumNous/new-api.git
-cd new-api
-
-# 設定を編集
-nano docker-compose.yml
-
-# サービスを起動
-docker-compose up -d
+git log --oneline --no-merges upstream/main..HEAD
 ```
 
-</details>
-
-<details>
-<summary><strong>方法 2: Dockerコマンド</strong></summary>
-
-**SQLiteを使用:**
-```bash
-docker run --name new-api -d --restart always \
-  -p 3000:3000 \
-  -e TZ=Asia/Shanghai \
-  -v ./data:/data \
-  calciumion/new-api:latest
-```
-
-**MySQLを使用:**
-```bash
-docker run --name new-api -d --restart always \
-  -p 3000:3000 \
-  -e SQL_DSN="root:123456@tcp(localhost:3306)/oneapi" \
-  -e TZ=Asia/Shanghai \
-  -v ./data:/data \
-  calciumion/new-api:latest
-```
-
-> **💡 パス説明:**
-> - `./data:/data` - 相対パス、データは現在のディレクトリのdataフォルダに保存されます
-> - 絶対パスを使用することもできます：`/your/custom/path:/data`
-
-</details>
-
-<details>
-<summary><strong>方法 3: 宝塔パネル</strong></summary>
-
-1. 宝塔パネル（**9.2.0バージョン**以上）をインストールし、アプリケーションストアで**New-API**を検索してインストールします。
-
-📖 [画像付きチュートリアル](./docs/BT.md)
-
-</details>
-
-### ⚠️ マルチマシンデプロイの注意事項
-
-> [!WARNING]
-> - **必ず設定する必要があります** `SESSION_SECRET` - そうしないとマルチマシンデプロイ時にログイン状態が不一致になります
-> - **共有Redisは必ず設定する必要があります** `CRYPTO_SECRET` - そうしないとデータを復号化できません
-
-### 🔄 チャネルリトライとキャッシュ
-
-**リトライ設定:** `設定 → 運営設定 → 一般設定 → 失敗リトライ回数`
-
-**キャッシュ設定:**
-- `REDIS_CONN_STRING`：Redisキャッシュ（推奨）
-- `MEMORY_CACHE_ENABLED`：メモリキャッシュ
+完全な多言語更新チェックリストは `AGENTS.md` → *Fork Documentation Maintenance* を参照してください。
 
 ---
 
-## 🔗 関連プロジェクト
+## 🤝 コントリビュート
 
-### 上流プロジェクト
+コントリビューションを歓迎します！Fork 専用機能を追加・変更する PR を開く際は：
 
-| プロジェクト | 説明 |
-|------|------|
-| [One API](https://github.com/songquanpeng/one-api) | オリジナルプロジェクトベース |
-| [Midjourney-Proxy](https://github.com/novicezk/midjourney-proxy) | Midjourneyインターフェースサポート |
-
-### 補助ツール
-
-| プロジェクト | 説明 |
-|------|------|
-| [new-api-key-tool](https://github.com/Calcium-Ion/new-api-key-tool) | キー使用量クォータ照会ツール |
-| [new-api-horizon](https://github.com/Calcium-Ion/new-api-horizon) | New API高性能最適化版 |
-
----
-
-## 💬 ヘルプサポート
-
-### 📖 ドキュメントリソース
-
-| リソース | リンク |
-|------|------|
-| 📘 よくある質問 | [FAQ](https://docs.newapi.pro/ja/docs/support/faq) |
-| 💬 コミュニティ交流 | [交流チャネル](https://docs.newapi.pro/ja/docs/support/community-interaction) |
-| 🐛 問題のフィードバック | [問題フィードバック](https://docs.newapi.pro/ja/docs/support/feedback-issues) |
-| 📚 完全なドキュメント | [公式ドキュメント](https://docs.newapi.pro/ja/docs) |
-
-### 🤝 貢献ガイド
-
-あらゆる形の貢献を歓迎します！
-
-- 🐛 バグを報告する
-- 💡 新しい機能を提案する
-- 📝 ドキュメントを改善する
-- 🔧 コードを提出する
+1. **すべて**の言語の README（`README.md`、`README.zh_CN.md`、`README.zh_TW.md`、`README.fr.md`、`README.ja.md`）の `<!-- FORK-DELTA -->` ブロックを更新してください—構造は同じで、言語のみ異なります。
+2. 各ブロックの `Last verified` 日付を更新してください。
+3. すべての new-api / QuantumNous の帰属、上流リンク、AGPLv3 Section 7 の通知を保持してください。
 
 ---
 
 ## 📜 ライセンス
 
-このプロジェクトは [GNU Affero General Public License v3.0 (AGPLv3)](./LICENSE) の下でライセンスされています。
+本プロジェクトは [GNU Affero General Public License v3.0 (AGPLv3)](./LICENSE) の下でライセンスされています。
 
-本プロジェクトは、[One API](https://github.com/songquanpeng/one-api)（MITライセンス）をベースに開発されたオープンソースプロジェクトです。
+AGPLv3 Section 7 に基づく追加条項が適用されます（[`NOTICE`](./NOTICE) を参照）。修正版は、適切な法的通知およびユーザーインターフェースに表示される目立つ「について」、法的、フッター、帰属の各場所に、帰属表示 `Frontend design and development by New API contributors.` を**保持しなければなりません**。
 
-お客様の組織のポリシーがAGPLv3ライセンスのソフトウェアの使用を許可していない場合、またはAGPLv3のオープンソース義務を回避したい場合は、こちらまでお問い合わせください：[support@quantumnous.com](mailto:support@quantumnous.com)
+ユーザーインターフェースを表示する修正版は、オリジナルプロジェクトへの可視リンクも保持しなければなりません：<https://github.com/QuantumNous/new-api>。
+
+本プロジェクトは [One API](https://github.com/songquanpeng/one-api)（MIT License）をベースとしたオープンソースプロジェクトです。
 
 ---
 
-## 🌟 スター履歴
+## 🙏 謝辞
+
+NextRouter は **[new-api](https://github.com/QuantumNous/new-api)** のコントリビューターと **[One API](https://github.com/songquanpeng/one-api)** の成果の上に構築されています。感謝いたします。
 
 <div align="center">
 
-[![スター履歴チャート](https://api.star-history.com/svg?repos=Calcium-Ion/new-api&type=Date)](https://star-history.com/#Calcium-Ion/new-api&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=WebAgentLoop/nextrouter&type=Date)](https://star-history.com/#WebAgentLoop/nextrouter&Date)
 
 </div>
 
@@ -470,12 +234,6 @@ docker run --name new-api -d --restart always \
 
 <div align="center">
 
-### 💖 New APIをご利用いただきありがとうございます
-
-このプロジェクトがあなたのお役に立てたなら、ぜひ ⭐️ スターをください！
-
-**[公式ドキュメント](https://docs.newapi.pro/ja/docs)** • **[問題フィードバック](https://github.com/Calcium-Ion/new-api/issues)** • **[最新リリース](https://github.com/Calcium-Ion/new-api/releases)**
-
-<sub>❤️ で構築された QuantumNous</sub>
+<sub>[QuantumNous/new-api](https://github.com/QuantumNous/new-api) 上に構築 · Frontend design and development by New API contributors.</sub>
 
 </div>

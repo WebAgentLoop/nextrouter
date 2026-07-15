@@ -2,12 +2,12 @@
 
 ![new-api](/web/default/public/logo.png)
 
-# New API
+# NextRouter
 
-🍥 **新一代大模型网关与AI资产管理系统**
+🍥 **[new-api](https://github.com/QuantumNous/new-api) 的滚动发布增强版 Fork — LLM 网关 + 浏览器端 Agent 循环**
 
 <p align="center">
-  简体中文 |
+  <strong>简体中文</strong> |
   <a href="./README.zh_TW.md">繁體中文</a> |
   <a href="./README.md">English</a> |
   <a href="./README.fr.md">Français</a> |
@@ -15,93 +15,92 @@
 </p>
 
 <p align="center">
-  <a href="https://raw.githubusercontent.com/Calcium-Ion/new-api/main/LICENSE">
-    <img src="https://img.shields.io/github/license/Calcium-Ion/new-api?color=brightgreen" alt="license">
+  <a href="./LICENSE">
+    <img src="https://img.shields.io/badge/license-AGPLv3-brightgreen" alt="license">
   </a><!--
-  --><a href="https://github.com/Calcium-Ion/new-api/releases/latest">
-    <img src="https://img.shields.io/github/v/release/Calcium-Ion/new-api?color=brightgreen&include_prereleases" alt="release">
+  --><a href="https://hub.docker.com/r/webagentloop/nextrouter">
+    <img src="https://img.shields.io/badge/docker-webagentloop%2Fnextrouter-blue" alt="docker">
   </a><!--
-  --><a href="https://hub.docker.com/r/CalciumIon/new-api">
-    <img src="https://img.shields.io/badge/docker-dockerHub-blue" alt="docker">
-  </a><!--
-  --><a href="https://goreportcard.com/report/github.com/Calcium-Ion/new-api">
-    <img src="https://goreportcard.com/badge/github.com/Calcium-Ion/new-api" alt="GoReportCard">
+  --><a href="https://github.com/QuantumNous/new-api">
+    <img src="https://img.shields.io/badge/fork%20of-QuantumNous%2Fnew--api-orange" alt="fork of QuantumNous/new-api">
   </a>
 </p>
 
 <p align="center">
-  <a href="https://trendshift.io/repositories/20180" target="_blank">
-    <img src="https://trendshift.io/api/badge/repositories/20180" alt="QuantumNous%2Fnew-api | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/>
-  </a>
-  <br>
-  <a href="https://hellogithub.com/repository/QuantumNous/new-api" target="_blank">
-    <img src="https://api.hellogithub.com/v1/widgets/recommend.svg?rid=539ac4217e69431684ad4a0bab768811&claim_uid=tbFPfKIDHpc4TzR" alt="Featured｜HelloGitHub" style="width: 250px; height: 54px;" width="250" height="54" />
-  </a><!--
-  --><a href="https://www.producthunt.com/products/new-api/launches/new-api?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-new-api" target="_blank" rel="noopener noreferrer">
-    <img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1047693&theme=light&t=1769577875005" alt="New API - All-in-one AI asset management gateway. | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" />
-  </a>
-</p>
-
-<p align="center">
+  <a href="#-nextrouter-是什么">关于</a> •
+  <a href="#-nextrouter-相比上游的改进">改进</a> •
   <a href="#-快速开始">快速开始</a> •
-  <a href="#-主要特性">主要特性</a> •
-  <a href="#-部署">部署</a> •
-  <a href="#-文档">文档</a> •
-  <a href="#-帮助支持">帮助</a>
+  <a href="#-维护如何跟踪上游">维护</a> •
+  <a href="#-许可证">许可证</a>
 </p>
 
 </div>
 
-## 📝 项目说明
+> 🔄 **滚动更新，紧随上游。** NextRouter 持续合并 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api) 的 `main` 分支。滚动镜像 tag **`nextrouter`** 始终指向最新构建（上游 + fork 改动）——`docker pull` 即可保持最新；固定带日期的 tag 可实现可复现部署。
 
 > [!IMPORTANT]
 > - 本项目仅面向合法授权的 AI API 网关、组织内部鉴权、多模型管理、用量统计、成本核算和私有化部署场景。
 > - 使用者必须合法取得上游 API Key、账号、模型服务或接口权限，并遵守上游服务条款及适用法律法规。
-> - 使用者应确保其使用方式符合上游服务条款及适用法律法规。
-> - 面向公众提供生成式人工智能服务时，使用者应遵守[《生成式人工智能服务管理暂行办法》](http://www.cac.gov.cn/2023-07/13/c_1690898327029107.htm)等监管要求，自行完成所在司法辖区要求的备案、许可、内容安全、实名、日志留存、税务和上游授权等合规义务。
+> - 面向公众提供生成式人工智能服务时，使用者应遵守适用监管要求，并自行完成所在司法辖区要求的备案、许可、内容安全、实名核验、日志留存、税务和上游授权等合规义务。
 
 ---
 
-## 🤝 我们信任的合作伙伴
+## 🧭 NextRouter 是什么
 
-<p align="center">
-  <em>排名不分先后</em>
-</p>
+**NextRouter** 是 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api) 的社区 Fork，持续跟踪上游 `main`。它保留了 new-api 的全部能力——在统一 API 后聚合 40+ 上游 AI 提供商（OpenAI、Claude、Gemini、Azure、AWS Bedrock 等），并配套用户管理、计费、限流与管理后台——同时新增了一批聚焦网关与前端的增强（见[相比上游的改进](#-nextrouter-相比上游的改进)）。
 
-<p align="center">
-  <a href="https://www.cherry-ai.com/" target="_blank">
-    <img src="./docs/images/cherry-studio.png" alt="Cherry Studio" height="80" />
-  </a><!--
-  --><a href="https://github.com/iOfficeAI/AionUi/" target="_blank">
-    <img src="./docs/images/aionui.png" alt="Aion UI" height="80" />
-  </a><!--
-  --><a href="https://bda.pku.edu.cn/" target="_blank">
-    <img src="./docs/images/pku.png" alt="北京大学" height="80" />
-  </a><!--
-  --><a href="https://www.compshare.cn/?ytag=GPU_yy_gh_newapi" target="_blank">
-    <img src="./docs/images/ucloud.png" alt="UCloud 优刻得" height="80" />
-  </a><!--
-  --><a href="https://www.aliyun.com/" target="_blank">
-    <img src="./docs/images/aliyun.png" alt="阿里云" height="80" />
-  </a><!--
-  --><a href="https://io.net/" target="_blank">
-    <img src="./docs/images/io-net.png" alt="IO.NET" height="80" />
-  </a>
-</p>
+完整功能、模型支持、API 格式与配置，请参阅**上游官方文档**：<https://docs.newapi.pro>。
 
 ---
 
-## 🙏 特别鸣谢
+## 🌱 关于本 Fork 与上游的关系
 
-<p align="center">
-  <a href="https://www.jetbrains.com/?from=new-api" target="_blank">
-    <img src="https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.png" alt="JetBrains Logo" width="120" />
-  </a>
-</p>
+NextRouter **基于 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api)**（AGPLv3），后者又基于 [One API](https://github.com/songquanpeng/one-api)（MIT）。本 Fork：
 
-<p align="center">
-  <strong>感谢 <a href="https://www.jetbrains.com/?from=new-api">JetBrains</a> 为本项目提供免费的开源开发许可证</strong>
-</p>
+- 持续跟踪上游 `main`，Fork 独有的改动自成一体，列于下方。
+- 对自身修改负责，并按 AGPLv3 第 7(c) 条标注修改。
+- **保留必需的署名声明：** `Frontend design and development by New API contributors.`
+- **保留指向原始项目的可见链接：** <https://github.com/QuantumNous/new-api>
+
+完整条款见[许可证](#-许可证)与 [`NOTICE`](./NOTICE)。
+
+---
+
+<!-- FORK-DELTA: NextRouter changes vs upstream QuantumNous/new-api.
+     Update after merging any fork-only branch.
+     Completeness check: git log --oneline --no-merges upstream/main..HEAD
+     Last verified: 2026-07-15 -->
+
+## ✨ NextRouter 相比上游的改进
+
+> 下方仅列出与上游的差异。上游既有功能请见官方文档。
+
+### 🤖 浏览器端 Agent 循环
+
+新增 **Agent** 侧边栏模块（`/agent`，在“个人资料 → 侧边栏模块”开关），实现完全在浏览器端运行的 Agent 对话循环。
+
+- 复用 playground relay `/pg/chat/completions`，采用 OpenAI function-calling 格式；内置工具注册表与**计算器**工具（安全表达式求值）。
+- 流式解析 tool-call；将每个 AI 回合聚合成一张卡片，带可折叠的 **Process** 过程面板。
+- 消息操作：复制 / 重新生成 / 编辑（可选是否重提） / 删除。
+- 多会话历史持久化于 **IndexedDB**（最多 50 个会话），支持重命名 / 切换 / 删除。
+- 迭代次数上限保护，防止工具调用死循环；7 语言本地化。
+
+### ⚡ 渠道与 Relay 增强
+
+- **Force Stream** 渠道设置：针对“只支持流式”的上游，当客户端发非流式请求时，网关缓冲 SSE 流并返回单条非流式 JSON 响应（含后端缓冲逻辑与单元测试）。
+- **Force Format / Force Stream** 开关对**高级自定义（Advanced Custom）**渠道开放（此前仅 OpenAI 渠道）。
+- `/pg/chat/completions` 作为高级自定义入站路径选项。
+
+### 🧩 模型管理
+
+- **厂商（Vendor）管理对话框**：列出全部模型厂商，支持编辑 / 删除 / 新增（此前仅能创建），含错误重试。
+- **端点模板合并**：保存时改为合并而非整体覆盖；既有端点 JSON 非法时在合并前告警。
+
+### 💰 钱包与支付
+
+- 修正自定义货币（CUSTOM）模式与 Waffo Pancake 支付方式的钱包金额展示。
+
+<!-- /FORK-DELTA -->
 
 ---
 
@@ -110,9 +109,9 @@
 ### 使用 Docker Compose（推荐）
 
 ```bash
-# 克隆项目
-git clone https://github.com/QuantumNous/new-api.git
-cd new-api
+# 克隆本 Fork
+git clone https://github.com/WebAgentLoop/nextrouter.git
+cd nextrouter
 
 # 编辑 docker-compose.yml 配置
 nano docker-compose.yml
@@ -126,343 +125,108 @@ docker-compose up -d
 
 ```bash
 # 拉取最新镜像
-docker pull calciumion/new-api:latest
+docker pull webagentloop/nextrouter:nextrouter
 
 # 使用 SQLite（默认）
-docker run --name new-api -d --restart always \
+docker run --name nextrouter -d --restart always \
   -p 3000:3000 \
   -e TZ=Asia/Shanghai \
   -v ./data:/data \
-  calciumion/new-api:latest
+  webagentloop/nextrouter:nextrouter
 
 # 使用 MySQL
-docker run --name new-api -d --restart always \
+docker run --name nextrouter -d --restart always \
   -p 3000:3000 \
   -e SQL_DSN="root:123456@tcp(localhost:3306)/oneapi" \
   -e TZ=Asia/Shanghai \
   -v ./data:/data \
-  calciumion/new-api:latest
+  webagentloop/nextrouter:nextrouter
 ```
 
-> **💡 提示：** `-v ./data:/data` 会将数据保存在当前目录的 `data` 文件夹中，你也可以改为绝对路径如 `-v /your/custom/path:/data`
+> **💡 提示：** `-v ./data:/data` 会把数据保存在当前目录的 `data` 文件夹；也可使用绝对路径，如 `-v /your/custom/path:/data`。
 
 </details>
 
+部署完成后，访问 `http://localhost:3000` 即可开始使用。
+
 ---
 
-🎉 部署完成后，访问 `http://localhost:3000` 即可使用！
+## 📦 镜像与部署
+
+| 组件 | 要求 |
+|------|------|
+| **镜像** | `webagentloop/nextrouter:nextrouter` |
+| **本地数据库** | SQLite（Docker 必须挂载 `/data` 目录） |
+| **远程数据库** | MySQL ≥ 5.7.8 或 PostgreSQL ≥ 9.6 |
+| **容器引擎** | Docker / Docker Compose |
+| **系统架构** | 仅 64 位（amd64 / arm64），不支持 32 位 |
+
+> [!TIP]
+> `nextrouter` 是**滚动 tag**，始终跟踪 `nextrouter` 分支的最新构建。如需可复现部署，请固定到带日期的 tag，例如 `webagentloop/nextrouter:nextrouter-20260715-911a101`。
 
 > [!WARNING]
-> 将本项目作为面向公众的生成式 AI 服务或 API 转售服务运营时，使用者应先完成备案、内容安全、实名、日志留存、税务、支付和上游授权等合规义务。
+> 多机部署时**必须**设置 `SESSION_SECRET`（否则登录状态不一致）；共享 Redis **必须**设置 `CRYPTO_SECRET`（否则数据无法解密）。
 
-📖 更多部署方式请参考 [部署指南](https://docs.newapi.pro/zh/docs/installation)
+📖 所有环境变量与部署方式，请见上游[环境变量](https://docs.newapi.pro/en/docs/installation/config-maintenance/environment-variables)与[安装](https://docs.newapi.pro/en/docs/installation)文档——它们同样适用于本 Fork。
 
 ---
 
 ## 📚 文档
 
-<div align="center">
-
-### 📖 [官方文档](https://docs.newapi.pro/zh/docs) | [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/QuantumNous/new-api)
-
-</div>
-
-**快速导航：**
+上游文档涵盖了完整功能、API 参考与配置，并适用于 NextRouter：
 
 | 分类 | 链接 |
 |------|------|
-| 🚀 部署指南 | [安装文档](https://docs.newapi.pro/zh/docs/installation) |
-| ⚙️ 环境配置 | [环境变量](https://docs.newapi.pro/zh/docs/installation/config-maintenance/environment-variables) |
-| 📡 接口文档 | [API 文档](https://docs.newapi.pro/zh/docs/api) |
-| ❓ 常见问题 | [FAQ](https://docs.newapi.pro/zh/docs/support/faq) |
-| 💬 社区交流 | [交流渠道](https://docs.newapi.pro/zh/docs/support/community-interaction) |
+| 🚀 部署指南 | [安装文档](https://docs.newapi.pro/en/docs/installation) |
+| ⚙️ 环境配置 | [环境变量](https://docs.newapi.pro/en/docs/installation/config-maintenance/environment-variables) |
+| 📡 API 文档 | [API 参考](https://docs.newapi.pro/en/docs/api) |
+| ❓ 常见问题 | [FAQ](https://docs.newapi.pro/en/docs/support/faq) |
 
 ---
 
-## ✨ 主要特性
+## 🔧 维护：如何跟踪上游
 
-> 详细特性请参考 [特性说明](https://docs.newapi.pro/zh/docs/guide/wiki/basic-concepts/features-introduction)
+NextRouter 维护长期分支 `nextrouter`，持续合并 `upstream/main`。Fork 独有功能在 feature 分支（如 `feat/frontend-agent-loop`）开发后合并进 `nextrouter`。
 
-### 🎨 核心功能
-
-| 特性 | 说明 |
-|------|------|
-| 🎨 全新 UI | 现代化的用户界面设计 |
-| 🌍 多语言 | 支持中文、英文、法语、日语 |
-| 🔄 数据兼容 | 完全兼容原版 One API 数据库 |
-| 📈 数据看板 | 可视化控制台与统计分析 |
-| 🔒 权限管理 | 令牌分组、模型限制、用户管理 |
-
-### 💰 授权用量与成本管理
-
-- ✅ 合法授权场景下的内部充值与额度分配（易支付、Stripe）
-- ✅ 组织内按次、按量或缓存命中成本核算
-- ✅ 支持 OpenAI、Azure、DeepSeek、Claude、Qwen 等模型的缓存计费统计
-- ✅ 面向内部管理或企业客户的灵活计费策略配置
-
-### 🔐 授权与安全
-
-- 😈 Discord 授权登录
-- 🤖 LinuxDO 授权登录
-- 📱 Telegram 授权登录
-- 🔑 OIDC 统一认证
-- 🔍 Key 查询使用额度（配合 [new-api-key-tool](https://github.com/Calcium-Ion/new-api-key-tool)）
-
-### 🚀 高级功能
-
-**API 格式支持：**
-- ⚡ [OpenAI Responses](https://docs.newapi.pro/zh/docs/api/ai-model/chat/openai/create-response)
-- ⚡ [OpenAI Realtime API](https://docs.newapi.pro/zh/docs/api/ai-model/realtime/create-realtime-session)（含 Azure）
-- ⚡ [Claude Messages](https://docs.newapi.pro/zh/docs/api/ai-model/chat/create-message)
-- ⚡ [Google Gemini](https://doc.newapi.pro/api/google-gemini-chat)
-- 🔄 [Rerank 模型](https://docs.newapi.pro/zh/docs/api/ai-model/rerank/create-rerank)（Cohere、Jina）
-
-**智能路由：**
-- ⚖️ 渠道加权随机
-- 🔄 失败自动重试
-- 🚦 用户级别模型限流
-
-**格式转换：**
-- 🔄 **OpenAI Compatible ⇄ Claude Messages**
-- 🔄 **OpenAI Compatible → Google Gemini**
-- 🔄 **Google Gemini → OpenAI Compatible** - 仅支持文本，暂不支持函数调用
-- 🚧 **OpenAI Compatible ⇄ OpenAI Responses** - 开发中
-- 🔄 **思考转内容功能**
-
-**Reasoning Effort 支持：**
-
-<details>
-<summary>查看详细配置</summary>
-
-**OpenAI 系列模型：**
-- `o3-mini-high` - High reasoning effort
-- `o3-mini-medium` - Medium reasoning effort
-- `o3-mini-low` - Low reasoning effort
-- `gpt-5-high` - High reasoning effort
-- `gpt-5-medium` - Medium reasoning effort
-- `gpt-5-low` - Low reasoning effort
-
-**Claude 思考模型：**
-- `claude-3-7-sonnet-20250219-thinking` - 启用思考模式
-
-**Google Gemini 系列模型：**
-- `gemini-2.5-flash-thinking` - 启用思考模式
-- `gemini-2.5-flash-nothinking` - 禁用思考模式
-- `gemini-2.5-pro-thinking` - 启用思考模式
-- `gemini-2.5-pro-thinking-128` - 启用思考模式，并设置思考预算为128tokens
-- 也可以直接在 Gemini 模型名称后追加 `-low` / `-medium` / `-high` 来控制思考力度（无需再设置思考预算后缀）
-
-</details>
-
----
-
-## 🤖 模型支持
-
-> 详情请参考 [接口文档 - 网关接口](https://docs.newapi.pro/zh/docs/api)
-
-| 模型类型 | 说明 | 文档 |
-|---------|------|------|
-| 🤖 OpenAI-Compatible | OpenAI 兼容模型 | [文档](https://docs.newapi.pro/zh/docs/api/ai-model/chat/openai/createchatcompletion) |
-| 🤖 OpenAI Responses | OpenAI Responses 格式 | [文档](https://docs.newapi.pro/zh/docs/api/ai-model/chat/openai/createresponse) |
-| 🎨 Midjourney-Proxy | [Midjourney-Proxy(Plus)](https://github.com/novicezk/midjourney-proxy) | [文档](https://doc.newapi.pro/api/midjourney-proxy-image) |
-| 🎵 Suno-API | [Suno API](https://github.com/Suno-API/Suno-API) | [文档](https://doc.newapi.pro/api/suno-music) |
-| 🔄 Rerank | Cohere、Jina | [文档](https://docs.newapi.pro/zh/docs/api/ai-model/rerank/create-rerank) |
-| 💬 Claude | Messages 格式 | [文档](https://docs.newapi.pro/zh/docs/api/ai-model/chat/createmessage) |
-| 🌐 Gemini | Google Gemini 格式 | [文档](https://docs.newapi.pro/zh/docs/api/ai-model/chat/gemini/geminirelayv1beta) |
-| 🔧 Dify | ChatFlow 模式 | - |
-| 🎯 自定义上游 | 支持配置合法授权的上游接口地址 | - |
-
-### 📡 支持的接口
-
-<details>
-<summary>查看完整接口列表</summary>
-
-- [聊天接口 (Chat Completions)](https://docs.newapi.pro/zh/docs/api/ai-model/chat/openai/createchatcompletion)
-- [响应接口 (Responses)](https://docs.newapi.pro/zh/docs/api/ai-model/chat/openai/createresponse)
-- [图像接口 (Image)](https://docs.newapi.pro/zh/docs/api/ai-model/images/openai/post-v1-images-generations)
-- [音频接口 (Audio)](https://docs.newapi.pro/zh/docs/api/ai-model/audio/openai/create-transcription)
-- [视频接口 (Video)](https://docs.newapi.pro/zh/docs/api/ai-model/audio/openai/createspeech)
-- [嵌入接口 (Embeddings)](https://docs.newapi.pro/zh/docs/api/ai-model/embeddings/createembedding)
-- [重排序接口 (Rerank)](https://docs.newapi.pro/zh/docs/api/ai-model/rerank/creatererank)
-- [实时对话 (Realtime)](https://docs.newapi.pro/zh/docs/api/ai-model/realtime/createrealtimesession)
-- [Claude 聊天](https://docs.newapi.pro/zh/docs/api/ai-model/chat/createmessage)
-- [Google Gemini 聊天](https://docs.newapi.pro/zh/docs/api/ai-model/chat/gemini/geminirelayv1beta)
-
-</details>
-
----
-
-## 🚢 部署
-
-> [!TIP]
-> **最新版 Docker 镜像：** `calciumion/new-api:latest`
-
-### 📋 部署要求
-
-| 组件 | 要求 |
-|------|------|
-| **本地数据库** | SQLite（Docker 需挂载 `/data` 目录）|
-| **远程数据库** | MySQL ≥ 5.7.8 或 PostgreSQL ≥ 9.6 |
-| **容器引擎** | Docker / Docker Compose |
-| **系统架构** | 仅支持 64 位系统（amd64 / arm64），不支持 32 位系统 |
-
-### ⚙️ 环境变量配置
-
-<details>
-<summary>常用环境变量配置</summary>
-
-| 变量名 | 说明                                                           | 默认值 |
-|--------|--------------------------------------------------------------|--------|
-| `SESSION_SECRET` | 会话密钥（多机部署必须）                                                 | - |
-| `CRYPTO_SECRET` | 加密密钥（Redis 必须）                                               | - |
-| `SQL_DSN` | 数据库连接字符串                                                     | - |
-| `REDIS_CONN_STRING` | Redis 连接字符串                                                  | - |
-| `STREAMING_TIMEOUT` | 流式超时时间（秒）                                                    | `300` |
-| `STREAM_SCANNER_MAX_BUFFER_MB` | 流式扫描器单行最大缓冲（MB），图像生成等超大 `data:` 片段（如 4K 图片 base64）需适当调大 | `64` |
-| `MAX_REQUEST_BODY_MB` | 请求体最大大小（MB，**解压后**计；防止超大请求/zip bomb 导致内存暴涨），超过将返回 `413` | `32` |
-| `AZURE_DEFAULT_API_VERSION` | Azure API 版本                                                 | `2025-04-01-preview` |
-| `ERROR_LOG_ENABLED` | 错误日志开关                                                       | `false` |
-| `PYROSCOPE_URL` | Pyroscope 服务地址                                            | - |
-| `PYROSCOPE_APP_NAME` | Pyroscope 应用名                                        | `new-api` |
-| `PYROSCOPE_BASIC_AUTH_USER` | Pyroscope Basic Auth 用户名                        | - |
-| `PYROSCOPE_BASIC_AUTH_PASSWORD` | Pyroscope Basic Auth 密码                  | - |
-| `PYROSCOPE_MUTEX_RATE` | Pyroscope mutex 采样率                               | `5` |
-| `PYROSCOPE_BLOCK_RATE` | Pyroscope block 采样率                               | `5` |
-| `HOSTNAME` | Pyroscope 标签里的主机名                                          | `new-api` |
-
-📖 **完整配置：** [环境变量文档](https://docs.newapi.pro/zh/docs/installation/config-maintenance/environment-variables)
-
-</details>
-
-### 🔧 部署方式
-
-<details>
-<summary><strong>方式 1：Docker Compose（推荐）</strong></summary>
+当合并 fork-only 分支时，必须更新[相比上游的改进](#-nextrouter-相比上游的改进)章节。确切差异始终可由以下命令推导：
 
 ```bash
-# 克隆项目
-git clone https://github.com/QuantumNous/new-api.git
-cd new-api
-
-# 编辑配置
-nano docker-compose.yml
-
-# 启动服务
-docker-compose up -d
+git log --oneline --no-merges upstream/main..HEAD
 ```
 
-</details>
-
-<details>
-<summary><strong>方式 2：Docker 命令</strong></summary>
-
-**使用 SQLite：**
-```bash
-docker run --name new-api -d --restart always \
-  -p 3000:3000 \
-  -e TZ=Asia/Shanghai \
-  -v ./data:/data \
-  calciumion/new-api:latest
-```
-
-**使用 MySQL：**
-```bash
-docker run --name new-api -d --restart always \
-  -p 3000:3000 \
-  -e SQL_DSN="root:123456@tcp(localhost:3306)/oneapi" \
-  -e TZ=Asia/Shanghai \
-  -v ./data:/data \
-  calciumion/new-api:latest
-```
-
-> **💡 路径说明：**
-> - `./data:/data` - 相对路径，数据保存在当前目录的 data 文件夹
-> - 也可使用绝对路径，如：`/your/custom/path:/data`
-
-</details>
-
-<details>
-<summary><strong>方式 3：宝塔面板</strong></summary>
-
-1. 安装宝塔面板（≥ 9.2.0 版本）
-2. 在应用商店搜索 **New-API**
-3. 一键安装
-
-📖 [图文教程](./docs/installation/BT.md)
-
-</details>
-
-### ⚠️ 多机部署注意事项
-
-> [!WARNING]
-> - **必须设置** `SESSION_SECRET` - 否则登录状态不一致
-> - **公用 Redis 必须设置** `CRYPTO_SECRET` - 否则数据无法解密
-
-### 🔄 渠道重试与缓存
-
-**重试配置：** `设置 → 运营设置 → 通用设置 → 失败重试次数`
-
-**缓存配置：**
-- `REDIS_CONN_STRING`：Redis 缓存（推荐）
-- `MEMORY_CACHE_ENABLED`：内存缓存
+完整的多语言更新清单见 `AGENTS.md` → *Fork Documentation Maintenance*。
 
 ---
 
-## 🔗 相关项目
+## 🤝 贡献
 
-### 上游项目
+欢迎贡献！提交涉及 fork-only 功能的 PR 时：
 
-| 项目 | 说明 |
-|------|------|
-| [One API](https://github.com/songquanpeng/one-api) | 原版项目基础 |
-| [Midjourney-Proxy](https://github.com/novicezk/midjourney-proxy) | Midjourney 接口支持 |
-
-### 配套工具
-
-| 项目 | 说明 |
-|------|------|
-| [new-api-key-tool](https://github.com/Calcium-Ion/new-api-key-tool) | Key 额度查询工具 |
-| [new-api-horizon](https://github.com/Calcium-Ion/new-api-horizon) | New API 高性能优化版 |
-
----
-
-## 💬 帮助支持
-
-### 📖 文档资源
-
-| 资源 | 链接 |
-|------|------|
-| 📘 常见问题 | [FAQ](https://docs.newapi.pro/zh/docs/support/faq) |
-| 💬 社区交流 | [交流渠道](https://docs.newapi.pro/zh/docs/support/community-interaction) |
-| 🐛 反馈问题 | [问题反馈](https://docs.newapi.pro/zh/docs/support/feedback-issues) |
-| 📚 完整文档 | [官方文档](https://docs.newapi.pro/zh/docs) |
-
-### 🤝 贡献指南
-
-欢迎各种形式的贡献！
-
-- 🐛 报告 Bug
-- 💡 提出新功能
-- 📝 改进文档
-- 🔧 提交代码
+1. 更新**全部**语言 README（`README.md`、`README.zh_CN.md`、`README.zh_TW.md`、`README.fr.md`、`README.ja.md`）中的 `<!-- FORK-DELTA -->` 区块——结构一致，仅语言不同。
+2. 更新每个区块头部的 `Last verified` 日期。
+3. 保留所有 new-api / QuantumNous 署名、上游链接与 AGPLv3 Section 7 声明。
 
 ---
 
 ## 📜 许可证
 
-本项目采用 [GNU Affero 通用公共许可证 v3.0 (AGPLv3)](./LICENSE) 授权。
+本项目基于 [GNU Affero General Public License v3.0 (AGPLv3)](./LICENSE) 授权。
 
-本项目为开源项目，在 [One API](https://github.com/songquanpeng/one-api)（MIT 许可证）的基础上进行二次开发。
+AGPLv3 Section 7 的附加条款适用（见 [`NOTICE`](./NOTICE)）。修改版**必须保留**署名声明 `Frontend design and development by New API contributors.`，置于相应的法律声明及用户界面中任何显眼的关于、法律、页脚或署名位置。
 
-如果您所在的组织政策不允许使用 AGPLv3 许可的软件，或您希望规避 AGPLv3 的开源义务，请发送邮件至：[support@quantumnous.com](mailto:support@quantumnous.com)
+提供用户界面的修改版还必须保留指向原始项目的可见链接：<https://github.com/QuantumNous/new-api>。
+
+本项目是基于 [One API](https://github.com/songquanpeng/one-api)（MIT License）的开源项目。
 
 ---
 
-## 🌟 Star History
+## 🙏 致谢
+
+NextRouter 构建于 **[new-api](https://github.com/QuantumNous/new-api)** 贡献者与 **[One API](https://github.com/songquanpeng/one-api)** 的工作之上，在此致谢。
 
 <div align="center">
 
-[![Star History Chart](https://api.star-history.com/svg?repos=Calcium-Ion/new-api&type=Date)](https://star-history.com/#Calcium-Ion/new-api&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=WebAgentLoop/nextrouter&type=Date)](https://star-history.com/#WebAgentLoop/nextrouter&Date)
 
 </div>
 
@@ -470,12 +234,6 @@ docker run --name new-api -d --restart always \
 
 <div align="center">
 
-### 💖 感谢使用 New API
-
-如果这个项目对你有帮助，欢迎给我们一个 ⭐️ Star！
-
-**[官方文档](https://docs.newapi.pro/zh/docs)** • **[问题反馈](https://github.com/Calcium-Ion/new-api/issues)** • **[最新发布](https://github.com/Calcium-Ion/new-api/releases)**
-
-<sub>Built with ❤️ by QuantumNous</sub>
+<sub>构建于 [QuantumNous/new-api](https://github.com/QuantumNous/new-api) 之上 · Frontend design and development by New API contributors.</sub>
 
 </div>
