@@ -177,6 +177,7 @@ jobs:
         run: |
           docker buildx imagetools create \
             -t "${IMAGE}:${{ needs.prepare.outputs.docker_tag }}" \
+            --metadata-file "$RUNNER_TEMP/immutable-manifest-metadata.json" \
             "${IMAGE}:${{ needs.prepare.outputs.docker_tag }}-amd64" \
             "${IMAGE}:${{ needs.prepare.outputs.docker_tag }}-arm64"
 
@@ -184,7 +185,8 @@ jobs:
         id: manifest
         run: |
           set -euo pipefail
-          DIGEST=$(docker buildx imagetools inspect "${IMAGE}:${{ needs.prepare.outputs.docker_tag }}" | awk '$1 == "Digest:" { print $2; exit }')
+          cat "$RUNNER_TEMP/immutable-manifest-metadata.json"
+          DIGEST=$(jq -r '."containerimage.digest" // ."containerimage.descriptor".digest // empty' "$RUNNER_TEMP/immutable-manifest-metadata.json")
           if [[ ! "$DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]; then
             echo "::error::Could not resolve the immutable manifest digest"
             exit 1
@@ -202,8 +204,10 @@ jobs:
           set -euo pipefail
           docker buildx imagetools create \
             -t "${IMAGE}:latest" \
+            --metadata-file "$RUNNER_TEMP/latest-manifest-metadata.json" \
             "${IMAGE}@${{ steps.manifest.outputs.digest }}"
-          LATEST_DIGEST=$(docker buildx imagetools inspect "${IMAGE}:latest" | awk '$1 == "Digest:" { print $2; exit }')
+          cat "$RUNNER_TEMP/latest-manifest-metadata.json"
+          LATEST_DIGEST=$(jq -r '."containerimage.digest" // ."containerimage.descriptor".digest // empty' "$RUNNER_TEMP/latest-manifest-metadata.json")
           if [ "$LATEST_DIGEST" != "${{ steps.manifest.outputs.digest }}" ]; then
             echo "::error::latest points to $LATEST_DIGEST instead of ${{ steps.manifest.outputs.digest }}"
             exit 1
