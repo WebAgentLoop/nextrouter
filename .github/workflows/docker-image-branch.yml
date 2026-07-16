@@ -1,58 +1,86 @@
-name: Publish Docker image (manual branch)
+name: Publish NextRouter Docker release
 
 on:
   workflow_dispatch:
-    inputs:
-      branch:
-        description: "Branch name to build (e.g. nextrouter, alpha, nightly)"
-        required: false
-        default: nextrouter
-        type: string
+
+concurrency:
+  group: nextrouter-docker-release
+  cancel-in-progress: false
+
+env:
+  IMAGE: webagentloop/nextrouter
 
 jobs:
   prepare:
-    name: Prepare Docker tags
+    name: Prepare release
     runs-on: ubuntu-latest
-    outputs:
-      branch: ${{ steps.version.outputs.branch }}
-      sha: ${{ steps.version.outputs.sha }}
-      tag_prefix: ${{ steps.version.outputs.tag_prefix }}
-      version: ${{ steps.version.outputs.version }}
     permissions:
       contents: read
+    outputs:
+      sha: ${{ steps.version.outputs.sha }}
+      version: ${{ steps.version.outputs.version }}
+      git_tag: ${{ steps.version.outputs.git_tag }}
+      docker_tag: ${{ steps.version.outputs.docker_tag }}
+      previous_tag: ${{ steps.version.outputs.previous_tag }}
     steps:
-      - name: Check out branch
+      - name: Check out nextrouter
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
-          fetch-depth: 1
-          ref: ${{ inputs.branch }}
+          fetch-depth: 0
+          ref: nextrouter
 
-      - name: Resolve Docker tags
+      - name: Resolve release version
         id: version
         env:
-          BRANCH_NAME: ${{ inputs.branch }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          TAG_PREFIX=$(printf '%s' "$BRANCH_NAME" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9_.-]+/-/g; s/^[.-]+//; s/[.-]+$//')
-          TAG_PREFIX=${TAG_PREFIX:0:105}
-          TAG_PREFIX=$(printf '%s' "$TAG_PREFIX" | sed -E 's/[.-]+$//')
-          if [ -z "$TAG_PREFIX" ]; then
-            echo "::error::Branch '$BRANCH_NAME' cannot be converted to a valid Docker tag prefix"
-            exit 1
-          fi
+          set -euo pipefail
 
           SHA=$(git rev-parse HEAD)
-          SHORT_SHA=$(git rev-parse --short HEAD)
-          VERSION="${TAG_PREFIX}-$(date +'%Y%m%d')-${SHORT_SHA}"
+          DATE=$(TZ=Asia/Shanghai date +'%Y.%m.%d')
+          EXISTING_TAG=$(git tag --points-at "$SHA" --list 'nextrouter-????.??.??.*' --sort=-version:refname | head -n 1)
 
-          echo "branch=$BRANCH_NAME" >> "$GITHUB_OUTPUT"
+          if [ -n "$EXISTING_TAG" ]; then
+            if gh release view "$EXISTING_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+              IS_DRAFT=$(gh release view "$EXISTING_TAG" --repo "$GITHUB_REPOSITORY" --json isDraft --jq '.isDraft')
+              if [ "$IS_DRAFT" != "true" ]; then
+                echo "::error::Commit $SHA is already published as $EXISTING_TAG"
+                exit 1
+              fi
+            fi
+            GIT_TAG=$EXISTING_TAG
+            VERSION=${GIT_TAG#nextrouter-}
+          else
+            LAST_SEQUENCE=$(
+              git tag --list "nextrouter-${DATE}.*" |
+                sed -nE "s/^nextrouter-${DATE//./\\.}\.([0-9]+)$/\1/p" |
+                sort -n |
+                tail -n 1
+            )
+            SEQUENCE=$(( ${LAST_SEQUENCE:-0} + 1 ))
+            VERSION="${DATE}.${SEQUENCE}"
+            GIT_TAG="nextrouter-${VERSION}"
+          fi
+
+          PREVIOUS_TAG=$(
+            git tag --merged "$SHA" --list 'nextrouter-????.??.??.*' --sort=-version:refname |
+              grep -Fvx "$GIT_TAG" |
+              head -n 1 || true
+          )
+          if [ -z "$PREVIOUS_TAG" ]; then
+            PREVIOUS_TAG=$(git describe --tags --abbrev=0 "${SHA}^" 2>/dev/null || true)
+          fi
+
           echo "sha=$SHA" >> "$GITHUB_OUTPUT"
-          echo "tag_prefix=$TAG_PREFIX" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Prepared Docker tags for $BRANCH_NAME at $SHORT_SHA"
+          echo "git_tag=$GIT_TAG" >> "$GITHUB_OUTPUT"
+          echo "docker_tag=latest-$VERSION" >> "$GITHUB_OUTPUT"
+          echo "previous_tag=$PREVIOUS_TAG" >> "$GITHUB_OUTPUT"
+          echo "Prepared $GIT_TAG from $SHA (previous: ${PREVIOUS_TAG:-none})"
 
   build_single_arch:
-    name: Build & push (${{ matrix.arch }}) [native]
-    needs: [prepare]
+    name: Build & push (${{ matrix.arch }})
+    needs: prepare
     strategy:
       fail-fast: false
       matrix:
@@ -68,16 +96,14 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - name: Check out branch
+      - name: Check out release commit
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 1
           ref: ${{ needs.prepare.outputs.sha }}
 
       - name: Write VERSION
-        run: |
-          echo "${{ needs.prepare.outputs.version }}" > VERSION
-          echo "Publishing version: ${{ needs.prepare.outputs.version }} for ${{ matrix.arch }}"
+        run: echo "${{ needs.prepare.outputs.git_tag }}" > VERSION
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
@@ -88,23 +114,20 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Extract metadata (labels)
+      - name: Extract image metadata
         id: meta
         uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
         with:
-          images: |
-            webagentloop/nextrouter
+          images: ${{ env.IMAGE }}
 
-      - name: Build & push single-arch
+      - name: Build and push immutable image
         id: build
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7.3.0
         with:
           context: .
           platforms: ${{ matrix.platform }}
           push: true
-          tags: |
-            webagentloop/nextrouter:${{ needs.prepare.outputs.tag_prefix }}-${{ matrix.arch }}
-            webagentloop/nextrouter:${{ needs.prepare.outputs.version }}-${{ matrix.arch }}
+          tags: ${{ env.IMAGE }}:${{ needs.prepare.outputs.docker_tag }}-${{ matrix.arch }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -114,58 +137,141 @@ jobs:
       - name: Install cosign
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
 
-      - name: Sign image with cosign
-        run: cosign sign --yes webagentloop/nextrouter@${{ steps.build.outputs.digest }}
+      - name: Sign image digest
+        run: cosign sign --yes "${IMAGE}@${{ steps.build.outputs.digest }}"
 
-      - name: Output digest
+      - name: Write architecture summary
         run: |
-          echo "### Docker Image Digest (${{ matrix.arch }})" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          echo "webagentloop/nextrouter:${{ needs.prepare.outputs.tag_prefix }}-${{ matrix.arch }}" >> $GITHUB_STEP_SUMMARY
-          echo "webagentloop/nextrouter:${{ needs.prepare.outputs.version }}-${{ matrix.arch }}" >> $GITHUB_STEP_SUMMARY
-          echo "${{ steps.build.outputs.digest }}" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          {
+            echo "### ${{ matrix.arch }} image"
+            echo '```text'
+            echo "${IMAGE}:${{ needs.prepare.outputs.docker_tag }}-${{ matrix.arch }}"
+            echo "${{ steps.build.outputs.digest }}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
-  create_manifests:
-    name: Create multi-arch manifests (Docker Hub)
+  publish:
+    name: Publish manifests and release
     needs: [prepare, build_single_arch]
     runs-on: ubuntu-latest
     permissions:
+      contents: write
       id-token: write
     steps:
+      - name: Check out release commit
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+          ref: ${{ needs.prepare.outputs.sha }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
+
       - name: Log in to Docker Hub
         uses: docker/login-action@c99871dec2022cc055c062a10cc1a1310835ceb4 # v4.3.0
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Create & push manifest (Docker Hub - branch)
+      - name: Create immutable multi-arch manifest
         run: |
           docker buildx imagetools create \
-            -t webagentloop/nextrouter:${{ needs.prepare.outputs.tag_prefix }} \
-            webagentloop/nextrouter:${{ needs.prepare.outputs.tag_prefix }}-amd64 \
-            webagentloop/nextrouter:${{ needs.prepare.outputs.tag_prefix }}-arm64
+            -t "${IMAGE}:${{ needs.prepare.outputs.docker_tag }}" \
+            "${IMAGE}:${{ needs.prepare.outputs.docker_tag }}-amd64" \
+            "${IMAGE}:${{ needs.prepare.outputs.docker_tag }}-arm64"
 
-      - name: Create & push manifest (Docker Hub - versioned)
+      - name: Resolve immutable manifest digest
+        id: manifest
         run: |
-          docker buildx imagetools create \
-            -t webagentloop/nextrouter:${{ needs.prepare.outputs.version }} \
-            webagentloop/nextrouter:${{ needs.prepare.outputs.version }}-amd64 \
-            webagentloop/nextrouter:${{ needs.prepare.outputs.version }}-arm64
+          set -euo pipefail
+          DIGEST=$(docker buildx imagetools inspect "${IMAGE}:${{ needs.prepare.outputs.docker_tag }}" | awk '$1 == "Digest:" { print $2; exit }')
+          if [[ ! "$DIGEST" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+            echo "::error::Could not resolve the immutable manifest digest"
+            exit 1
+          fi
+          echo "digest=$DIGEST" >> "$GITHUB_OUTPUT"
 
       - name: Install cosign
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
 
-      - name: Sign manifests with cosign
-        run: |
-          cosign sign --yes webagentloop/nextrouter:${{ needs.prepare.outputs.tag_prefix }}
-          cosign sign --yes webagentloop/nextrouter:${{ needs.prepare.outputs.version }}
+      - name: Sign immutable manifest
+        run: cosign sign --yes "${IMAGE}@${{ steps.manifest.outputs.digest }}"
 
-      - name: Output manifest digest
+      - name: Promote immutable manifest to latest
         run: |
-          echo "### Multi-arch Manifest Digests" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          docker buildx imagetools inspect webagentloop/nextrouter:${{ needs.prepare.outputs.tag_prefix }} >> $GITHUB_STEP_SUMMARY
-          echo "---" >> $GITHUB_STEP_SUMMARY
-          docker buildx imagetools inspect webagentloop/nextrouter:${{ needs.prepare.outputs.version }} >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
+          set -euo pipefail
+          docker buildx imagetools create \
+            -t "${IMAGE}:latest" \
+            "${IMAGE}@${{ steps.manifest.outputs.digest }}"
+          LATEST_DIGEST=$(docker buildx imagetools inspect "${IMAGE}:latest" | awk '$1 == "Digest:" { print $2; exit }')
+          if [ "$LATEST_DIGEST" != "${{ steps.manifest.outputs.digest }}" ]; then
+            echo "::error::latest points to $LATEST_DIGEST instead of ${{ steps.manifest.outputs.digest }}"
+            exit 1
+          fi
+
+      - name: Generate release notes
+        env:
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+          RELEASE_SHA: ${{ needs.prepare.outputs.sha }}
+          PREVIOUS_TAG: ${{ needs.prepare.outputs.previous_tag }}
+          DOCKER_IMAGE: ${{ env.IMAGE }}
+          DOCKER_TAG: ${{ needs.prepare.outputs.docker_tag }}
+          MANIFEST_DIGEST: ${{ steps.manifest.outputs.digest }}
+          OUTPUT_FILE: ${{ runner.temp }}/release-notes.md
+        run: .github/scripts/generate-release-notes.sh
+
+      - name: Create Git tag and GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GIT_TAG: ${{ needs.prepare.outputs.git_tag }}
+          RELEASE_SHA: ${{ needs.prepare.outputs.sha }}
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+          NOTES_FILE: ${{ runner.temp }}/release-notes.md
+        run: |
+          set -euo pipefail
+
+          if git rev-parse "refs/tags/$GIT_TAG" >/dev/null 2>&1; then
+            TAG_SHA=$(git rev-list -n 1 "$GIT_TAG")
+            if [ "$TAG_SHA" != "$RELEASE_SHA" ]; then
+              echo "::error::Tag $GIT_TAG points to $TAG_SHA instead of $RELEASE_SHA"
+              exit 1
+            fi
+          else
+            git -c user.name='github-actions[bot]' \
+              -c user.email='41898282+github-actions[bot]@users.noreply.github.com' \
+              tag -a "$GIT_TAG" "$RELEASE_SHA" -m "NextRouter $RELEASE_VERSION"
+            git push origin "refs/tags/$GIT_TAG"
+          fi
+
+          if gh release view "$GIT_TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release edit "$GIT_TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --title "NextRouter $RELEASE_VERSION" \
+              --notes-file "$NOTES_FILE" \
+              --draft=false \
+              --prerelease=false \
+              --latest
+          else
+            gh release create "$GIT_TAG" \
+              --repo "$GITHUB_REPOSITORY" \
+              --verify-tag \
+              --title "NextRouter $RELEASE_VERSION" \
+              --notes-file "$NOTES_FILE" \
+              --latest
+          fi
+
+      - name: Write release summary
+        run: |
+          {
+            echo "## NextRouter ${{ needs.prepare.outputs.version }}"
+            echo
+            echo "- Commit: \`${{ needs.prepare.outputs.sha }}\`"
+            echo "- Immutable image: \`${IMAGE}:${{ needs.prepare.outputs.docker_tag }}\`"
+            echo "- Rolling image: \`${IMAGE}:latest\`"
+            echo "- Digest: \`${{ steps.manifest.outputs.digest }}\`"
+            echo
+            echo '### Roll back'
+            echo '```bash'
+            echo "docker pull ${IMAGE}:${{ needs.prepare.outputs.docker_tag }}"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
