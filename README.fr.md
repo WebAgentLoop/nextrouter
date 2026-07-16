@@ -73,7 +73,7 @@ Voir [Licence](#-licence) et [`NOTICE`](./NOTICE) pour les conditions complètes
 
 ## ✨ Les nouveautés de NextRouter
 
-> La liste ci-dessous ne couvre que les différences avec l'amont. Pour les fonctionnalités amont, consultez la documentation officielle.
+> La liste ci-dessous présente les principales différences avec l'amont, sans prétendre être exhaustive. Consultez les [GitHub Releases](https://github.com/WebAgentLoop/nextrouter/releases) pour les changements complets de chaque version publiée ; pour les fonctionnalités amont, consultez la documentation officielle.
 
 ### 🤖 Boucle d'agent côté navigateur
 
@@ -95,6 +95,10 @@ Un nouveau module de barre latérale **Agent** (`/agent`, à activer sous *Profi
 
 - **Boîte de dialogue de gestion des vendeurs** : liste tous les vendeurs de modèles avec édition / suppression / ajout (auparavant uniquement la création), avec réessai en cas d'erreur.
 - **Fusion du modèle d'endpoints** : l'enregistrement fusionne désormais au lieu de tout remplacer ; un JSON d'endpoints existant invalide déclenche un avertissement avant la fusion.
+
+### 📊 Observabilité des performances
+
+- **Taux de cache hit au niveau des tokens** : enregistre les tokens d'entrée mis en cache et le total des tokens d'entrée, calcule le taux de cache hit par modèle, groupe et période, puis affiche les performances actuelles et récentes du cache dans les badges et les détails de performance des modèles.
 
 ### 💰 Portefeuille et paiements
 

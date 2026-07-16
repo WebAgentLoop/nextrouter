@@ -73,7 +73,7 @@ NextRouter **基于 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-a
 
 ## ✨ NextRouter 相比上游的改进
 
-> 下方仅列出与上游的差异。上游既有功能请见官方文档。
+> 下方列出与上游的主要差异，但可能并不详尽。每个已发布版本的完整变更请参见 [GitHub Releases](https://github.com/WebAgentLoop/nextrouter/releases)；上游既有功能请见官方文档。
 
 ### 🤖 浏览器端 Agent 循环
 
@@ -95,6 +95,10 @@ NextRouter **基于 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-a
 
 - **厂商（Vendor）管理对话框**：列出全部模型厂商，支持编辑 / 删除 / 新增（此前仅能创建），含错误重试。
 - **端点模板合并**：保存时改为合并而非整体覆盖；既有端点 JSON 非法时在合并前告警。
+
+### 📊 性能可观测性
+
+- **Token 级缓存命中率**：记录缓存命中的输入 Token 与总输入 Token，按模型、分组和时间段计算缓存命中率，并在模型性能徽标与性能详情中展示当前及近期缓存表现。
 
 ### 💰 钱包与支付
 

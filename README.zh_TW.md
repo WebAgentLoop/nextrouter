@@ -73,7 +73,7 @@ NextRouter **基於 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-a
 
 ## ✨ NextRouter 相比上游的改進
 
-> 下方僅列出與上游的差異。上游既有功能請見官方文件。
+> 下方列出與上游的主要差異，但可能並不詳盡。每個已發布版本的完整變更請參見 [GitHub Releases](https://github.com/WebAgentLoop/nextrouter/releases)；上游既有功能請見官方文件。
 
 ### 🤖 瀏覽器端 Agent 迴圈
 
@@ -95,6 +95,10 @@ NextRouter **基於 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-a
 
 - **廠商（Vendor）管理對話框**：列出全部模型廠商，支援編輯 / 刪除 / 新增（此前僅能建立），含錯誤重試。
 - **端點範本合併**：儲存時改為合併而非整體覆蓋；既有端點 JSON 非法時於合併前告警。
+
+### 📊 效能可觀測性
+
+- **Token 級快取命中率**：記錄快取命中的輸入 Token 與總輸入 Token，依模型、分組和時間區段計算快取命中率，並在模型效能徽章與效能詳情中顯示目前及近期快取表現。
 
 ### 💰 錢包與支付
 

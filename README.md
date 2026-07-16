@@ -73,7 +73,7 @@ See [License](#-license) and [`NOTICE`](./NOTICE) for the complete terms.
 
 ## ✨ What's new in NextRouter
 
-> The list below covers only the differences from upstream. For upstream features, see the official docs.
+> The list below highlights major differences from upstream and may not be exhaustive. See [GitHub Releases](https://github.com/WebAgentLoop/nextrouter/releases) for the complete changes in each published version; for upstream features, see the official docs.
 
 ### 🤖 Browser-side Agent loop
 
@@ -95,6 +95,10 @@ A new **Agent** sidebar module (`/agent`, toggle it under *Profile → Sidebar m
 
 - **Vendor management dialog**: lists all model vendors with edit / delete / add (previously only create), including error retry.
 - **Endpoint template merge**: saving now merges instead of replacing everything; invalid existing endpoint JSON is warned about before merge.
+
+### 📊 Performance observability
+
+- **Token-level cache hit rate**: records cached and total input tokens, calculates cache hit rates by model, group, and time bucket, and displays current and recent cache performance in model badges and performance details.
 
 ### 💰 Wallet & payments
 
