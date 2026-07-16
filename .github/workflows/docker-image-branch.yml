@@ -285,3 +285,26 @@ jobs:
             echo "docker pull ${IMAGE}:${{ needs.prepare.outputs.docker_tag }}"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+
+  sync_dockerhub_overview:
+    name: Sync Docker Hub overview
+    needs: [prepare, publish]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out release commit
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 1
+          ref: ${{ needs.prepare.outputs.sha }}
+
+      - name: Update Docker Hub overview
+        uses: peter-evans/dockerhub-description@1b9a80c056b620d92cedb9d9b5a223409c68ddfa # v5
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          repository: webagentloop/nextrouter
+          short-description: NextRouter - rolling-release AI API gateway with multi-provider routing and browser-side agents
+          readme-filepath: ./README.md
+          enable-url-completion: true
