@@ -62,13 +62,19 @@ jobs:
             GIT_TAG="nextrouter-${VERSION}"
           fi
 
-          PREVIOUS_TAG=$(
+          PREVIOUS_TAG=''
+          while read -r CANDIDATE_TAG; do
+            [ -n "$CANDIDATE_TAG" ] || continue
+            if gh release view "$CANDIDATE_TAG" --repo "$GITHUB_REPOSITORY" --json isDraft --jq 'select(.isDraft == false) | .isDraft' 2>/dev/null | grep -qx false; then
+              PREVIOUS_TAG=$CANDIDATE_TAG
+              break
+            fi
+          done < <(
             git tag --merged "$SHA" --list 'nextrouter-????.??.??.*' --sort=-version:refname |
-              grep -Fvx "$GIT_TAG" |
-              head -n 1 || true
+              grep -Fvx "$GIT_TAG" || true
           )
           if [ -z "$PREVIOUS_TAG" ]; then
-            PREVIOUS_TAG=$(git describe --tags --abbrev=0 "${SHA}^" 2>/dev/null || true)
+            PREVIOUS_TAG=$(git tag --merged "$SHA" --list 'v*' --sort=-version:refname | sed -n '1p')
           fi
 
           echo "sha=$SHA" >> "$GITHUB_OUTPUT"

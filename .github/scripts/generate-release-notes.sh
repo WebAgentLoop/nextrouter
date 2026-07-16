@@ -12,6 +12,8 @@ set -euo pipefail
 SERVER_URL=${GITHUB_SERVER_URL:-https://github.com}
 REPOSITORY=${GITHUB_REPOSITORY:?GITHUB_REPOSITORY is required}
 COMMIT_URL="$SERVER_URL/$REPOSITORY/commit"
+MAX_CHANGELOG_ENTRIES=100
+MAX_SUBJECT_LENGTH=240
 TEMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TEMP_DIR"' EXIT
 
@@ -25,11 +27,15 @@ if [ -n "${PREVIOUS_TAG:-}" ]; then
 else
   RANGE="$RELEASE_SHA"
 fi
+total_changes=$(git rev-list --count --no-merges "$RANGE")
 
 while IFS=$'\t' read -r sha subject; do
   [ -n "$sha" ] || continue
   has_changes=true
   short_sha=${sha:0:8}
+  if (( ${#subject} > MAX_SUBJECT_LENGTH )); then
+    subject="${subject:0:MAX_SUBJECT_LENGTH - 3}..."
+  fi
   escaped_subject=${subject//\\/\\\\}
   escaped_subject=${escaped_subject//\[/\\[}
   escaped_subject=${escaped_subject//\]/\\]}
@@ -45,7 +51,7 @@ while IFS=$'\t' read -r sha subject; do
   esac
 
   printf '%s\n' "$entry" >> "$TEMP_DIR/$category"
-done < <(git log --no-merges --format='%H%x09%s' "$RANGE")
+done < <(git log --no-merges --max-count="$MAX_CHANGELOG_ENTRIES" --format='%H%x09%s' "$RANGE")
 
 {
   echo "Docker release for commit [\`${RELEASE_SHA}\`](${COMMIT_URL}/${RELEASE_SHA})."
@@ -83,6 +89,11 @@ HEADINGS
   if [ "$has_changes" = false ]; then
     echo
     echo "No non-merge commits were added in this release."
+  fi
+
+  if (( total_changes > MAX_CHANGELOG_ENTRIES )); then
+    echo
+    echo "_Showing the ${MAX_CHANGELOG_ENTRIES} most recent of ${total_changes} non-merge commits. Use the full changelog link below for the complete history._"
   fi
 
   if [ -n "${PREVIOUS_TAG:-}" ]; then
