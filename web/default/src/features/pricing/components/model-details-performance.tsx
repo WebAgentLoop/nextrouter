@@ -28,6 +28,7 @@ import {
 import { GroupBadge } from '@/components/group-badge'
 import { getPerfMetrics } from '@/features/performance-metrics/api'
 import {
+  formatCacheHitPct,
   formatLatency,
   formatThroughput,
   formatUptimePct,
@@ -36,7 +37,7 @@ import {
 import type { PerformanceGroup } from '@/features/performance-metrics/types'
 import { cn } from '@/lib/utils'
 
-import { type UptimeDayPoint } from '../lib/mock-stats'
+import type { UptimeDayPoint } from '../lib/mock-stats'
 import type { PricingModel } from '../types'
 import { LatencyTrendChart, UptimeTrendChart } from './model-details-charts'
 import { UptimeSparkline } from './model-details-uptime-sparkline'
@@ -77,6 +78,7 @@ type PerformanceRow = {
   avg_ttft_ms: number
   avg_latency_ms: number
   success_rate: number
+  cache_hit_rate: number | null
   avg_tps: number
 }
 
@@ -97,7 +99,7 @@ function toLatencySeries(groups: PerformanceGroup[]) {
     }
   }
 
-  return Array.from(byTs.entries())
+  return [...byTs.entries()]
     .sort(([a], [b]) => a - b)
     .map(([ts, values]) => ({
       timestamp: new Date(ts * 1000).toISOString(),
@@ -121,7 +123,7 @@ function toUptimeSeries(groups: PerformanceGroup[]): UptimeDayPoint[] {
       byTs.set(point.ts, current)
     }
   }
-  return Array.from(byTs.entries())
+  return [...byTs.entries()]
     .sort(([a], [b]) => a - b)
     .map(([ts, value]) => {
       const uptime =
@@ -179,6 +181,7 @@ export function ModelDetailsPerformance(props: { model: PricingModel }) {
         avg_ttft_ms: group.avg_ttft_ms,
         avg_latency_ms: group.avg_latency_ms,
         success_rate: group.success_rate,
+        cache_hit_rate: group.cache_hit_rate,
         avg_tps: group.avg_tps,
       })),
     [groups]
@@ -217,11 +220,12 @@ export function ModelDetailsPerformance(props: { model: PricingModel }) {
       ? successRates.reduce((sum, value) => sum + value, 0) /
         successRates.length
       : 0
+  const cacheHitRate = metricsQuery.data?.data.cache_hit_rate ?? null
   const incidentCount = uptimeSeries.reduce((s, p) => s + p.incidents, 0)
 
   return (
     <div className='flex flex-col gap-4'>
-      <div className='grid grid-cols-1 gap-2 sm:grid-cols-3'>
+      <div className='grid grid-cols-1 gap-2 sm:grid-cols-4'>
         <StatCard
           icon={Timer}
           label='TPS'
@@ -232,6 +236,11 @@ export function ModelDetailsPerformance(props: { model: PricingModel }) {
           icon={Timer}
           label={t('Average latency')}
           value={formatLatency(avgLatency)}
+        />
+        <StatCard
+          icon={HeartPulse}
+          label={t('Cache hit rate')}
+          value={formatCacheHitPct(cacheHitRate)}
         />
         <StatCard
           icon={HeartPulse}
@@ -252,7 +261,9 @@ export function ModelDetailsPerformance(props: { model: PricingModel }) {
         <SectionHeader
           icon={HeartPulse}
           title={t('Per-group performance')}
-          description={t('Average latency, TTFT, TPS, and success rate')}
+          description={t(
+            'Average latency, TTFT, TPS, success rate, and cache hit rate'
+          )}
         />
         <StaticDataTable
           className='rounded-lg'
@@ -290,9 +301,16 @@ export function ModelDetailsPerformance(props: { model: PricingModel }) {
               cell: (perf) => formatLatency(perf.avg_latency_ms),
             },
             {
+              id: 'cache-hit',
+              header: t('Cache hit rate'),
+              className: tableStyles.compactHeaderCellRight,
+              cellClassName: tableStyles.compactNumericCell,
+              cell: (perf) => formatCacheHitPct(perf.cache_hit_rate),
+            },
+            {
               id: 'success',
               header: t('Success rate'),
-              className: cn(tableStyles.compactHeaderCell, 'min-w-[180px]'),
+              className: tableStyles.compactHeaderCell,
               cellClassName: tableStyles.compactCell,
               cell: (perf) => (
                 <UptimeSparkline

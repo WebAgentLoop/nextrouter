@@ -96,3 +96,17 @@ export function getSuccessRateDotClass(rate: number): string {
 export function getSuccessRateColor(rate: number): string {
   return SUCCESS_RATE_HEX_COLOR[getSuccessRateLevel(rate)]
 }
+
+export function formatCacheHitPct(pct: number | null | undefined): string {
+  if (pct == null || !Number.isFinite(pct)) return '—'
+  return `${pct.toFixed(1)}%`
+}
+
+export function getCacheHitDotClass(rate: number | null | undefined): string {
+  if (rate == null || !Number.isFinite(rate) || rate <= 0) {
+    return 'bg-muted-foreground/10'
+  }
+  if (rate >= 50) return 'bg-sky-500'
+  if (rate >= 20) return 'bg-sky-400'
+  return 'bg-sky-300'
+}

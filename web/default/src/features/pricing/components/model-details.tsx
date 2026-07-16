@@ -50,6 +50,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { getPerfMetrics } from '@/features/performance-metrics/api'
 import {
+  formatCacheHitPct,
   formatLatency,
   formatThroughput,
   formatUptimePct,
@@ -190,6 +191,7 @@ function OverviewSummaryGrid(props: { model: PricingModel }) {
     successRates.length > 0
       ? successRates.reduce((sum, rate) => sum + rate, 0) / successRates.length
       : Number.NaN
+  const cacheHitRate = metricsQuery.data?.data.cache_hit_rate ?? null
   const tpsValues = groups
     .map((group) => group.avg_tps)
     .filter((value) => value > 0)
@@ -209,7 +211,7 @@ function OverviewSummaryGrid(props: { model: PricingModel }) {
       : 0
 
   return (
-    <div className='bg-muted/20 grid overflow-hidden rounded-lg border sm:grid-cols-3 sm:divide-x'>
+    <div className='bg-muted/20 grid overflow-hidden rounded-lg border sm:grid-cols-4 sm:divide-x'>
       <OverviewMetric
         icon={Timer}
         label='TPS'
@@ -219,6 +221,11 @@ function OverviewSummaryGrid(props: { model: PricingModel }) {
         icon={Timer}
         label={t('Average latency')}
         value={formatLatency(avgLatency)}
+      />
+      <OverviewMetric
+        icon={HeartPulse}
+        label={t('Cache hit rate')}
+        value={formatCacheHitPct(cacheHitRate)}
       />
       <OverviewMetric
         icon={HeartPulse}
