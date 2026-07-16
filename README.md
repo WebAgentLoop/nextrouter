@@ -36,7 +36,7 @@
 
 </div>
 
-> 🔄 **Rolling updates, tracking upstream.** NextRouter continuously merges [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api) `main`. The rolling image tag **`nextrouter`** always points to the latest build (upstream + fork changes) — `docker pull` keeps you current; pin a dated tag for reproducible deployments.
+> 🔄 **Rolling updates, tracking upstream.** NextRouter continuously merges [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api) `main`. The rolling image tag **`latest`** points to the most recent successful release (upstream + fork changes) — `docker pull` keeps you current; pin a versioned tag for reproducible deployments.
 
 > [!IMPORTANT]
 > - This project is intended solely for lawful and authorized AI API gateway, organization-level authentication, multi-model management, usage analytics, cost accounting, and private deployment scenarios.
@@ -69,7 +69,7 @@ See [License](#-license) and [`NOTICE`](./NOTICE) for the complete terms.
 <!-- FORK-DELTA: NextRouter changes vs upstream QuantumNous/new-api.
      Update after merging any fork-only branch.
      Completeness check: git log --oneline --no-merges upstream/main..HEAD
-     Last verified: 2026-07-15 -->
+     Last verified: 2026-07-16 -->
 
 ## ✨ What's new in NextRouter
 
@@ -100,6 +100,11 @@ A new **Agent** sidebar module (`/agent`, toggle it under *Profile → Sidebar m
 
 - Fixed wallet amount display for the custom-currency (CUSTOM) mode and the Waffo Pancake payment provider.
 
+### 📦 Releases & deployment
+
+- The manual Docker release workflow builds and signs native amd64 / arm64 images, then promotes `latest` only after the multi-arch manifest succeeds.
+- Every release creates an immutable `latest-YYYY.MM.DD.N` image tag plus a GitHub Release with categorized changes, image digest, and rollback command.
+
 <!-- /FORK-DELTA -->
 
 ---
@@ -125,14 +130,14 @@ docker-compose up -d
 
 ```bash
 # Pull the latest image
-docker pull webagentloop/nextrouter:nextrouter
+docker pull webagentloop/nextrouter:latest
 
 # Using SQLite (default)
 docker run --name nextrouter -d --restart always \
   -p 3000:3000 \
   -e TZ=Asia/Shanghai \
   -v ./data:/data \
-  webagentloop/nextrouter:nextrouter
+  webagentloop/nextrouter:latest
 
 # Using MySQL
 docker run --name nextrouter -d --restart always \
@@ -140,7 +145,7 @@ docker run --name nextrouter -d --restart always \
   -e SQL_DSN="root:123456@tcp(localhost:3306)/oneapi" \
   -e TZ=Asia/Shanghai \
   -v ./data:/data \
-  webagentloop/nextrouter:nextrouter
+  webagentloop/nextrouter:latest
 ```
 
 > **💡 Tip:** `-v ./data:/data` saves data in the `data` folder of the current directory; use an absolute path like `-v /your/custom/path:/data` if you prefer.
@@ -155,14 +160,14 @@ After deployment, visit `http://localhost:3000` to start using it.
 
 | Component | Requirement |
 |------|------|
-| **Image** | `webagentloop/nextrouter:nextrouter` |
+| **Image** | `webagentloop/nextrouter:latest` |
 | **Local database** | SQLite (Docker must mount the `/data` directory) |
 | **Remote database** | MySQL ≥ 5.7.8 or PostgreSQL ≥ 9.6 |
 | **Container engine** | Docker / Docker Compose |
 | **Architecture** | 64-bit only (amd64 / arm64); 32-bit is not supported |
 
 > [!TIP]
-> `nextrouter` is a **rolling tag** that always tracks the latest build of the `nextrouter` branch. For reproducible deployments, pin a dated tag such as `webagentloop/nextrouter:nextrouter-20260715-911a101`.
+> `latest` is a **rolling release tag** and moves only after a manually triggered multi-arch release succeeds. For reproducible deployments and rollback, pin an immutable tag such as `webagentloop/nextrouter:latest-2026.07.16.1`.
 
 > [!WARNING]
 > For multi-machine deployment, you **must** set `SESSION_SECRET` (otherwise login state is inconsistent), and a shared Redis **must** set `CRYPTO_SECRET` (otherwise data cannot be decrypted).

@@ -36,7 +36,7 @@
 
 </div>
 
-> 🔄 **滾動更新，緊隨上游。** NextRouter 持續合併 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api) 的 `main` 分支。滾動映像 tag **`nextrouter`** 始終指向最新建構（上游 + fork 改動）——`docker pull` 即可保持最新；固定帶日期的 tag 可實現可重現部署。
+> 🔄 **滾動更新，緊隨上游。** NextRouter 持續合併 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api) 的 `main` 分支。滾動映像 tag **`latest`** 指向最近一次成功發布（上游 + fork 改動）——`docker pull` 即可保持最新；固定版本 tag 可實現可重現部署。
 
 > [!IMPORTANT]
 > - 本專案僅面向合法授權的 AI API 閘道、組織內部鑑權、多模型管理、用量統計、成本核算和私有化部署場景。
@@ -69,7 +69,7 @@ NextRouter **基於 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-a
 <!-- FORK-DELTA: NextRouter changes vs upstream QuantumNous/new-api.
      Update after merging any fork-only branch.
      Completeness check: git log --oneline --no-merges upstream/main..HEAD
-     Last verified: 2026-07-15 -->
+     Last verified: 2026-07-16 -->
 
 ## ✨ NextRouter 相比上游的改進
 
@@ -100,6 +100,11 @@ NextRouter **基於 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-a
 
 - 修正自訂貨幣（CUSTOM）模式與 Waffo Pancake 支付方式的錢包金額顯示。
 
+### 📦 發布與部署
+
+- 手動 Docker 發布工作流程原生建構並簽署 amd64 / arm64 映像，僅在多架構 manifest 成功後才更新 `latest`。
+- 每次發布都會建立不可變的 `latest-YYYY.MM.DD.N` 映像 tag，以及包含分類變更、映像 digest 和回滾指令的 GitHub Release。
+
 <!-- /FORK-DELTA -->
 
 ---
@@ -125,14 +130,14 @@ docker-compose up -d
 
 ```bash
 # 拉取最新映像
-docker pull webagentloop/nextrouter:nextrouter
+docker pull webagentloop/nextrouter:latest
 
 # 使用 SQLite（預設）
 docker run --name nextrouter -d --restart always \
   -p 3000:3000 \
   -e TZ=Asia/Shanghai \
   -v ./data:/data \
-  webagentloop/nextrouter:nextrouter
+  webagentloop/nextrouter:latest
 
 # 使用 MySQL
 docker run --name nextrouter -d --restart always \
@@ -140,7 +145,7 @@ docker run --name nextrouter -d --restart always \
   -e SQL_DSN="root:123456@tcp(localhost:3306)/oneapi" \
   -e TZ=Asia/Shanghai \
   -v ./data:/data \
-  webagentloop/nextrouter:nextrouter
+  webagentloop/nextrouter:latest
 ```
 
 > **💡 提示：** `-v ./data:/data` 會將資料保存在目前目錄的 `data` 資料夾；也可使用絕對路徑，如 `-v /your/custom/path:/data`。
@@ -155,14 +160,14 @@ docker run --name nextrouter -d --restart always \
 
 | 元件 | 要求 |
 |------|------|
-| **映像** | `webagentloop/nextrouter:nextrouter` |
+| **映像** | `webagentloop/nextrouter:latest` |
 | **本地資料庫** | SQLite（Docker 必須掛載 `/data` 目錄） |
 | **遠端資料庫** | MySQL ≥ 5.7.8 或 PostgreSQL ≥ 9.6 |
 | **容器引擎** | Docker / Docker Compose |
 | **系統架構** | 僅 64 位元（amd64 / arm64），不支援 32 位元 |
 
 > [!TIP]
-> `nextrouter` 是**滾動 tag**，始終追蹤 `nextrouter` 分支的最新建構。如需可重現的部署，請固定到帶日期的 tag，例如 `webagentloop/nextrouter:nextrouter-20260715-911a101`。
+> `latest` 是**滾動發布 tag**，僅在手動觸發的多架構發布成功後才會移動。如需可重現部署和回滾，請固定到不可變 tag，例如 `webagentloop/nextrouter:latest-2026.07.16.1`。
 
 > [!WARNING]
 > 多機部署時**必須**設定 `SESSION_SECRET`（否則登入狀態不一致）；共享 Redis **必須**設定 `CRYPTO_SECRET`（否則資料無法解密）。

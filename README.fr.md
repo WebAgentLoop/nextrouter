@@ -36,7 +36,7 @@
 
 </div>
 
-> 🔄 **Mises à jour roulantes, suivi de l'amont.** NextRouter fusionne en continu le `main` de [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api). Le tag d'image roulant **`nextrouter`** pointe toujours vers la dernière construction (amont + modifications du fork) — un `docker pull` vous maintient à jour ; épinglez un tag daté pour des déploiements reproductibles.
+> 🔄 **Mises à jour roulantes, suivi de l'amont.** NextRouter fusionne en continu le `main` de [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api). Le tag d'image roulant **`latest`** pointe vers la dernière version publiée avec succès (amont + modifications du fork) — un `docker pull` vous maintient à jour ; épinglez un tag versionné pour des déploiements reproductibles.
 
 > [!IMPORTANT]
 > - Ce projet est exclusivement destiné aux scénarios de passerelle API d'IA légalement autorisés, d'authentification organisationnelle, de gestion multi-modèles, d'analyse d'utilisation, de comptabilisation des coûts et de déploiement privé.
@@ -69,7 +69,7 @@ Voir [Licence](#-licence) et [`NOTICE`](./NOTICE) pour les conditions complètes
 <!-- FORK-DELTA: NextRouter changes vs upstream QuantumNous/new-api.
      Update after merging any fork-only branch.
      Completeness check: git log --oneline --no-merges upstream/main..HEAD
-     Last verified: 2026-07-15 -->
+     Last verified: 2026-07-16 -->
 
 ## ✨ Les nouveautés de NextRouter
 
@@ -100,6 +100,11 @@ Un nouveau module de barre latérale **Agent** (`/agent`, à activer sous *Profi
 
 - Correction de l'affichage du montant du portefeuille pour le mode de devise personnalisée (CUSTOM) et le fournisseur de paiement Waffo Pancake.
 
+### 📦 Versions et déploiement
+
+- Le workflow Docker manuel construit et signe nativement les images amd64 / arm64, puis ne promeut `latest` qu'après la réussite du manifeste multi-architecture.
+- Chaque version crée un tag d'image immuable `latest-YYYY.MM.DD.N` et une GitHub Release contenant les changements classés, le digest de l'image et la commande de retour arrière.
+
 <!-- /FORK-DELTA -->
 
 ---
@@ -125,14 +130,14 @@ docker-compose up -d
 
 ```bash
 # Récupérer la dernière image
-docker pull webagentloop/nextrouter:nextrouter
+docker pull webagentloop/nextrouter:latest
 
 # Avec SQLite (par défaut)
 docker run --name nextrouter -d --restart always \
   -p 3000:3000 \
   -e TZ=Asia/Shanghai \
   -v ./data:/data \
-  webagentloop/nextrouter:nextrouter
+  webagentloop/nextrouter:latest
 
 # Avec MySQL
 docker run --name nextrouter -d --restart always \
@@ -140,7 +145,7 @@ docker run --name nextrouter -d --restart always \
   -e SQL_DSN="root:123456@tcp(localhost:3306)/oneapi" \
   -e TZ=Asia/Shanghai \
   -v ./data:/data \
-  webagentloop/nextrouter:nextrouter
+  webagentloop/nextrouter:latest
 ```
 
 > **💡 Astuce :** `-v ./data:/data` enregistre les données dans le dossier `data` du répertoire courant ; utilisez un chemin absolu comme `-v /votre/chemin/perso:/data` si vous préférez.
@@ -155,14 +160,14 @@ Après le déploiement, visitez `http://localhost:3000` pour commencer.
 
 | Composant | Prérequis |
 |------|------|
-| **Image** | `webagentloop/nextrouter:nextrouter` |
+| **Image** | `webagentloop/nextrouter:latest` |
 | **Base de données locale** | SQLite (Docker doit monter le répertoire `/data`) |
 | **Base de données distante** | MySQL ≥ 5.7.8 ou PostgreSQL ≥ 9.6 |
 | **Moteur de conteneurs** | Docker / Docker Compose |
 | **Architecture** | 64 bits uniquement (amd64 / arm64) ; 32 bits non pris en charge |
 
 > [!TIP]
-> `nextrouter` est un **tag roulant** qui suit toujours la dernière construction de la branche `nextrouter`. Pour des déploiements reproductibles, épinglez un tag daté tel que `webagentloop/nextrouter:nextrouter-20260715-911a101`.
+> `latest` est un **tag de version roulant** qui ne change qu'après la réussite d'une publication multi-architecture déclenchée manuellement. Pour un déploiement reproductible et un retour arrière, épinglez un tag immuable tel que `webagentloop/nextrouter:latest-2026.07.16.1`.
 
 > [!WARNING]
 > Pour un déploiement multi-machines, vous **devez** définir `SESSION_SECRET` (sinon l'état de connexion est incohérent), et un Redis partagé **doit** définir `CRYPTO_SECRET` (sinon les données ne peuvent pas être déchiffrées).
