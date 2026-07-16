@@ -19,14 +19,20 @@ For commercial licensing, please contact support@quantumnous.com
 import { memo } from 'react'
 import { useTranslation } from 'react-i18next'
 
-import { getSuccessRateDotClass } from '@/features/performance-metrics/lib/format'
+import {
+  formatCacheHitPct,
+  getCacheHitDotClass,
+  getSuccessRateDotClass,
+} from '@/features/performance-metrics/lib/format'
 import { cn } from '@/lib/utils'
 
 export type ModelPerfBadgeData = {
   avg_latency_ms: number
   success_rate: number
+  cache_hit_rate: number | null
   avg_tps: number
   recent_success_rates?: number[]
+  recent_cache_hit_rates?: (number | null)[]
 }
 
 export interface ModelPerfBadgeProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -50,6 +56,12 @@ function formatCompactThroughput(tps: number): string {
   return `${formatCompactNumber(tps)}t`
 }
 
+const RATE_BAR_SLOTS = [
+  { id: 'oldest', heightClass: 'h-2', emptyClass: 'bg-muted-foreground/10' },
+  { id: 'middle', heightClass: 'h-2.5', emptyClass: 'bg-muted-foreground/15' },
+  { id: 'latest', heightClass: 'h-3', emptyClass: 'bg-muted-foreground/15' },
+] as const
+
 export const ModelPerfBadge = memo(function ModelPerfBadge(
   props: ModelPerfBadgeProps
 ) {
@@ -59,7 +71,7 @@ export const ModelPerfBadge = memo(function ModelPerfBadge(
     return null
   }
 
-  const { avg_latency_ms, avg_tps, success_rate } = props.perf
+  const { avg_latency_ms, avg_tps, success_rate, cache_hit_rate } = props.perf
 
   const recentRates =
     props.perf.recent_success_rates?.filter((rate) => Number.isFinite(rate)) ??
@@ -71,10 +83,18 @@ export const ModelPerfBadge = memo(function ModelPerfBadge(
     ...statusRates,
   ].slice(-3)
 
+  const recentCacheRates = props.perf.recent_cache_hit_rates ?? []
+  const cacheRates =
+    recentCacheRates.length > 0 ? recentCacheRates.slice(-3) : [cache_hit_rate]
+  const cacheBars = [
+    ...Array(Math.max(0, 3 - cacheRates.length)).fill(null),
+    ...cacheRates,
+  ].slice(-3)
+
   return (
     <div
       className={cn(
-        'hidden w-[132px] grid-cols-[38px_48px_30px] gap-x-2 text-right tabular-nums min-[460px]:grid',
+        'hidden w-[172px] grid-cols-[38px_48px_30px_30px] gap-x-2 text-right tabular-nums min-[460px]:grid',
         props.className
       )}
     >
@@ -95,6 +115,29 @@ export const ModelPerfBadge = memo(function ModelPerfBadge(
         </div>
       </div>
       <div
+        title={`${t('Cache hit rate')}: ${formatCacheHitPct(cache_hit_rate)}`}
+        className='min-w-0'
+      >
+        <div className='text-muted-foreground/55 truncate text-[10px] leading-4'>
+          {t('Cache short')}
+        </div>
+        <div className='flex h-4 items-center justify-end gap-0.5'>
+          {RATE_BAR_SLOTS.map((slot, index) => {
+            const rate = cacheBars[index]
+            return (
+              <span
+                key={`cache-${slot.id}`}
+                className={cn(
+                  'w-1 rounded-full',
+                  slot.heightClass,
+                  rate == null ? slot.emptyClass : getCacheHitDotClass(rate)
+                )}
+              />
+            )
+          })}
+        </div>
+      </div>
+      <div
         title={`${t('Success rate')}: ${success_rate.toFixed(1)}%`}
         className='min-w-0'
       >
@@ -102,22 +145,19 @@ export const ModelPerfBadge = memo(function ModelPerfBadge(
           {t('Status short')}
         </div>
         <div className='flex h-4 items-center justify-end gap-0.5'>
-          {statusBars.map((rate, index) => (
-            <span
-              key={`${index}-${rate ?? 'empty'}`}
-              className={cn(
-                'w-1 rounded-full',
-                index === 0 && 'h-2',
-                index === 1 && 'h-2.5',
-                index === 2 && 'h-3',
-                rate == null
-                  ? index === 0
-                    ? 'bg-muted-foreground/10'
-                    : 'bg-muted-foreground/15'
-                  : getSuccessRateDotClass(rate)
-              )}
-            />
-          ))}
+          {RATE_BAR_SLOTS.map((slot, index) => {
+            const rate = statusBars[index]
+            return (
+              <span
+                key={`status-${slot.id}`}
+                className={cn(
+                  'w-1 rounded-full',
+                  slot.heightClass,
+                  rate == null ? slot.emptyClass : getSuccessRateDotClass(rate)
+                )}
+              />
+            )
+          })}
         </div>
       </div>
     </div>

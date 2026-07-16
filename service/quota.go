@@ -379,8 +379,11 @@ func PostAudioConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, u
 		Group:            relayInfo.UsingGroup,
 		Other:            other,
 	})
+	normalizedUsage := effectiveBillingUsage(usage)
+	isClaudeUsageSemantic := usageSemanticFromUsage(relayInfo, normalizedUsage) == dto.BillingUsageSemanticAnthropic
+	cachedInputTokens, inputTokens := performanceInputTokenUsage(normalizedUsage, isClaudeUsageSemantic)
 	gopool.Go(func() {
-		perfmetrics.RecordRelaySample(relayInfo, true, int64(usage.CompletionTokens))
+		perfmetrics.RecordRelaySample(relayInfo, true, int64(usage.CompletionTokens), cachedInputTokens, inputTokens)
 	})
 }
 
