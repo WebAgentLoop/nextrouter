@@ -27,6 +27,88 @@ type openRouterRequestReasoning struct {
 	Exclude   bool   `json:"exclude,omitempty"`
 }
 
+func convertOpenAIToolResultContentToClaude(c *gin.Context, message dto.Message) (any, error) {
+	var contentItems []any
+	switch content := message.Content.(type) {
+	case []any:
+		contentItems = content
+	case []dto.MediaContent:
+		contentItems = make([]any, len(content))
+		for i := range content {
+			contentItems[i] = content[i]
+		}
+	case []map[string]any:
+		contentItems = make([]any, len(content))
+		for i := range content {
+			contentItems[i] = content[i]
+		}
+	default:
+		return message.Content, nil
+	}
+
+	convertedContent := make([]any, 0, len(contentItems))
+	convertedAnyImage := false
+	for _, contentItem := range contentItems {
+		var mediaMessage dto.MediaContent
+		switch content := contentItem.(type) {
+		case map[string]any:
+			if content["type"] != dto.ContentTypeImageURL {
+				convertedContent = append(convertedContent, contentItem)
+				continue
+			}
+			mediaMessages := (&dto.Message{Content: []any{content}}).ParseContent()
+			if len(mediaMessages) != 1 {
+				return nil, fmt.Errorf("invalid image_url tool result content")
+			}
+			mediaMessage = mediaMessages[0]
+		case dto.MediaContent:
+			if content.Type != dto.ContentTypeImageURL {
+				convertedContent = append(convertedContent, contentItem)
+				continue
+			}
+			mediaMessage = content
+		case *dto.MediaContent:
+			if content == nil || content.Type != dto.ContentTypeImageURL {
+				convertedContent = append(convertedContent, contentItem)
+				continue
+			}
+			mediaMessage = *content
+		default:
+			convertedContent = append(convertedContent, contentItem)
+			continue
+		}
+
+		source := mediaMessage.ToFileSource()
+		if source == nil {
+			return nil, fmt.Errorf("invalid image_url tool result source")
+		}
+
+		base64Data, mimeType, err := relaymedia.ResolveBase64Data(c, source, "formatting tool result image for Claude")
+		if err != nil {
+			return nil, fmt.Errorf("get tool result file data failed: %s", err.Error())
+		}
+
+		contentType := "image"
+		if strings.HasPrefix(mimeType, "application/pdf") {
+			contentType = "document"
+		}
+		convertedContent = append(convertedContent, dto.ClaudeMediaMessage{
+			Type: contentType,
+			Source: &dto.ClaudeMessageSource{
+				Type:      "base64",
+				MediaType: mimeType,
+				Data:      base64Data,
+			},
+		})
+		convertedAnyImage = true
+	}
+
+	if !convertedAnyImage {
+		return message.Content, nil
+	}
+	return convertedContent, nil
+}
+
 func OpenAIChatRequestToClaudeMessages(c *gin.Context, textRequest dto.GeneralOpenAIRequest) (*dto.ClaudeRequest, error) {
 	claudeTools := make([]any, 0, len(textRequest.Tools))
 
@@ -299,6 +381,10 @@ func OpenAIChatRequestToClaudeMessages(c *gin.Context, textRequest dto.GeneralOp
 			Role: message.Role,
 		}
 		if message.Role == "tool" {
+			toolResultContent, err := convertOpenAIToolResultContentToClaude(c, message)
+			if err != nil {
+				return nil, err
+			}
 			if len(claudeMessages) > 0 && claudeMessages[len(claudeMessages)-1].Role == "user" {
 				lastClaudeMessage := claudeMessages[len(claudeMessages)-1]
 				if content, ok := lastClaudeMessage.Content.(string); ok {
@@ -312,7 +398,7 @@ func OpenAIChatRequestToClaudeMessages(c *gin.Context, textRequest dto.GeneralOp
 				lastClaudeMessage.Content = append(lastClaudeMessage.Content.([]dto.ClaudeMediaMessage), dto.ClaudeMediaMessage{
 					Type:      "tool_result",
 					ToolUseId: message.ToolCallId,
-					Content:   message.Content,
+					Content:   toolResultContent,
 				})
 				claudeMessages[len(claudeMessages)-1] = lastClaudeMessage
 				continue
@@ -323,7 +409,7 @@ func OpenAIChatRequestToClaudeMessages(c *gin.Context, textRequest dto.GeneralOp
 				{
 					Type:      "tool_result",
 					ToolUseId: message.ToolCallId,
-					Content:   message.Content,
+					Content:   toolResultContent,
 				},
 			}
 		} else if message.IsStringContent() && message.ToolCalls == nil {
