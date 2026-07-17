@@ -256,4 +256,72 @@ describe('buildAgentPayload', () => {
     assert.equal(payload.messages.length, 1)
     assert.equal(payload.messages[0].role, 'user')
   })
+
+  test('drops empty and failed assistant messages from the wire history', () => {
+    const messages: AgentMessage[] = [
+      userMessage('first'),
+      {
+        id: 'a-empty',
+        role: 'assistant',
+        content: '',
+        createdAt: 0,
+      },
+      userMessage('second'),
+      {
+        id: 'a-error',
+        role: 'assistant',
+        content: 'Request error occurred',
+        isError: true,
+        createdAt: 0,
+      },
+      userMessage('third'),
+    ]
+
+    const payload = buildAgentPayload(messages, config)
+
+    assert.deepEqual(
+      payload.messages.map((message) => message.content),
+      ['first', 'second', 'third']
+    )
+  })
+
+  test('keeps a non-empty partial assistant response after interruption', () => {
+    const payload = buildAgentPayload(
+      [
+        userMessage('hi'),
+        {
+          id: 'a-partial',
+          role: 'assistant',
+          content: 'Partial answer',
+          isStreaming: false,
+          createdAt: 0,
+        },
+      ],
+      config
+    )
+
+    assert.equal(payload.messages.length, 2)
+    assert.equal(payload.messages[1].content, 'Partial answer')
+  })
+
+  test('drops an empty assistant after repairing incomplete tool calls', () => {
+    const payload = buildAgentPayload(
+      [
+        userMessage('hi'),
+        assistantWithTools('', [
+          {
+            id: 'call_1',
+            name: 'calculator',
+            argumentsRaw: '{}',
+            parsedArguments: {},
+            status: 'cancelled',
+          },
+        ]),
+      ],
+      config
+    )
+
+    assert.equal(payload.messages.length, 1)
+    assert.equal(payload.messages[0].role, 'user')
+  })
 })

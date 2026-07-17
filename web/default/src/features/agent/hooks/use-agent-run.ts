@@ -23,6 +23,7 @@ import { toast } from 'sonner'
 import { ERROR_MESSAGES, MAX_AGENT_ITERATIONS } from '../constants'
 import {
   applyAgentEdit,
+  AgentStreamChunkBuffer,
   buildAgentPayload,
   computeRegenerateSeed,
   getTool,
@@ -91,6 +92,7 @@ export function useAgentRun({
   const { t } = useTranslation()
   const { streamOneRound, closeStream } = useAgentStream()
   const abortControllerRef = useRef<AbortController | null>(null)
+  const activeChunkBufferRef = useRef<AgentStreamChunkBuffer | null>(null)
   const isRunningRef = useRef(false)
   const [isRunning, setIsRunning] = useState(false)
 
@@ -149,27 +151,30 @@ export function useAgentRun({
             commit()
           }
 
+          const chunkBuffer = new AgentStreamChunkBuffer((batch) => {
+            updateAssistant((message) => ({
+              ...message,
+              content: message.content + batch.content,
+              reasoning: batch.reasoning
+                ? (message.reasoning ?? '') + batch.reasoning
+                : message.reasoning,
+            }))
+          })
+          activeChunkBufferRef.current = chunkBuffer
+
           let result: StreamRoundResult
           try {
             result = await streamOneRound(
               payload,
               {
-                onContent: (chunk) => {
-                  updateAssistant((message) => ({
-                    ...message,
-                    content: message.content + chunk,
-                  }))
-                },
-                onReasoning: (chunk) => {
-                  updateAssistant((message) => ({
-                    ...message,
-                    reasoning: (message.reasoning ?? '') + chunk,
-                  }))
-                },
+                onContent: (chunk) => chunkBuffer.pushContent(chunk),
+                onReasoning: (chunk) => chunkBuffer.pushReasoning(chunk),
               },
               controller.signal
             )
           } catch (error) {
+            chunkBuffer.flush()
+            activeChunkBufferRef.current = null
             if (controller.signal.aborted) {
               updateAssistant((current) => ({
                 ...current,
@@ -194,6 +199,8 @@ export function useAgentRun({
             return
           }
 
+          chunkBuffer.flush()
+          activeChunkBufferRef.current = null
           const toolCalls: ToolCall[] = result.toolCalls
           updateAssistant((current) => ({
             ...current,
@@ -306,6 +313,8 @@ export function useAgentRun({
           toast.error(t(ERROR_MESSAGES.API_REQUEST_ERROR))
         }
       } finally {
+        activeChunkBufferRef.current?.clear()
+        activeChunkBufferRef.current = null
         setIsRunning(false)
         isRunningRef.current = false
         abortControllerRef.current = null
@@ -380,6 +389,8 @@ export function useAgentRun({
 
   useEffect(
     () => () => {
+      activeChunkBufferRef.current?.clear()
+      activeChunkBufferRef.current = null
       abortControllerRef.current?.abort()
       closeStream()
     },

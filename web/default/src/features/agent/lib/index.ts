@@ -41,6 +41,11 @@ export {
   type StreamErrorDetails,
 } from './stream/stream-utils'
 export {
+  AgentStreamChunkBuffer,
+  type AgentStreamChunkBatch,
+  type AgentStreamFlushScheduler,
+} from './stream/stream-chunk-buffer'
+export {
   buildAgentPayload,
   repairMessageSequence,
 } from './stream/payload-builder'

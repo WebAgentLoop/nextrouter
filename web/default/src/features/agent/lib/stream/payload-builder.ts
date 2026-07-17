@@ -48,7 +48,10 @@ function toApiMessage(message: AgentMessage): ApiChatMessage | null {
           })),
         }
       }
-      return { role: 'assistant', content: message.content || null }
+      if (!message.content.trim()) {
+        return null
+      }
+      return { role: 'assistant', content: message.content }
     }
     case 'tool': {
       if (!message.toolCallId) {
@@ -136,7 +139,9 @@ export function buildAgentPayload(
   config: AgentConfig,
   tools?: ToolDefinition[]
 ): ChatCompletionRequest {
-  const apiMessages = repairMessageSequence(messages)
+  const apiMessages = repairMessageSequence(
+    messages.filter((message) => !message.isError)
+  )
     .map(toApiMessage)
     .filter((message): message is ApiChatMessage => message !== null)
 
