@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/QuantumNous/new-api/model"
+	"golang.org/x/sync/singleflight"
 )
 
 const (
@@ -130,8 +131,9 @@ type vendorAggregate struct {
 }
 
 var (
-	rankingCacheMu sync.Mutex
-	rankingCache   = map[string]rankingCacheItem{}
+	rankingCacheMu    sync.Mutex
+	rankingCache      = map[string]rankingCacheItem{}
+	rankingBuildGroup singleflight.Group
 )
 
 func GetRankingsSnapshot(period string) (*RankingsResponse, error) {
@@ -148,19 +150,31 @@ func GetRankingsSnapshot(period string) (*RankingsResponse, error) {
 	}
 	rankingCacheMu.Unlock()
 
-	data, err := buildRankingsSnapshot(config, now)
+	result, err, _ := rankingBuildGroup.Do(config.id, func() (any, error) {
+		rankingCacheMu.Lock()
+		if item, ok := rankingCache[config.id]; ok && now.Before(item.expiresAt) {
+			rankingCacheMu.Unlock()
+			return item.data, nil
+		}
+		rankingCacheMu.Unlock()
+
+		data, buildErr := buildRankingsSnapshot(config, now)
+		if buildErr != nil {
+			return nil, buildErr
+		}
+
+		rankingCacheMu.Lock()
+		rankingCache[config.id] = rankingCacheItem{
+			expiresAt: now.Add(rankingCacheTTL),
+			data:      data,
+		}
+		rankingCacheMu.Unlock()
+		return data, nil
+	})
 	if err != nil {
 		return nil, err
 	}
-
-	rankingCacheMu.Lock()
-	rankingCache[config.id] = rankingCacheItem{
-		expiresAt: now.Add(rankingCacheTTL),
-		data:      data,
-	}
-	rankingCacheMu.Unlock()
-
-	return data, nil
+	return result.(*RankingsResponse), nil
 }
 
 func rankingConfig(period string) (rankingPeriodConfig, error) {
@@ -173,6 +187,8 @@ func rankingConfig(period string) (rankingPeriodConfig, error) {
 		return rankingPeriodConfig{id: "month", duration: 30 * 24 * time.Hour, bucketSize: 24 * 3600, labelLayout: "Jan 2", hasPrevious: true}, nil
 	case "year":
 		return rankingPeriodConfig{id: "year", duration: 365 * 24 * time.Hour, bucketSize: 7 * 24 * 3600, labelLayout: "Jan 2", hasPrevious: true}, nil
+	case "all":
+		return rankingPeriodConfig{id: "all", duration: 0, labelLayout: "Jan 2006", hasPrevious: false}, nil
 	default:
 		return rankingPeriodConfig{}, fmt.Errorf("invalid ranking period: %s", period)
 	}
@@ -184,7 +200,12 @@ func buildRankingsSnapshot(config rankingPeriodConfig, now time.Time) (*Rankings
 	if err != nil {
 		return nil, err
 	}
-	currentBuckets, err := model.GetRankingQuotaBuckets(startTime, endTime, config.bucketSize)
+	var currentBuckets []model.RankingQuotaBucket
+	if config.id == "all" {
+		currentBuckets, err = model.GetRankingQuotaMonthlyBuckets(startTime, endTime)
+	} else {
+		currentBuckets, err = model.GetRankingQuotaBuckets(startTime, endTime, config.bucketSize)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -203,8 +224,10 @@ func buildRankingsSnapshot(config rankingPeriodConfig, now time.Time) (*Rankings
 	previousRankByModel := rankingRankMap(previousTotals)
 	previousTokensByModel := rankingTokenMap(previousTotals)
 
-	rankedModels := buildRankedModels(currentTotals, totalTokens, previousRankByModel, previousTokensByModel, meta, config.hasPrevious)
-	vendors := buildRankedVendors(currentTotals, previousTotals, totalTokens, meta, config.hasPrevious)
+	// Missing previous-period usage is treated as zero by product convention,
+	// including all-time rankings where no previous period is queried.
+	rankedModels := buildRankedModels(currentTotals, totalTokens, previousRankByModel, previousTokensByModel, meta)
+	vendors := buildRankedVendors(currentTotals, previousTotals, totalTokens, meta)
 	modelHistory := buildModelHistory(currentBuckets, currentTotals, meta, config)
 	vendorHistory := buildVendorShareHistory(currentBuckets, vendors, totalTokens, meta, config)
 	movers, droppers := buildRankingMovers(rankedModels)
@@ -260,7 +283,7 @@ func modelMeta(modelName string, meta map[string]rankingModelMeta) rankingModelM
 	return rankingModelMeta{vendor: rankingUnknownVendor}
 }
 
-func buildRankedModels(totals []model.RankingQuotaTotal, totalTokens int64, previousRanks map[string]int, previousTokens map[string]int64, meta map[string]rankingModelMeta, showGrowth bool) []RankedModel {
+func buildRankedModels(totals []model.RankingQuotaTotal, totalTokens int64, previousRanks map[string]int, previousTokens map[string]int64, meta map[string]rankingModelMeta) []RankedModel {
 	rows := make([]RankedModel, 0, len(totals))
 	for idx, item := range totals {
 		modelMeta := modelMeta(item.ModelName, meta)
@@ -268,10 +291,6 @@ func buildRankedModels(totals []model.RankingQuotaTotal, totalTokens int64, prev
 		if rank, ok := previousRanks[item.ModelName]; ok {
 			rankCopy := rank
 			previousRank = &rankCopy
-		}
-		growth := 0.0
-		if showGrowth {
-			growth = rankingGrowthPct(item.TotalTokens, previousTokens[item.ModelName])
 		}
 		rows = append(rows, RankedModel{
 			Rank:         idx + 1,
@@ -282,13 +301,13 @@ func buildRankedModels(totals []model.RankingQuotaTotal, totalTokens int64, prev
 			Category:     "all",
 			TotalTokens:  item.TotalTokens,
 			Share:        rankingShare(item.TotalTokens, totalTokens),
-			GrowthPct:    growth,
+			GrowthPct:    rankingGrowthPct(item.TotalTokens, previousTokens[item.ModelName]),
 		})
 	}
 	return rows
 }
 
-func buildRankedVendors(currentTotals []model.RankingQuotaTotal, previousTotals []model.RankingQuotaTotal, totalTokens int64, meta map[string]rankingModelMeta, showGrowth bool) []RankedVendor {
+func buildRankedVendors(currentTotals []model.RankingQuotaTotal, previousTotals []model.RankingQuotaTotal, totalTokens int64, meta map[string]rankingModelMeta) []RankedVendor {
 	aggregates := make(map[string]*vendorAggregate)
 	for _, item := range currentTotals {
 		modelMeta := modelMeta(item.ModelName, meta)
@@ -311,16 +330,12 @@ func buildRankedVendors(currentTotals []model.RankingQuotaTotal, previousTotals 
 		if agg.totalTokens <= 0 {
 			continue
 		}
-		growth := 0.0
-		if showGrowth {
-			growth = rankingGrowthPct(agg.totalTokens, agg.previousTokens)
-		}
 		rows = append(rows, RankedVendor{
 			Vendor:      agg.name,
 			VendorIcon:  agg.icon,
 			TotalTokens: agg.totalTokens,
 			Share:       rankingShare(agg.totalTokens, totalTokens),
-			GrowthPct:   growth,
+			GrowthPct:   rankingGrowthPct(agg.totalTokens, agg.previousTokens),
 			ModelsCount: len(agg.models),
 			TopModel:    agg.topModel,
 		})
@@ -527,7 +542,11 @@ func rankingBucketTs(bucket int64) string {
 }
 
 func rankingBucketLabel(bucket int64, config rankingPeriodConfig) string {
-	return time.Unix(bucket, 0).Format(config.labelLayout)
+	bucketTime := time.Unix(bucket, 0)
+	if config.id == "all" {
+		bucketTime = bucketTime.UTC()
+	}
+	return bucketTime.Format(config.labelLayout)
 }
 
 func rankingRankMap(totals []model.RankingQuotaTotal) map[string]int {

@@ -27,6 +27,10 @@ export const STATIC_I18N_KEYS = [
   'Docs',
   'About',
 
+  // Rankings constants
+  'All time',
+  'Monthly token usage by model since launch',
+
   // Sidebar views (drill-in workspaces)
   'System Settings',
   'Back to Dashboard',
