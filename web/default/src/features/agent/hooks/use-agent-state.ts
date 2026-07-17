@@ -282,6 +282,17 @@ export function useAgentState() {
     []
   )
 
+  const clearMessages = useCallback(() => {
+    if (statusRef.current === 'running') {
+      return
+    }
+    titleCustomRef.current = false
+    sessionTitleRef.current = DEFAULT_SESSION_TITLE
+    setSessionTitle(DEFAULT_SESSION_TITLE)
+    setStatus('idle')
+    updateMessages(() => [])
+  }, [updateMessages])
+
   const newSession = useCallback(() => {
     if (statusRef.current === 'running') {
       return
@@ -490,6 +501,7 @@ export function useAgentState() {
   return {
     messages,
     updateMessages,
+    clearMessages,
     deleteMessage,
     config,
     updateConfig,
