@@ -158,6 +158,33 @@ docker run --name nextrouter -d --restart always \
 
 Après le déploiement, visitez `http://localhost:3000` pour commencer.
 
+### Migration depuis new-api (amont)
+
+Vous utilisez déjà `calciumion/new-api` ? Passer à NextRouter ne nécessite **aucune migration de données** — le seul changement est le nom de l'image :
+
+| Élément                       | new-api (amont)                      | nextrouter (fork)                | Impact                         |
+| ----------------------------- | ------------------------------------ | -------------------------------- | ------------------------------ |
+| **Image Docker**              | `calciumion/new-api:latest`          | `webagentloop/nextrouter:latest` | ✅ Le *seul* changement         |
+| **Volume de données**         | `./data:/data` (ou personnalisé)     | `./data:/data` (ou personnalisé) | ✅ Inchangé                     |
+| **Fichier SQLite**            | `one-api.db`                         | `one-api.db`                     | ✅ Inchangé                     |
+| **Port**                      | `3000`                               | `3000`                           | ✅ Inchangé                     |
+| **Variables d'environnement** | `SQL_DSN`, `REDIS_CONN_STRING`, etc. | Mêmes variables                  | ✅ Inchangé                     |
+| **Base de données distante**  | MySQL / PostgreSQL                   | MySQL / PostgreSQL               | ✅ Inchangé, données préservées |
+
+```bash
+# Arrêter l'ancien conteneur
+docker stop new-api && docker rm new-api
+
+# Démarrer avec les mêmes volumes et environnement
+docker run --name nextrouter -d --restart always \
+  -p 3000:3000 \
+  -e TZ=Asia/Shanghai \
+  -v ./data:/data \
+  webagentloop/nextrouter:latest
+```
+
+Pour Docker Compose, remplacez `image: calciumion/new-api` par `image: webagentloop/nextrouter:latest` et exécutez `docker compose up -d`. GORM applique automatiquement les modifications de schéma au premier démarrage — vos données SQLite, MySQL ou PostgreSQL sont préservées intactes.
+
 ---
 
 ## 📦 Images et déploiement

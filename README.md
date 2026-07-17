@@ -158,6 +158,33 @@ docker run --name nextrouter -d --restart always \
 
 After deployment, visit `http://localhost:3000` to start using it.
 
+### Migrating from new-api (upstream)
+
+Already running `calciumion/new-api`? Switching to NextRouter requires **zero data migration** — the only change is the image name:
+
+| Item                      | new-api (upstream)                   | nextrouter (fork)                | Impact                       |
+| ------------------------- | ------------------------------------ | -------------------------------- | ---------------------------- |
+| **Docker image**          | `calciumion/new-api:latest`          | `webagentloop/nextrouter:latest` | ✅ The *only* thing to change |
+| **Data volume**           | `./data:/data` (or custom)           | `./data:/data` (or custom)       | ✅ Unchanged                  |
+| **SQLite file**           | `one-api.db`                         | `one-api.db`                     | ✅ Unchanged                  |
+| **Port**                  | `3000`                               | `3000`                           | ✅ Unchanged                  |
+| **Environment variables** | `SQL_DSN`, `REDIS_CONN_STRING`, etc. | Same set of variables            | ✅ Unchanged                  |
+| **Remote DB**             | MySQL / PostgreSQL                   | MySQL / PostgreSQL               | ✅ Unchanged, data preserved  |
+
+```bash
+# Stop the old container
+docker stop new-api && docker rm new-api
+
+# Start with the same volumes and environment
+docker run --name nextrouter -d --restart always \
+  -p 3000:3000 \
+  -e TZ=Asia/Shanghai \
+  -v ./data:/data \
+  webagentloop/nextrouter:latest
+```
+
+For Docker Compose, change `image: calciumion/new-api` to `image: webagentloop/nextrouter:latest` and run `docker compose up -d`. GORM applies any schema changes automatically on first startup — your SQLite, MySQL, or PostgreSQL data is preserved as-is.
+
 ---
 
 ## 📦 Images & Deployment

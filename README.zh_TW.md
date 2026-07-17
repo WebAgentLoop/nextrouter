@@ -158,6 +158,33 @@ docker run --name nextrouter -d --restart always \
 
 部署完成後，造訪 `http://localhost:3000` 即可開始使用。
 
+### 從 new-api（上游）遷移
+
+正在使用 `calciumion/new-api`？切換到 NextRouter **無需資料遷移**——只需變更映像名稱：
+
+| 項目            | new-api（上游）                   | nextrouter（本 Fork）            | 影響                 |
+| --------------- | --------------------------------- | -------------------------------- | -------------------- |
+| **Docker 映像** | `calciumion/new-api:latest`       | `webagentloop/nextrouter:latest` | ✅ 唯一需要改動的地方 |
+| **資料卷**      | `./data:/data`（或自訂）          | `./data:/data`（或自訂）         | ✅ 不變               |
+| **SQLite 檔案** | `one-api.db`                      | `one-api.db`                     | ✅ 不變               |
+| **連接埠**      | `3000`                            | `3000`                           | ✅ 不變               |
+| **環境變數**    | `SQL_DSN`、`REDIS_CONN_STRING` 等 | 同一套變數                       | ✅ 不變               |
+| **遠端資料庫**  | MySQL / PostgreSQL                | MySQL / PostgreSQL               | ✅ 不變，資料保留     |
+
+```bash
+# 停掉舊容器
+docker stop new-api && docker rm new-api
+
+# 使用相同的磁碟區和環境啟動
+docker run --name nextrouter -d --restart always \
+  -p 3000:3000 \
+  -e TZ=Asia/Shanghai \
+  -v ./data:/data \
+  webagentloop/nextrouter:latest
+```
+
+使用 Docker Compose 的使用者只需將 `image: calciumion/new-api` 改為 `image: webagentloop/nextrouter:latest`，然後執行 `docker compose up -d`。GORM 在首次啟動時會自動套用任何 schema 變更——您的 SQLite、MySQL 或 PostgreSQL 資料將被完整保留。
+
 ---
 
 ## 📦 映像與部署

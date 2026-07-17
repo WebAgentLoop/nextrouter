@@ -158,6 +158,33 @@ docker run --name nextrouter -d --restart always \
 
 デプロイ完了後、`http://localhost:3000` にアクセスして利用を開始します。
 
+### new-api（上流）からの移行
+
+`calciumion/new-api` をお使いですか？NextRouter への移行には **データ移行は一切不要** です——変更するのはイメージ名だけです：
+
+| 項目                     | new-api（上流）                   | nextrouter（Fork）               | 影響                   |
+| ------------------------ | --------------------------------- | -------------------------------- | ---------------------- |
+| **Docker イメージ**      | `calciumion/new-api:latest`       | `webagentloop/nextrouter:latest` | ✅ 唯一の変更点         |
+| **データボリューム**     | `./data:/data`（またはカスタム）  | `./data:/data`（またはカスタム） | ✅ 変更なし             |
+| **SQLite ファイル**      | `one-api.db`                      | `one-api.db`                     | ✅ 変更なし             |
+| **ポート**               | `3000`                            | `3000`                           | ✅ 変更なし             |
+| **環境変数**             | `SQL_DSN`、`REDIS_CONN_STRING` 等 | 同一の変数セット                 | ✅ 変更なし             |
+| **リモートデータベース** | MySQL / PostgreSQL                | MySQL / PostgreSQL               | ✅ 変更なし、データ保持 |
+
+```bash
+# 古いコンテナを停止
+docker stop new-api && docker rm new-api
+
+# 同じボリュームと環境で起動
+docker run --name nextrouter -d --restart always \
+  -p 3000:3000 \
+  -e TZ=Asia/Shanghai \
+  -v ./data:/data \
+  webagentloop/nextrouter:latest
+```
+
+Docker Compose を使用している場合は、`image: calciumion/new-api` を `image: webagentloop/nextrouter:latest` に変更し、`docker compose up -d` を実行してください。GORM が初回起動時にスキーマ変更を自動適用します——SQLite、MySQL、PostgreSQL のデータはそのまま保持されます。
+
 ---
 
 ## 📦 イメージとデプロイ
