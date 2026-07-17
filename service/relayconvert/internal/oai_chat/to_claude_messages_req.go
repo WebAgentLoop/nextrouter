@@ -28,25 +28,57 @@ type openRouterRequestReasoning struct {
 }
 
 func convertOpenAIToolResultContentToClaude(c *gin.Context, message dto.Message) (any, error) {
-	contentItems, ok := message.Content.([]any)
-	if !ok {
+	var contentItems []any
+	switch content := message.Content.(type) {
+	case []any:
+		contentItems = content
+	case []dto.MediaContent:
+		contentItems = make([]any, len(content))
+		for i := range content {
+			contentItems[i] = content[i]
+		}
+	case []map[string]any:
+		contentItems = make([]any, len(content))
+		for i := range content {
+			contentItems[i] = content[i]
+		}
+	default:
 		return message.Content, nil
 	}
 
 	convertedContent := make([]any, 0, len(contentItems))
 	convertedAnyImage := false
 	for _, contentItem := range contentItems {
-		contentMap, ok := contentItem.(map[string]any)
-		if !ok || contentMap["type"] != dto.ContentTypeImageURL {
+		var mediaMessage dto.MediaContent
+		switch content := contentItem.(type) {
+		case map[string]any:
+			if content["type"] != dto.ContentTypeImageURL {
+				convertedContent = append(convertedContent, contentItem)
+				continue
+			}
+			mediaMessages := (&dto.Message{Content: []any{content}}).ParseContent()
+			if len(mediaMessages) != 1 {
+				return nil, fmt.Errorf("invalid image_url tool result content")
+			}
+			mediaMessage = mediaMessages[0]
+		case dto.MediaContent:
+			if content.Type != dto.ContentTypeImageURL {
+				convertedContent = append(convertedContent, contentItem)
+				continue
+			}
+			mediaMessage = content
+		case *dto.MediaContent:
+			if content == nil || content.Type != dto.ContentTypeImageURL {
+				convertedContent = append(convertedContent, contentItem)
+				continue
+			}
+			mediaMessage = *content
+		default:
 			convertedContent = append(convertedContent, contentItem)
 			continue
 		}
 
-		mediaMessages := (&dto.Message{Content: []any{contentItem}}).ParseContent()
-		if len(mediaMessages) != 1 {
-			return nil, fmt.Errorf("invalid image_url tool result content")
-		}
-		source := mediaMessages[0].ToFileSource()
+		source := mediaMessage.ToFileSource()
 		if source == nil {
 			return nil, fmt.Errorf("invalid image_url tool result source")
 		}

@@ -87,6 +87,50 @@ func TestOpenAIChatRequestToClaudeMessagesPreservesNonImageURLToolContent(t *tes
 	assert.Equal(t, original, toolResultBlocks[0].Content)
 }
 
+func TestOpenAIChatRequestToClaudeMessagesConvertsTypedToolResultImageURL(t *testing.T) {
+	relaymedia.SetMediaResolver(relaymedia.MediaResolver{
+		GetBase64Data: func(_ *gin.Context, source types.FileSource, _ ...string) (string, string, error) {
+			assert.Equal(t, "https://example.com/typed-tool-result.png", source.GetRawData())
+			return "typed-image-data", "image/png", nil
+		},
+	})
+	t.Cleanup(func() {
+		relaymedia.SetMediaResolver(relaymedia.MediaResolver{})
+	})
+
+	request := toolResultConversionRequest(nil)
+	request.Messages[2].SetMediaContent([]dto.MediaContent{
+		{Type: dto.ContentTypeText, Text: "Typed image result:"},
+		{
+			Type: dto.ContentTypeImageURL,
+			ImageUrl: &dto.MessageImageUrl{
+				Url: "https://example.com/typed-tool-result.png",
+			},
+		},
+	})
+
+	claudeRequest, err := OpenAIChatRequestToClaudeMessages(nil, request)
+	require.NoError(t, err)
+	require.Len(t, claudeRequest.Messages, 3)
+
+	toolResultBlocks, ok := claudeRequest.Messages[2].Content.([]dto.ClaudeMediaMessage)
+	require.True(t, ok)
+	require.Len(t, toolResultBlocks, 1)
+	toolContent, ok := toolResultBlocks[0].Content.([]any)
+	require.True(t, ok)
+	require.Len(t, toolContent, 2)
+
+	imageBlock, ok := toolContent[1].(dto.ClaudeMediaMessage)
+	require.True(t, ok)
+	assert.Equal(t, "image", imageBlock.Type)
+	require.NotNil(t, imageBlock.Source)
+	assert.Equal(t, "typed-image-data", imageBlock.Source.Data)
+
+	payload, err := common.Marshal(claudeRequest)
+	require.NoError(t, err)
+	assert.NotContains(t, string(payload), `"image_url"`)
+}
+
 func toolResultConversionRequest(toolContent any) dto.GeneralOpenAIRequest {
 	return dto.GeneralOpenAIRequest{
 		Model: "test-model",
