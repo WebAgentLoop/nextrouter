@@ -29,6 +29,7 @@ export function Agent() {
   const {
     messages,
     updateMessages,
+    clearMessages,
     deleteMessage,
     config,
     updateConfig,
@@ -123,6 +124,11 @@ export function Agent() {
     newSession()
   }
 
+  const handleClearMessages = () => {
+    setEditingId(null)
+    clearMessages()
+  }
+
   const handleSelectSession = (id: string) => {
     setEditingId(null)
     void selectSession(id).then(() => {
@@ -171,8 +177,10 @@ export function Agent() {
           config={config}
           disabled={isGenerating || isLoadingMessages}
           groups={groups}
+          hasMessages={messages.length > 0}
           isGenerating={isGenerating}
           models={models}
+          onClearMessages={handleClearMessages}
           onGroupChange={(value) => updateConfig('group', value)}
           onGroupChangeCommitted={handleGroupChangeCommitted}
           onModelChange={(value) => updateConfig('model', value)}

@@ -204,6 +204,9 @@ export function processGroupStatus(items: ProcessItem[]): ToolCallStatus {
   if (statuses.some((status) => status === 'error')) {
     return 'error'
   }
+  if (statuses.some((status) => status === 'cancelled')) {
+    return 'cancelled'
+  }
   if (statuses.every((status) => status === 'done')) {
     return 'done'
   }

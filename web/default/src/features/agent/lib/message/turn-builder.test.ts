@@ -355,6 +355,39 @@ describe('processGroupStatus', () => {
     )
   })
 
+  test('cancelled when settled calls include a cancellation', () => {
+    assert.equal(
+      processGroupStatus([
+        { kind: 'tools', toolCalls: [toolCall('c1', 'cancelled')] },
+      ]),
+      'cancelled'
+    )
+    assert.equal(
+      processGroupStatus([
+        { kind: 'tools', toolCalls: [toolCall('c1', 'done')] },
+        { kind: 'tools', toolCalls: [toolCall('c2', 'cancelled')] },
+      ]),
+      'cancelled'
+    )
+  })
+
+  test('active and error states take priority over cancelled', () => {
+    assert.equal(
+      processGroupStatus([
+        { kind: 'tools', toolCalls: [toolCall('c1', 'cancelled')] },
+        { kind: 'tools', toolCalls: [toolCall('c2', 'error')] },
+      ]),
+      'error'
+    )
+    assert.equal(
+      processGroupStatus([
+        { kind: 'tools', toolCalls: [toolCall('c1', 'cancelled')] },
+        { kind: 'tools', toolCalls: [toolCall('c2', 'running')] },
+      ]),
+      'running'
+    )
+  })
+
   test('empty panel is done', () => {
     assert.equal(processGroupStatus([]), 'done')
   })

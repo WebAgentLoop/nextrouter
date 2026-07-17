@@ -30,6 +30,7 @@ import {
 import { ModelGroupSelector } from '@/components/model-group-selector'
 
 import type { AgentConfig, GroupOption, ModelOption } from '../types'
+import { AgentInputTools } from './agent-input-tools'
 
 interface AgentInputProps {
   config: AgentConfig
@@ -42,6 +43,8 @@ interface AgentInputProps {
   isGenerating?: boolean
   models: ModelOption[]
   groups: GroupOption[]
+  hasMessages: boolean
+  onClearMessages: () => void
 }
 
 export function AgentInput({
@@ -55,6 +58,8 @@ export function AgentInput({
   isGenerating,
   models,
   groups,
+  hasMessages,
+  onClearMessages,
 }: AgentInputProps) {
   const { t } = useTranslation()
   const [text, setText] = useState('')
@@ -113,6 +118,11 @@ export function AgentInput({
             </div>
 
             <div className='flex items-center justify-between gap-2 md:justify-start'>
+              <AgentInputTools
+                disabled={disabled}
+                hasMessages={hasMessages}
+                onClearMessages={onClearMessages}
+              />
               <div className='flex items-center gap-1.5 md:hidden'>
                 {isGenerating ? (
                   <PromptInputButton
