@@ -152,7 +152,10 @@ export function Pricing() {
     return (
       <PublicLayout showMainContainer={false}>
         <div className='mx-auto w-full max-w-[1800px] px-3 pt-16 pb-8 sm:px-6 sm:pt-20 sm:pb-10 xl:px-8'>
-          <LoadingSkeleton viewMode={viewMode} />
+          <div className='grid gap-4 xl:grid-cols-[330px_minmax(0,1fr)]'>
+            <div className='hidden xl:block' aria-hidden='true' />
+            <LoadingSkeleton viewMode={viewMode} />
+          </div>
         </div>
       </PublicLayout>
     )
