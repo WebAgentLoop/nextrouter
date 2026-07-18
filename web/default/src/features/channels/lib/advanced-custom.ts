@@ -25,53 +25,54 @@ import type {
 } from '../types'
 
 export const CHANNEL_TYPE_ADVANCED_CUSTOM = 58
+export const ADVANCED_CUSTOM_MODEL_LIST_PATH = '/v1/models'
 
 export const ADVANCED_CUSTOM_CONVERTER_OPTIONS: Array<{
   value: AdvancedCustomConverter
   label: string
   triggerLabel: string
 }> = [
-  {
-    value: 'none',
-    label: 'Native forwarding',
-    triggerLabel: 'Native forwarding',
-  },
-  {
-    value: 'anthropic_messages_to_openai_chat_completions',
-    label: 'Anthropic Messages to OpenAI Chat',
-    triggerLabel: 'To OpenAI Chat',
-  },
-  {
-    value: 'openai_chat_completions_to_anthropic_messages',
-    label: 'OpenAI Chat to Anthropic Messages',
-    triggerLabel: 'To Anthropic Messages',
-  },
-  {
-    value: 'openai_chat_completions_to_openai_responses',
-    label: 'OpenAI Chat to OpenAI Responses',
-    triggerLabel: 'To OpenAI Responses',
-  },
-  {
-    value: 'openai_responses_to_openai_chat_completions',
-    label: 'OpenAI Responses to OpenAI Chat',
-    triggerLabel: 'To OpenAI Chat',
-  },
-  {
-    value: 'openai_responses_to_gemini_generate_content',
-    label: 'OpenAI Responses to Gemini Generate Content',
-    triggerLabel: 'To Gemini Generate Content',
-  },
-  {
-    value: 'gemini_generate_content_to_openai_chat_completions',
-    label: 'Gemini Generate Content to OpenAI Chat',
-    triggerLabel: 'To OpenAI Chat',
-  },
-  {
-    value: 'openai_chat_completions_to_gemini_generate_content',
-    label: 'OpenAI Chat to Gemini Generate Content',
-    triggerLabel: 'To Gemini Generate Content',
-  },
-]
+    {
+      value: 'none',
+      label: 'Native forwarding',
+      triggerLabel: 'Native forwarding',
+    },
+    {
+      value: 'anthropic_messages_to_openai_chat_completions',
+      label: 'Anthropic Messages to OpenAI Chat',
+      triggerLabel: 'To OpenAI Chat',
+    },
+    {
+      value: 'openai_chat_completions_to_anthropic_messages',
+      label: 'OpenAI Chat to Anthropic Messages',
+      triggerLabel: 'To Anthropic Messages',
+    },
+    {
+      value: 'openai_chat_completions_to_openai_responses',
+      label: 'OpenAI Chat to OpenAI Responses',
+      triggerLabel: 'To OpenAI Responses',
+    },
+    {
+      value: 'openai_responses_to_openai_chat_completions',
+      label: 'OpenAI Responses to OpenAI Chat',
+      triggerLabel: 'To OpenAI Chat',
+    },
+    {
+      value: 'openai_responses_to_gemini_generate_content',
+      label: 'OpenAI Responses to Gemini Generate Content',
+      triggerLabel: 'To Gemini Generate Content',
+    },
+    {
+      value: 'gemini_generate_content_to_openai_chat_completions',
+      label: 'Gemini Generate Content to OpenAI Chat',
+      triggerLabel: 'To OpenAI Chat',
+    },
+    {
+      value: 'openai_chat_completions_to_gemini_generate_content',
+      label: 'OpenAI Chat to Gemini Generate Content',
+      triggerLabel: 'To Gemini Generate Content',
+    },
+  ]
 
 export type AdvancedCustomAuthMode = 'default' | AdvancedCustomAuthType
 
@@ -79,11 +80,11 @@ export const ADVANCED_CUSTOM_AUTH_MODE_OPTIONS: Array<{
   value: AdvancedCustomAuthMode
   label: string
 }> = [
-  { value: 'default', label: 'Default Bearer' },
-  { value: 'none', label: 'No Auth' },
-  { value: 'header', label: 'Header' },
-  { value: 'query', label: 'Query' },
-]
+    { value: 'default', label: 'Default Bearer' },
+    { value: 'none', label: 'No Auth' },
+    { value: 'header', label: 'Header' },
+    { value: 'query', label: 'Query' },
+  ]
 
 export type AdvancedCustomIncomingPathOption = {
   value: string
@@ -107,6 +108,10 @@ export const ADVANCED_CUSTOM_INCOMING_PATH_OPTIONS: AdvancedCustomIncomingPathOp
     {
       value: '/v1/responses/compact',
       label: 'OpenAI Responses Compact',
+    },
+    {
+      value: ADVANCED_CUSTOM_MODEL_LIST_PATH,
+      label: 'OpenAI Models',
     },
     {
       value: '/v1/embeddings',
@@ -165,6 +170,7 @@ export const ADVANCED_CUSTOM_INCOMING_PATH_OPTIONS: AdvancedCustomIncomingPathOp
 const ADVANCED_CUSTOM_ROUTE_SUMMARY_LABELS: Record<string, string> = {
   '/v1/chat/completions': 'OpenAI Chat',
   '/pg/chat/completions': 'Playground Chat',
+  [ADVANCED_CUSTOM_MODEL_LIST_PATH]: 'OpenAI Models',
 }
 
 export type AdvancedCustomValidationError = {
@@ -542,6 +548,7 @@ export function validateAdvancedCustomConfig(
     string,
     { catchAllIndex: number | null; models: Map<string, number> }
   >()
+  let modelListRouteIndex: number | null = null
   for (let index = 0; index < routes.length; index += 1) {
     const route = routes[index]
     const incomingPath = route.incoming_path?.trim() || ''
@@ -559,6 +566,33 @@ export function validateAdvancedCustomConfig(
       return {
         routeIndex: index,
         message: 'Incoming path must not include query',
+      }
+    }
+    if (incomingPath === ADVANCED_CUSTOM_MODEL_LIST_PATH) {
+      if (modelListRouteIndex !== null) {
+        return {
+          routeIndex: index,
+          message: 'Only one OpenAI Models route is allowed',
+        }
+      }
+      modelListRouteIndex = index
+      if (routeModels.length > 0) {
+        return {
+          routeIndex: index,
+          message: 'OpenAI Models route does not support client model rules',
+        }
+      }
+      if (converter !== 'none') {
+        return {
+          routeIndex: index,
+          message: 'OpenAI Models route must use native forwarding',
+        }
+      }
+      if (upstreamPath.includes('{model}')) {
+        return {
+          routeIndex: index,
+          message: 'OpenAI Models upstream path must not contain {model}',
+        }
       }
     }
     const routeModelsError = validateAdvancedCustomRouteModels(
@@ -597,6 +631,16 @@ export function validateAdvancedCustomConfig(
   }
 
   return null
+}
+
+export function hasValidAdvancedCustomModelListRoute(
+  config: AdvancedCustomConfig | null
+): boolean {
+  if (!config || validateAdvancedCustomConfig(config)) return false
+  const normalized = normalizeAdvancedCustomConfig(config)
+  return (normalized.advanced_routes || []).some(
+    (route) => route.incoming_path?.trim() === ADVANCED_CUSTOM_MODEL_LIST_PATH
+  )
 }
 
 export function advancedCustomConfigUsesRelativeUpstreamPath(
