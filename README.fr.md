@@ -69,7 +69,7 @@ Voir [Licence](#-licence) et [`NOTICE`](./NOTICE) pour les conditions complètes
 <!-- FORK-DELTA: NextRouter changes vs upstream QuantumNous/new-api.
      Update after merging any fork-only branch.
      Completeness check: git log --oneline --no-merges upstream/main..HEAD
-     Last verified: 2026-07-16 -->
+     Last verified: 2026-07-18 -->
 
 ## ✨ Les nouveautés de NextRouter
 
@@ -95,6 +95,7 @@ Un nouveau module de barre latérale **Agent** (`/agent`, à activer sous *Profi
 
 - **Boîte de dialogue de gestion des vendeurs** : liste tous les vendeurs de modèles avec édition / suppression / ajout (auparavant uniquement la création), avec réessai en cas d'erreur.
 - **Fusion du modèle d'endpoints** : l'enregistrement fusionne désormais au lieu de tout remplacer ; un JSON d'endpoints existant invalide déclenche un avertissement avant la fusion.
+- **Visibilité configurable de la place des modèles** : les administrateurs peuvent exiger une configuration de modèle activée (correspondance exacte ou par règle de nom) avant l'affichage dans le catalogue, sans modifier le routage des canaux.
 
 ### 📊 Observabilité des performances
 

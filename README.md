@@ -69,7 +69,7 @@ See [License](#-license) and [`NOTICE`](./NOTICE) for the complete terms.
 <!-- FORK-DELTA: NextRouter changes vs upstream QuantumNous/new-api.
      Update after merging any fork-only branch.
      Completeness check: git log --oneline --no-merges upstream/main..HEAD
-     Last verified: 2026-07-16 -->
+     Last verified: 2026-07-18 -->
 
 ## ✨ What's new in NextRouter
 
@@ -95,6 +95,7 @@ A new **Agent** sidebar module (`/agent`, toggle it under *Profile → Sidebar m
 
 - **Vendor management dialog**: lists all model vendors with edit / delete / add (previously only create), including error retry.
 - **Endpoint template merge**: saving now merges instead of replacing everything; invalid existing endpoint JSON is warned about before merge.
+- **Configurable Model Square visibility**: administrators can require models to have an enabled model configuration (exact or name-rule match) before they appear in the catalog, without changing channel routing.
 
 ### 📊 Performance observability
 

@@ -69,7 +69,7 @@ NextRouter **基于 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-a
 <!-- FORK-DELTA: NextRouter changes vs upstream QuantumNous/new-api.
      Update after merging any fork-only branch.
      Completeness check: git log --oneline --no-merges upstream/main..HEAD
-     Last verified: 2026-07-16 -->
+     Last verified: 2026-07-18 -->
 
 ## ✨ NextRouter 相比上游的改进
 
@@ -95,6 +95,7 @@ NextRouter **基于 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-a
 
 - **厂商（Vendor）管理对话框**：列出全部模型厂商，支持编辑 / 删除 / 新增（此前仅能创建），含错误重试。
 - **端点模板合并**：保存时改为合并而非整体覆盖；既有端点 JSON 非法时在合并前告警。
+- **可配置的模型广场可见性**：管理员可要求模型必须存在已启用的模型配置（精确匹配或名称规则匹配）才能出现在目录中，且不影响渠道路由。
 
 ### 📊 性能可观测性
 
