@@ -11,6 +11,7 @@ import (
 	"github.com/QuantumNous/new-api/constant"
 	"github.com/QuantumNous/new-api/dto"
 	"github.com/QuantumNous/new-api/setting/billing_setting"
+	"github.com/QuantumNous/new-api/setting/model_setting"
 	"github.com/QuantumNous/new-api/setting/ratio_setting"
 	"github.com/QuantumNous/new-api/types"
 )
@@ -235,6 +236,10 @@ func updatePricing() {
 			}
 		}
 	}
+	configuredModels := make(map[string]struct{}, len(metaMap))
+	for modelName := range metaMap {
+		configuredModels[modelName] = struct{}{}
+	}
 
 	// 预加载供应商
 	var vendors []Vendor
@@ -356,6 +361,12 @@ func updatePricing() {
 
 	pricingMap = make([]Pricing, 0)
 	for model, groups := range modelGroupsMap {
+		_, configured := configuredModels[model]
+		if model_setting.GetGlobalSettings().ModelSquareOnlyConfiguredModels && !configured {
+			continue
+		}
+		meta := metaMap[model]
+
 		pricing := Pricing{
 			ModelName:              model,
 			EnableGroup:            groups.Items(),
@@ -363,7 +374,7 @@ func updatePricing() {
 		}
 
 		// 补充模型元数据（描述、标签、供应商、状态）
-		if meta, ok := metaMap[model]; ok {
+		if configured {
 			// 若模型被禁用(status!=1)，则直接跳过，不返回给前端
 			if meta.Status != 1 {
 				continue

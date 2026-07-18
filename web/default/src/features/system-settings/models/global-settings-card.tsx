@@ -90,6 +90,7 @@ const jsonString = z.string().refine((value) => {
 const schema = z.object({
   global: z.object({
     pass_through_request_enabled: z.boolean(),
+    model_square_only_configured_models: z.boolean(),
     thinking_model_blacklist: jsonString,
     chat_completions_to_responses_policy: jsonString,
   }),
@@ -104,6 +105,7 @@ type GlobalModelSettingsFormInput = z.input<typeof schema>
 
 type FlatGlobalModelSettings = {
   'global.pass_through_request_enabled': boolean
+  'global.model_square_only_configured_models': boolean
   'global.thinking_model_blacklist': string
   'global.chat_completions_to_responses_policy': string
   'general_setting.ping_interval_enabled': boolean
@@ -115,6 +117,8 @@ const flattenGlobalValues = (
 ): FlatGlobalModelSettings => ({
   'global.pass_through_request_enabled':
     values.global.pass_through_request_enabled,
+  'global.model_square_only_configured_models':
+    values.global.model_square_only_configured_models,
   'global.thinking_model_blacklist': normalizeJsonText(
     values.global.thinking_model_blacklist,
     '[]'
@@ -211,6 +215,31 @@ export function GlobalSettingsCard({ defaultValues }: GlobalSettingsCardProps) {
                   <FormDescription>
                     {t(
                       'Forward requests directly to upstream providers without any post-processing.'
+                    )}
+                  </FormDescription>
+                </SettingsSwitchContent>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </SettingsSwitchItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name='global.model_square_only_configured_models'
+            render={({ field }) => (
+              <SettingsSwitchItem>
+                <SettingsSwitchContent>
+                  <FormLabel>
+                    {t('Only show configured models in Model Square')}
+                  </FormLabel>
+                  <FormDescription>
+                    {t(
+                      'Models without an enabled model configuration or matching name rule will be hidden from the Model Square.'
                     )}
                   </FormDescription>
                 </SettingsSwitchContent>
