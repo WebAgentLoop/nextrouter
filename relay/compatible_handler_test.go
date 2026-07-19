@@ -12,9 +12,9 @@ import (
 )
 
 // TestApplyForceStream guards the invariant that ForceStream only activates
-// when the channel opts in, the client requested non-streaming, and neither
-// pass-through mode is active. When activated it must flip stream to true and
-// set ForceStreamBuffer; otherwise the request stream must be left untouched.
+// when the channel opts in, the client requested non-streaming, the converted
+// upstream protocol is Chat Completions, and neither pass-through mode is
+// active. When activated it must flip stream to true and set ForceStreamBuffer.
 func TestApplyForceStream(t *testing.T) {
 	// ApplyForceStream reads the global pass-through flag, so save and restore it.
 	original := model_setting.GetGlobalSettings().PassThroughRequestEnabled
@@ -27,15 +27,18 @@ func TestApplyForceStream(t *testing.T) {
 		forceStream       bool
 		passThroughBody   bool
 		globalPassThrough bool
-		inStream          *bool // incoming request.Stream
+		clientStream      bool
+		convertedRequest  any
 		wantActive        bool
 	}{
-		{name: "active when force stream and non-stream client", forceStream: true, inStream: ptrBool(false), wantActive: true},
-		{name: "active when force stream and stream nil", forceStream: true, inStream: nil, wantActive: true},
-		{name: "inactive when client already streaming", forceStream: true, inStream: ptrBool(true), wantActive: false},
-		{name: "inactive when force stream disabled", forceStream: false, inStream: ptrBool(false), wantActive: false},
-		{name: "inactive when channel pass-through enabled", forceStream: true, passThroughBody: true, inStream: ptrBool(false), wantActive: false},
-		{name: "inactive when global pass-through enabled", forceStream: true, globalPassThrough: true, inStream: ptrBool(false), wantActive: false},
+		{name: "active for converted chat upstream", forceStream: true, convertedRequest: &dto.GeneralOpenAIRequest{Stream: ptrBool(false)}, wantActive: true},
+		{name: "active regardless of converted stream default", forceStream: true, convertedRequest: &dto.GeneralOpenAIRequest{Stream: ptrBool(true)}, wantActive: true},
+		{name: "inactive when client already streaming", forceStream: true, clientStream: true, convertedRequest: &dto.GeneralOpenAIRequest{Stream: ptrBool(true)}},
+		{name: "inactive for responses upstream", forceStream: true, convertedRequest: &dto.OpenAIResponsesRequest{Stream: ptrBool(false)}},
+		{name: "inactive for claude upstream", forceStream: true, convertedRequest: &dto.ClaudeRequest{Stream: ptrBool(false)}},
+		{name: "inactive when force stream disabled", convertedRequest: &dto.GeneralOpenAIRequest{Stream: ptrBool(false)}},
+		{name: "inactive when channel pass-through enabled", forceStream: true, passThroughBody: true, convertedRequest: &dto.GeneralOpenAIRequest{Stream: ptrBool(false)}},
+		{name: "inactive when global pass-through enabled", forceStream: true, globalPassThrough: true, convertedRequest: &dto.GeneralOpenAIRequest{Stream: ptrBool(false)}},
 	}
 
 	for _, tt := range tests {
@@ -43,6 +46,7 @@ func TestApplyForceStream(t *testing.T) {
 			model_setting.GetGlobalSettings().PassThroughRequestEnabled = tt.globalPassThrough
 
 			info := &relaycommon.RelayInfo{
+				IsStream: tt.clientStream,
 				ChannelMeta: &relaycommon.ChannelMeta{
 					ChannelSetting: dto.ChannelSettings{
 						ForceStream:            tt.forceStream,
@@ -50,22 +54,13 @@ func TestApplyForceStream(t *testing.T) {
 					},
 				},
 			}
-			req := &dto.GeneralOpenAIRequest{Stream: tt.inStream}
 
-			ApplyForceStream(info, req)
+			ApplyForceStream(info, tt.convertedRequest)
 
 			require.Equal(t, tt.wantActive, info.ForceStreamBuffer)
-			if tt.wantActive {
+			if req, ok := tt.convertedRequest.(*dto.GeneralOpenAIRequest); ok && tt.wantActive {
 				require.NotNil(t, req.Stream)
 				assert.True(t, *req.Stream, "stream must be forced true when active")
-			} else {
-				// Inactive: the stream pointer must be untouched.
-				if tt.inStream == nil {
-					assert.Nil(t, req.Stream)
-				} else {
-					require.NotNil(t, req.Stream)
-					assert.Equal(t, *tt.inStream, *req.Stream)
-				}
 			}
 		})
 	}
@@ -73,10 +68,9 @@ func TestApplyForceStream(t *testing.T) {
 
 // TestApplyForceStream_ClearsStaleFlagOnRetry guards the retry-reuse invariant:
 // RelayInfo is reused across retries onto different channels. If the first
-// channel forced streaming (setting ForceStreamBuffer=true) and then failed,
-// retrying onto a channel that does not force streaming must clear the flag —
-// otherwise the non-forced upstream's plain JSON response would be routed into
-// OaiStreamBufferHandler and misparsed as SSE.
+// channel forced a Chat stream and then failed, retrying onto a non-Chat
+// upstream must clear the flag. Otherwise that upstream response would be
+// routed into the Chat SSE accumulator.
 func TestApplyForceStream_ClearsStaleFlagOnRetry(t *testing.T) {
 	original := model_setting.GetGlobalSettings().PassThroughRequestEnabled
 	t.Cleanup(func() { model_setting.GetGlobalSettings().PassThroughRequestEnabled = original })
@@ -94,12 +88,11 @@ func TestApplyForceStream_ClearsStaleFlagOnRetry(t *testing.T) {
 	require.NotNil(t, firstReq.Stream)
 	require.True(t, *firstReq.Stream)
 
-	// Simulate a retry onto a channel that does not force streaming: the same
-	// RelayInfo is reused, but ChannelSetting now reflects the new channel.
-	info.ChannelSetting.ForceStream = false
-	secondReq := &dto.GeneralOpenAIRequest{}
+	// Simulate a retry onto a Responses upstream while keeping ForceStream
+	// enabled on the selected channel.
+	secondReq := &dto.OpenAIResponsesRequest{}
 	ApplyForceStream(info, secondReq)
 
-	assert.False(t, info.ForceStreamBuffer, "stale buffering flag must be cleared on retry to a non-ForceStream channel")
+	assert.False(t, info.ForceStreamBuffer, "stale buffering flag must be cleared on retry to a non-Chat upstream")
 	assert.Nil(t, secondReq.Stream, "non-forced request stream must remain untouched")
 }

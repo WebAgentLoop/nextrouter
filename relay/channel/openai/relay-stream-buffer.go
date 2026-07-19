@@ -67,7 +67,7 @@ func OaiStreamBufferHandler(c *gin.Context, info *relaycommon.RelayInfo, resp *h
 
 	markContentFilterReject(c, textResponse.Choices)
 
-	responseBody, marshalErr := marshalTextResponse(&textResponse, info)
+	responseBody, marshalErr := marshalTextResponse(c, &textResponse, info)
 	if marshalErr != nil {
 		return nil, types.NewError(marshalErr, types.ErrorCodeBadResponseBody)
 	}

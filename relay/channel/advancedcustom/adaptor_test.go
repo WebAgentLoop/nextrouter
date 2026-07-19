@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/QuantumNous/new-api/common"
@@ -462,6 +463,74 @@ func TestAdaptorConvertsResponsesRequestToOpenAIChatUpstream(t *testing.T) {
 	parsedURL, err := url.Parse(requestURL)
 	require.NoError(t, err)
 	assert.Equal(t, "/v1/chat/completions", parsedURL.Path)
+}
+
+func TestAdaptorForceStreamBuffersChatUpstreamForConvertedClients(t *testing.T) {
+	streamBody := strings.Join([]string{
+		`data: {"id":"chatcmpl-buffered","object":"chat.completion.chunk","created":1700000000,"model":"gpt-test","choices":[{"index":0,"delta":{"role":"assistant","content":"hello"},"finish_reason":"stop"}]}`,
+		`data: {"id":"chatcmpl-buffered","object":"chat.completion.chunk","created":1700000000,"model":"gpt-test","choices":[],"usage":{"prompt_tokens":2,"completion_tokens":1,"total_tokens":3}}`,
+		`data: [DONE]`,
+		``,
+	}, "\n\n")
+
+	tests := []struct {
+		name       string
+		path       string
+		converter  string
+		format     types.RelayFormat
+		relayMode  int
+		wantFields []string
+	}{
+		{
+			name:       "responses client",
+			path:       "/v1/responses",
+			converter:  relayconvert.ConverterOpenAIResponsesToOpenAIChat,
+			format:     types.RelayFormatOpenAIResponses,
+			relayMode:  relayconstant.RelayModeResponses,
+			wantFields: []string{`"object":"response"`, `"type":"output_text"`, `"text":"hello"`},
+		},
+		{
+			name:       "messages client",
+			path:       "/v1/messages",
+			converter:  relayconvert.ConverterClaudeMessagesToOpenAIChat,
+			format:     types.RelayFormatClaude,
+			relayMode:  relayconstant.RelayModeChatCompletions,
+			wantFields: []string{`"type":"message"`, `"role":"assistant"`, `"text":"hello"`},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			adaptor := &Adaptor{}
+			info := advancedCustomRelayInfo(&dto.AdvancedCustomConfig{
+				Routes: []dto.AdvancedCustomRoute{{
+					IncomingPath: tt.path,
+					UpstreamPath: "/v1/chat/completions",
+					Converter:    tt.converter,
+				}},
+			})
+			info.RelayFormat = tt.format
+			info.RelayMode = tt.relayMode
+			info.RequestURLPath = tt.path
+			info.ForceStreamBuffer = true
+
+			recorder := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(recorder)
+			c.Request = httptest.NewRequest(http.MethodPost, tt.path, nil)
+			usage, newAPIError := adaptor.DoResponse(c, &http.Response{
+				StatusCode: http.StatusOK,
+				Header:     http.Header{"Content-Type": []string{"text/event-stream"}},
+				Body:       io.NopCloser(bytes.NewBufferString(streamBody)),
+			}, info)
+
+			require.Nil(t, newAPIError)
+			require.NotNil(t, usage)
+			assert.Equal(t, "application/json", recorder.Header().Get("Content-Type"))
+			for _, field := range tt.wantFields {
+				assert.Contains(t, recorder.Body.String(), field)
+			}
+		})
+	}
 }
 
 func TestAdaptorSelectsDuplicateResponsesRoutesByModel(t *testing.T) {

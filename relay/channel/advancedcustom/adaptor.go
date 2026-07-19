@@ -289,6 +289,15 @@ func (a *Adaptor) DoResponse(c *gin.Context, resp *http.Response, info *relaycom
 		return nil, types.NewOpenAIError(err, types.ErrorCodeInvalidRequest, http.StatusBadRequest, types.ErrOptionWithSkipRetry())
 	}
 
+	if info.ForceStreamBuffer {
+		switch a.converter {
+		case relayconvert.ConverterClaudeMessagesToOpenAIChat,
+			relayconvert.ConverterGeminiContentToOpenAIChat,
+			relayconvert.ConverterOpenAIResponsesToOpenAIChat:
+			return openai.OaiStreamBufferHandler(c, info, resp)
+		}
+	}
+
 	switch a.converter {
 	case relayconvert.ConverterNone:
 		return a.doNativeResponse(c, resp, info)

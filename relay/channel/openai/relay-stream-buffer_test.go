@@ -1,12 +1,19 @@
 package openai
 
 import (
+	"bytes"
 	"encoding/json"
+	"io"
+	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/dto"
+	relaycommon "github.com/QuantumNous/new-api/relay/common"
+	"github.com/QuantumNous/new-api/types"
+	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -30,7 +37,7 @@ func mustJSON(t *testing.T, v any) string {
 	return string(b)
 }
 
-func intPtr(v int) *int      { return &v }
+func intPtr(v int) *int       { return &v }
 func strPtr(v string) *string { return &v }
 
 // ---------------------------------------------------------------------------
@@ -389,4 +396,74 @@ func TestAssemble_ProducesValidJSON(t *testing.T) {
 	var obj string
 	require.NoError(t, json.Unmarshal(raw["object"], &obj))
 	assert.Equal(t, "chat.completion", obj)
+}
+
+func TestOaiStreamBufferHandler_ConvertsToClientNonStreamFormat(t *testing.T) {
+	body := sseLines(
+		mustJSON(t, dto.ChatCompletionsStreamResponse{
+			Id: "chatcmpl-buffered", Model: "gpt-test", Created: 1700000000,
+			Choices: []dto.ChatCompletionsStreamResponseChoice{
+				{Index: 0, Delta: dto.ChatCompletionsStreamResponseChoiceDelta{Role: "assistant", Content: strPtr("hello")}, FinishReason: strPtr("stop")},
+			},
+			Usage: &dto.Usage{PromptTokens: 2, CompletionTokens: 1, TotalTokens: 3},
+		}),
+		"[DONE]",
+	)
+
+	tests := []struct {
+		name       string
+		format     types.RelayFormat
+		assertBody func(*testing.T, []byte)
+	}{
+		{
+			name:   "responses",
+			format: types.RelayFormatOpenAIResponses,
+			assertBody: func(t *testing.T, responseBody []byte) {
+				var response dto.OpenAIResponsesResponse
+				require.NoError(t, common.Unmarshal(responseBody, &response))
+				assert.Equal(t, "response", response.Object)
+				require.Len(t, response.Output, 1)
+				assert.Equal(t, "hello", response.Output[0].Content[0].Text)
+				assert.Equal(t, 3, response.Usage.TotalTokens)
+			},
+		},
+		{
+			name:   "messages",
+			format: types.RelayFormatClaude,
+			assertBody: func(t *testing.T, responseBody []byte) {
+				var response dto.ClaudeResponse
+				require.NoError(t, common.Unmarshal(responseBody, &response))
+				assert.Equal(t, "message", response.Type)
+				require.Len(t, response.Content, 1)
+				assert.Equal(t, "hello", response.Content[0].GetText())
+				require.NotNil(t, response.Usage)
+				assert.Equal(t, 2, response.Usage.InputTokens)
+				assert.Equal(t, 1, response.Usage.OutputTokens)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gin.SetMode(gin.TestMode)
+			recorder := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(recorder)
+			c.Request = httptest.NewRequest(http.MethodPost, "/", nil)
+			info := &relaycommon.RelayInfo{
+				RelayFormat: tt.format,
+				ChannelMeta: &relaycommon.ChannelMeta{UpstreamModelName: "gpt-test"},
+			}
+			resp := &http.Response{
+				StatusCode: http.StatusOK,
+				Header:     http.Header{"Content-Type": []string{"text/event-stream"}},
+				Body:       io.NopCloser(bytes.NewBufferString(body)),
+			}
+
+			usage, newAPIError := OaiStreamBufferHandler(c, info, resp)
+			require.Nil(t, newAPIError)
+			require.NotNil(t, usage)
+			assert.Equal(t, "application/json", recorder.Header().Get("Content-Type"))
+			tt.assertBody(t, recorder.Body.Bytes())
+		})
+	}
 }

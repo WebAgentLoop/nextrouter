@@ -257,15 +257,19 @@ func markContentFilterReject(c *gin.Context, choices []dto.OpenAITextResponseCho
 }
 
 // marshalTextResponse converts an OpenAITextResponse to the client's expected
-// relay format (Claude / Gemini / OpenAI) and marshals it. Shared between
-// OpenaiHandler and OaiStreamBufferHandler so the conversion logic stays in
-// one place.
-func marshalTextResponse(textResponse *dto.OpenAITextResponse, info *relaycommon.RelayInfo) ([]byte, error) {
+// relay format and marshals it.
+func marshalTextResponse(c *gin.Context, textResponse *dto.OpenAITextResponse, info *relaycommon.RelayInfo) ([]byte, error) {
 	switch info.RelayFormat {
 	case types.RelayFormatClaude:
 		return common.Marshal(service.ResponseOpenAI2Claude(textResponse, info))
 	case types.RelayFormatGemini:
 		return common.Marshal(service.ResponseOpenAI2Gemini(textResponse, info))
+	case types.RelayFormatOpenAIResponses:
+		result, err := relayconvert.ConvertResponse(c, info, types.RelayFormatOpenAIResponses, textResponse)
+		if err != nil {
+			return nil, err
+		}
+		return common.Marshal(result.Value)
 	default:
 		return common.Marshal(textResponse)
 	}
