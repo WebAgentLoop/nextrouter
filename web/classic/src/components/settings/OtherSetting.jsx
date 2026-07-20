@@ -245,18 +245,18 @@ const OtherSetting = () => {
       // Option 1: Use a public CORS proxy service
       // const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
       // const res = await API.get(
-      //   `${proxyUrl}https://api.github.com/repos/Calcium-Ion/new-api/releases/latest`,
+      //   `${proxyUrl}https://api.github.com/repos/WebAgentLoop/nextrouter/releases/latest`,
       // );
 
       // Option 2: Use the JSON proxy approach which often works better with GitHub API
       const res = await fetch(
-        'https://api.github.com/repos/Calcium-Ion/new-api/releases/latest',
+        'https://api.github.com/repos/WebAgentLoop/nextrouter/releases/latest',
         {
           headers: {
             Accept: 'application/json',
             'Content-Type': 'application/json',
             // Adding User-Agent which is often required by GitHub API
-            'User-Agent': 'new-api-update-checker',
+            'User-Agent': 'nextrouter-update-checker',
           },
         },
       ).then((response) => response.json());
