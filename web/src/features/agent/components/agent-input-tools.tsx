@@ -26,16 +26,21 @@ import {
   PromptInputTools,
 } from '@/components/ai-elements/prompt-input'
 import { ConfirmDialog } from '@/components/confirm-dialog'
+import { Spinner } from '@/components/ui/spinner'
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 
+import type { ExaMcpStatus } from '../hooks/use-exa-mcp'
+
 interface AgentInputToolsProps {
   disabled?: boolean
   hasMessages: boolean
   onClearMessages: () => void
+  exaMcpStatus: ExaMcpStatus
+  onToggleExaMcp: () => void
 }
 
 export function AgentInputTools(props: AgentInputToolsProps) {
@@ -46,6 +51,13 @@ export function AgentInputTools(props: AgentInputToolsProps) {
     props.onClearMessages()
     setClearConfirmOpen(false)
     toast.success(t('Conversation cleared'))
+  }
+
+  let searchLabel = t('Connect web search')
+  if (props.exaMcpStatus === 'connecting') {
+    searchLabel = t('Connecting to web search')
+  } else if (props.exaMcpStatus === 'connected') {
+    searchLabel = t('Disconnect web search')
   }
 
   return (
@@ -76,18 +88,23 @@ export function AgentInputTools(props: AgentInputToolsProps) {
           <TooltipTrigger
             render={
               <PromptInputButton
-                aria-label={t('Search')}
-                className='text-muted-foreground hover:text-foreground hover:bg-muted/70 font-medium'
-                disabled={props.disabled}
-                onClick={() => toast.info(t('Search feature in development'))}
+                aria-label={searchLabel}
+                aria-pressed={props.exaMcpStatus === 'connected'}
+                className='text-muted-foreground hover:text-foreground hover:bg-muted/70 aria-pressed:bg-primary/10 aria-pressed:text-primary font-medium'
+                disabled={props.disabled || props.exaMcpStatus === 'connecting'}
+                onClick={props.onToggleExaMcp}
                 variant='ghost'
               >
-                <GlobeIcon size={16} />
+                {props.exaMcpStatus === 'connecting' ? (
+                  <Spinner />
+                ) : (
+                  <GlobeIcon size={16} />
+                )}
               </PromptInputButton>
             }
           />
           <TooltipContent>
-            <p>{t('Search')}</p>
+            <p>{searchLabel}</p>
           </TooltipContent>
         </Tooltip>
 

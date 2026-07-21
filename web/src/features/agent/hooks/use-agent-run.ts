@@ -29,6 +29,7 @@ import {
   getTool,
   listToolDefinitions,
 } from '../lib'
+import type { RegisteredTool } from '../lib/tools/registry'
 import type {
   AgentConfig,
   AgentMessage,
@@ -48,6 +49,7 @@ interface UseAgentRunOptions {
   updateMessages: (updater: (prev: AgentMessage[]) => AgentMessage[]) => void
   // Seed messages at run start (the persisted conversation before this turn).
   messagesRef: { current: AgentMessage[] }
+  additionalTools?: RegisteredTool[]
 }
 
 function createId(): string {
@@ -88,6 +90,7 @@ export function useAgentRun({
   setStatus,
   updateMessages,
   messagesRef,
+  additionalTools = [],
 }: UseAgentRunOptions) {
   const { t } = useTranslation()
   const { streamOneRound, closeStream } = useAgentStream()
@@ -130,7 +133,7 @@ export function useAgentRun({
           const payload = buildAgentPayload(
             roundMessages,
             config,
-            listToolDefinitions()
+            listToolDefinitions(additionalTools)
           )
 
           const assistantId = createId()
@@ -234,7 +237,7 @@ export function useAgentRun({
               ),
             }))
 
-            const tool = getTool(call.name)
+            const tool = getTool(call.name, additionalTools)
             let execResult: {
               content: string
               isError?: boolean
@@ -324,7 +327,7 @@ export function useAgentRun({
         abortControllerRef.current = null
       }
     },
-    [config, setStatus, streamOneRound, t, updateMessages]
+    [additionalTools, config, setStatus, streamOneRound, t, updateMessages]
   )
 
   const run = useCallback(

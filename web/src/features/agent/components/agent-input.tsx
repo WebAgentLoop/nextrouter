@@ -29,6 +29,7 @@ import {
 } from '@/components/ai-elements/prompt-input'
 import { ModelGroupSelector } from '@/components/model-group-selector'
 
+import type { ExaMcpStatus } from '../hooks/use-exa-mcp'
 import type { AgentConfig, GroupOption, ModelOption } from '../types'
 import { AgentInputTools } from './agent-input-tools'
 
@@ -45,6 +46,8 @@ interface AgentInputProps {
   groups: GroupOption[]
   hasMessages: boolean
   onClearMessages: () => void
+  exaMcpStatus: ExaMcpStatus
+  onToggleExaMcp: () => void
 }
 
 export function AgentInput({
@@ -60,6 +63,8 @@ export function AgentInput({
   groups,
   hasMessages,
   onClearMessages,
+  exaMcpStatus,
+  onToggleExaMcp,
 }: AgentInputProps) {
   const { t } = useTranslation()
   const [text, setText] = useState('')
@@ -122,6 +127,8 @@ export function AgentInput({
                 disabled={disabled}
                 hasMessages={hasMessages}
                 onClearMessages={onClearMessages}
+                exaMcpStatus={exaMcpStatus}
+                onToggleExaMcp={onToggleExaMcp}
               />
               <div className='flex items-center gap-1.5 md:hidden'>
                 {isGenerating ? (

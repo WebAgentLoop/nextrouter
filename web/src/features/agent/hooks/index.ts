@@ -18,6 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 export { useAgentRun } from './use-agent-run'
 export { useAgentState } from './use-agent-state'
+export { useExaMcp } from './use-exa-mcp'
 export {
   AgentStreamError,
   useAgentStream,

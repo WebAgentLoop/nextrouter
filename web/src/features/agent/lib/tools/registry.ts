@@ -21,7 +21,7 @@ import { calculatorTool, type ToolExecuteResult } from './builtins/calculator'
 
 export type { ToolExecuteResult, ToolExecutor } from './builtins/calculator'
 
-interface RegisteredTool {
+export interface RegisteredTool {
   definition: ToolDefinition
   execute: (args: unknown, signal: AbortSignal) => Promise<ToolExecuteResult>
 }
@@ -36,13 +36,21 @@ const toolsByName = new Map<string, RegisteredTool>(
 /**
  * Look up a registered tool by its function name.
  */
-export function getTool(name: string): RegisteredTool | undefined {
-  return toolsByName.get(name)
+export function getTool(
+  name: string,
+  additionalTools: RegisteredTool[] = []
+): RegisteredTool | undefined {
+  return (
+    additionalTools.find((tool) => tool.definition.function.name === name) ??
+    toolsByName.get(name)
+  )
 }
 
 /**
  * Return the OpenAI function-calling definitions for every registered tool.
  */
-export function listToolDefinitions(): ToolDefinition[] {
-  return tools.map((tool) => tool.definition)
+export function listToolDefinitions(
+  additionalTools: RegisteredTool[] = []
+): ToolDefinition[] {
+  return [...tools, ...additionalTools].map((tool) => tool.definition)
 }

@@ -22,10 +22,11 @@ import { AgentChat } from './components/agent-chat'
 import { AgentHeader } from './components/agent-header'
 import { AgentHistorySheet } from './components/agent-history-sheet'
 import { AgentInput } from './components/agent-input'
-import { useAgentRun, useAgentState } from './hooks'
+import { useAgentRun, useAgentState, useExaMcp } from './hooks'
 import type { AgentMessage } from './types'
 
 export function Agent() {
+  const exaMcp = useExaMcp()
   const {
     messages,
     updateMessages,
@@ -63,6 +64,7 @@ export function Agent() {
     setStatus,
     updateMessages,
     messagesRef,
+    additionalTools: exaMcp.tools,
   })
 
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -182,9 +184,11 @@ export function Agent() {
           isGenerating={isGenerating}
           models={models}
           onClearMessages={handleClearMessages}
+          exaMcpStatus={exaMcp.status}
           onGroupChange={(value) => updateConfig('group', value)}
           onGroupChangeCommitted={handleGroupChangeCommitted}
           onModelChange={(value) => updateConfig('model', value)}
+          onToggleExaMcp={exaMcp.toggle}
           onStop={stop}
           onSubmit={handleRun}
         />
