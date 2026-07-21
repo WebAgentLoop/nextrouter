@@ -56,6 +56,13 @@ const defaultOperationsSettings: OperationsSettings = {
   'perf_metrics_setting.flush_interval': 5,
   'perf_metrics_setting.bucket_time': 'hour',
   'perf_metrics_setting.retention_days': 0,
+  'agent_setting.system_prompt': '',
+  'agent_setting.default_model': 'gpt-4o',
+  'agent_setting.default_group': 'default',
+  'agent_setting.temperature': null,
+  'agent_setting.max_tokens': null,
+  'agent_setting.max_iterations': 10,
+  AutoGroups: '[]',
 }
 
 export function OperationsSettings() {

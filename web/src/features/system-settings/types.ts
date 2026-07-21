@@ -31,7 +31,7 @@ export type SystemOptionsResponse = {
 
 export type UpdateOptionRequest = {
   key: string
-  value: string | boolean | number
+  value: string | boolean | number | null
 }
 
 export type UpdateOptionResponse = {
@@ -360,6 +360,13 @@ export type OperationsSettings = {
   'perf_metrics_setting.flush_interval': number
   'perf_metrics_setting.bucket_time': 'hour' | 'minute' | '5min'
   'perf_metrics_setting.retention_days': number
+  'agent_setting.system_prompt': string
+  'agent_setting.default_model': string
+  'agent_setting.default_group': string
+  'agent_setting.temperature': number | null
+  'agent_setting.max_tokens': number | null
+  'agent_setting.max_iterations': number
+  AutoGroups: string
 }
 
 export type SecuritySettings = {

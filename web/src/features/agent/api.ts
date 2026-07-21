@@ -18,8 +18,36 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { api } from '@/lib/api'
 
-import { API_ENDPOINTS } from './constants'
-import type { GroupOption, ModelOption } from './types'
+import { API_ENDPOINTS, DEFAULT_AGENT_SETTINGS } from './constants'
+import type { AgentSettings, GroupOption, ModelOption } from './types'
+
+export async function getAgentSettings(): Promise<AgentSettings> {
+  const res = await api.get(API_ENDPOINTS.SETTINGS)
+  const data = res.data?.data as Partial<AgentSettings> | undefined
+
+  if (!res.data?.success || !data) {
+    throw new Error('Failed to load agent settings')
+  }
+
+  return {
+    system_prompt:
+      typeof data.system_prompt === 'string' ? data.system_prompt : '',
+    default_model:
+      typeof data.default_model === 'string'
+        ? data.default_model
+        : DEFAULT_AGENT_SETTINGS.default_model,
+    default_group:
+      typeof data.default_group === 'string'
+        ? data.default_group
+        : DEFAULT_AGENT_SETTINGS.default_group,
+    temperature: typeof data.temperature === 'number' ? data.temperature : null,
+    max_tokens: typeof data.max_tokens === 'number' ? data.max_tokens : null,
+    max_iterations:
+      typeof data.max_iterations === 'number'
+        ? data.max_iterations
+        : DEFAULT_AGENT_SETTINGS.max_iterations,
+  }
+}
 
 /**
  * Fetch the models available to the current user for a given group.

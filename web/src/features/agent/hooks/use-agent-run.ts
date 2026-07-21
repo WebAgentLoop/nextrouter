@@ -20,7 +20,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
-import { ERROR_MESSAGES, MAX_AGENT_ITERATIONS } from '../constants'
+import { ABSOLUTE_MAX_AGENT_ITERATIONS, ERROR_MESSAGES } from '../constants'
 import {
   applyAgentEdit,
   AgentStreamChunkBuffer,
@@ -114,7 +114,11 @@ export function useAgentRun({
       commit()
 
       try {
-        for (let iteration = 0; iteration < MAX_AGENT_ITERATIONS; iteration++) {
+        const iterationLimit = Math.min(
+          config.max_iterations,
+          ABSOLUTE_MAX_AGENT_ITERATIONS
+        )
+        for (let iteration = 0; iteration < iterationLimit; iteration++) {
           if (controller.signal.aborted) {
             setStatus('stopped')
             return

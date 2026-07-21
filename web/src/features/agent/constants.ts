@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import type { AgentConfig } from './types'
+import type { AgentConfig, AgentSettings } from './types'
 
 // API endpoints — the agent reuses the playground chat completions relay,
 // which is a transparent OpenAI-format passthrough that already supports
@@ -25,6 +25,7 @@ export const API_ENDPOINTS = {
   CHAT_COMPLETIONS: '/pg/chat/completions',
   USER_MODELS: '/api/user/models',
   USER_GROUPS: '/api/user/self/groups',
+  SETTINGS: '/api/user/agent/settings',
 } as const
 
 // Safe fallback group; auto-group is only selected when the backend confirms
@@ -33,13 +34,24 @@ export const DEFAULT_GROUP = 'default' as const
 
 // Hard upper bound on agent iterations. Prevents infinite tool-call loops
 // when a model keeps requesting tools without converging on a final answer.
-export const MAX_AGENT_ITERATIONS = 10
+export const ABSOLUTE_MAX_AGENT_ITERATIONS = 50
+
+export const DEFAULT_AGENT_SETTINGS: AgentSettings = {
+  system_prompt: '',
+  default_model: 'gpt-4o',
+  default_group: DEFAULT_GROUP,
+  temperature: null,
+  max_tokens: null,
+  max_iterations: 10,
+}
 
 export const DEFAULT_AGENT_CONFIG: AgentConfig = {
-  model: 'gpt-4o',
-  group: DEFAULT_GROUP,
-  temperature: 0.7,
-  max_tokens: 4096,
+  model: DEFAULT_AGENT_SETTINGS.default_model,
+  group: DEFAULT_AGENT_SETTINGS.default_group,
+  system_prompt: DEFAULT_AGENT_SETTINGS.system_prompt,
+  temperature: DEFAULT_AGENT_SETTINGS.temperature,
+  max_tokens: DEFAULT_AGENT_SETTINGS.max_tokens,
+  max_iterations: DEFAULT_AGENT_SETTINGS.max_iterations,
   stream: true,
 }
 

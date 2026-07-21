@@ -28,6 +28,10 @@ export type {
 } from './tools/builtins/calculator'
 export { getTool, listToolDefinitions } from './tools/registry'
 export {
+  resolveAgentModel,
+  resolveInitialAgentGroup,
+} from './config/resolve-agent-config'
+export {
   ToolCallAccumulator,
   parseToolCallArguments,
 } from './stream/parse-tool-calls'

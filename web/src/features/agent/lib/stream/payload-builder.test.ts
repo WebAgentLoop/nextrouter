@@ -7,8 +7,10 @@ import { buildAgentPayload, repairMessageSequence } from './payload-builder'
 const config: AgentConfig = {
   model: 'gpt-4o',
   group: 'default',
+  system_prompt: '',
   temperature: 0.7,
   max_tokens: 4096,
+  max_iterations: 10,
   stream: true,
 }
 

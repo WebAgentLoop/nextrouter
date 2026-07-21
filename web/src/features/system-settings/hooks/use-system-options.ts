@@ -63,6 +63,21 @@ function parseOptionValueSafe<T>(
     return { success: true, value: parsed as T }
   }
 
+  if (defaultValue === null) {
+    if (value === 'null') {
+      return { success: true, value: null as T }
+    }
+    const parsed = Number(value)
+    if (!Number.isFinite(parsed)) {
+      return {
+        success: false,
+        error: `Invalid nullable number: "${value}"`,
+        fallback: defaultValue,
+      }
+    }
+    return { success: true, value: parsed as T }
+  }
+
   if (Array.isArray(defaultValue)) {
     try {
       const parsed = JSON.parse(value)
@@ -100,7 +115,7 @@ function parseOptionValueSafe<T>(
 }
 
 export function getOptionValue<
-  T extends Record<string, string | number | boolean | unknown[]>,
+  T extends Record<string, string | number | boolean | null | unknown[]>,
 >(options: Array<{ key: string; value: string }> | undefined, defaults: T): T {
   if (!options) return defaults
 

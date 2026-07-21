@@ -145,6 +145,10 @@ export function buildAgentPayload(
     .map(toApiMessage)
     .filter((message): message is ApiChatMessage => message !== null)
 
+  if (config.system_prompt) {
+    apiMessages.unshift({ role: 'system', content: config.system_prompt })
+  }
+
   const payload: ChatCompletionRequest = {
     model: config.model,
     group: config.group,
@@ -153,8 +157,10 @@ export function buildAgentPayload(
     tools: tools ?? listToolDefinitions(),
   }
 
-  payload.temperature = config.temperature
-  if (config.max_tokens) {
+  if (config.temperature !== null) {
+    payload.temperature = config.temperature
+  }
+  if (config.max_tokens !== null) {
     payload.max_tokens = config.max_tokens
   }
 

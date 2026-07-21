@@ -18,8 +18,8 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { getUserGroups, getUserModels } from '../api'
-import { DEFAULT_AGENT_CONFIG, DEFAULT_GROUP } from '../constants'
+import { getAgentSettings, getUserGroups, getUserModels } from '../api'
+import { DEFAULT_AGENT_CONFIG, DEFAULT_AGENT_SETTINGS } from '../constants'
 import {
   clearActiveSessionId,
   clearLegacyConversation,
@@ -32,6 +32,8 @@ import {
   listSessionSummaries,
   loadLegacyConversation,
   removeMessageTurn,
+  resolveAgentModel,
+  resolveInitialAgentGroup,
   sanitizePersistedMessages,
   saveSession,
   setActiveSessionId,
@@ -60,6 +62,7 @@ export function useAgentState() {
   const [models, setModels] = useState<ModelOption[]>([])
   const [groups, setGroups] = useState<GroupOption[]>([])
   const [isLoadingMessages, setIsLoadingMessages] = useState(true)
+  const [isLoadingConfig, setIsLoadingConfig] = useState(true)
   const [activeSessionId, setActiveSessionIdState] = useState<string | null>(
     null
   )
@@ -77,6 +80,7 @@ export function useAgentState() {
   const sessionTitleRef = useRef<string>(DEFAULT_SESSION_TITLE)
   const statusRef = useRef<AgentRunStatus>(status)
   const modelRequestIdRef = useRef(0)
+  const defaultModelRef = useRef(DEFAULT_AGENT_SETTINGS.default_model)
 
   useEffect(() => {
     statusRef.current = status
@@ -429,15 +433,17 @@ export function useAgentState() {
 
     void (async () => {
       try {
-        const loadedGroups = await getUserGroups()
+        const [settingsResult, loadedGroups] = await Promise.all([
+          getAgentSettings().catch(() => DEFAULT_AGENT_SETTINGS),
+          getUserGroups(),
+        ])
         if (cancelled) {
           return
         }
         setGroups(loadedGroups)
 
-        const group = loadedGroups.some((g) => g.value === DEFAULT_GROUP)
-          ? DEFAULT_GROUP
-          : (loadedGroups[0]?.value ?? DEFAULT_GROUP)
+        defaultModelRef.current = settingsResult.default_model
+        const group = resolveInitialAgentGroup(loadedGroups, settingsResult)
 
         const loadedModels = await getUserModels(group)
         if (cancelled || requestId !== modelRequestIdRef.current) {
@@ -446,21 +452,28 @@ export function useAgentState() {
         setModels(loadedModels)
 
         setConfig((prev) => {
-          const modelStillAvailable = loadedModels.some(
-            (m) => m.value === prev.model
-          )
           return {
             ...prev,
             group,
-            model: modelStillAvailable
-              ? prev.model
-              : (loadedModels[0]?.value ?? prev.model),
+            model: resolveAgentModel(
+              loadedModels,
+              settingsResult.default_model,
+              settingsResult.default_model
+            ),
+            system_prompt: settingsResult.system_prompt,
+            temperature: settingsResult.temperature,
+            max_tokens: settingsResult.max_tokens,
+            max_iterations: settingsResult.max_iterations,
           }
         })
       } catch {
         if (!cancelled && requestId === modelRequestIdRef.current) {
           setGroups([])
           setModels([])
+        }
+      } finally {
+        if (!cancelled && requestId === modelRequestIdRef.current) {
+          setIsLoadingConfig(false)
         }
       }
     })()
@@ -488,12 +501,9 @@ export function useAgentState() {
     }
     setModels(loaded)
     setConfig((prev) => {
-      const modelStillAvailable = loaded.some((m) => m.value === prev.model)
       return {
         ...prev,
-        model: modelStillAvailable
-          ? prev.model
-          : (loaded[0]?.value ?? prev.model),
+        model: resolveAgentModel(loaded, prev.model, defaultModelRef.current),
       }
     })
   }, [])
@@ -510,6 +520,7 @@ export function useAgentState() {
     models,
     groups,
     isLoadingMessages,
+    isLoadingConfig,
     reloadModels,
     activeSessionId,
     sessionTitle,

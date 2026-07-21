@@ -38,6 +38,7 @@ export function Agent() {
     models,
     groups,
     isLoadingMessages,
+    isLoadingConfig,
     reloadModels,
     activeSessionId,
     sessionTitle,
@@ -175,7 +176,7 @@ export function Agent() {
       <div className='mx-auto w-full max-w-4xl'>
         <AgentInput
           config={config}
-          disabled={isGenerating || isLoadingMessages}
+          disabled={isGenerating || isLoadingMessages || isLoadingConfig}
           groups={groups}
           hasMessages={messages.length > 0}
           isGenerating={isGenerating}

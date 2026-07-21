@@ -2,14 +2,18 @@ package controller
 
 import (
 	"fmt"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/i18n"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/relay/helper"
 	"github.com/QuantumNous/new-api/setting"
+	"github.com/QuantumNous/new-api/setting/agent_setting"
 	"github.com/QuantumNous/new-api/setting/console_setting"
 	"github.com/QuantumNous/new-api/setting/operation_setting"
 	"github.com/QuantumNous/new-api/setting/ratio_setting"
@@ -131,6 +135,12 @@ func UpdateOption(c *gin.Context) {
 		return
 	}
 	switch option.Value.(type) {
+	case nil:
+		if option.Key != "agent_setting.temperature" && option.Key != "agent_setting.max_tokens" {
+			common.ApiErrorMsg(c, "Option value cannot be null")
+			return
+		}
+		option.Value = "null"
 	case bool:
 		option.Value = common.Interface2String(option.Value.(bool))
 	case float64:
@@ -149,6 +159,61 @@ func UpdateOption(c *gin.Context) {
 	default:
 		if isPaymentComplianceOptionKey(option.Key) {
 			common.ApiErrorMsg(c, "合规确认字段不允许通过通用设置接口修改")
+			return
+		}
+	}
+	value := option.Value.(string)
+	switch option.Key {
+	case "agent_setting.system_prompt":
+		if utf8.RuneCountInString(value) > agent_setting.MaxSystemPromptRunes {
+			common.ApiErrorMsg(c, "Agent system prompt is too long")
+			return
+		}
+	case "agent_setting.default_model":
+		value = strings.TrimSpace(value)
+		if value != "" {
+			found := false
+			for _, enabledModel := range model.GetEnabledModels() {
+				if enabledModel == value {
+					found = true
+					break
+				}
+			}
+			if !found {
+				common.ApiErrorMsg(c, "Agent default model is not enabled")
+				return
+			}
+		}
+		option.Value = value
+	case "agent_setting.default_group":
+		value = strings.TrimSpace(value)
+		_, groupExists := ratio_setting.GetGroupRatioCopy()[value]
+		autoConfigured := value == "auto" && len(setting.GetAutoGroups()) > 0
+		if value != "" && !groupExists && !autoConfigured {
+			common.ApiErrorMsg(c, "Agent default group is not available")
+			return
+		}
+		option.Value = value
+	case "agent_setting.temperature":
+		if value != "null" {
+			temperature, parseErr := strconv.ParseFloat(value, 64)
+			if parseErr != nil || math.IsNaN(temperature) || math.IsInf(temperature, 0) || temperature < 0 || temperature > 2 {
+				common.ApiErrorMsg(c, "Agent temperature must be null or between 0 and 2")
+				return
+			}
+		}
+	case "agent_setting.max_tokens":
+		if value != "null" {
+			maxTokens, parseErr := strconv.ParseUint(value, 10, 64)
+			if parseErr != nil || maxTokens == 0 || maxTokens > uint64(helper.MaxTokensLimit) {
+				common.ApiErrorMsg(c, "Agent max tokens is invalid")
+				return
+			}
+		}
+	case "agent_setting.max_iterations":
+		maxIterations, parseErr := strconv.Atoi(value)
+		if parseErr != nil || maxIterations < 1 || maxIterations > agent_setting.MaxIterationsLimit {
+			common.ApiErrorMsg(c, "Agent max iterations must be between 1 and 50")
 			return
 		}
 	}

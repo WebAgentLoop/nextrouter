@@ -25,6 +25,7 @@ import { PerformanceSection } from '../maintenance/performance-section'
 import { UpdateCheckerSection } from '../maintenance/update-checker-section'
 import type { OperationsSettings } from '../types'
 import { createSectionRegistry } from '../utils/section-registry'
+import { AgentSettingsSection } from './agent-settings-section'
 
 const OPERATIONS_SECTIONS = [
   {
@@ -36,6 +37,23 @@ const OPERATIONS_SECTIONS = [
           DefaultCollapseSidebar: settings.DefaultCollapseSidebar,
           DemoSiteEnabled: settings.DemoSiteEnabled,
           SelfUseModeEnabled: settings.SelfUseModeEnabled,
+        }}
+      />
+    ),
+  },
+  {
+    id: 'agent',
+    titleKey: 'Agent settings',
+    build: (settings: OperationsSettings) => (
+      <AgentSettingsSection
+        autoGroups={settings.AutoGroups}
+        defaultValues={{
+          system_prompt: settings['agent_setting.system_prompt'],
+          default_model: settings['agent_setting.default_model'],
+          default_group: settings['agent_setting.default_group'],
+          temperature: settings['agent_setting.temperature'],
+          max_tokens: settings['agent_setting.max_tokens'],
+          max_iterations: settings['agent_setting.max_iterations'],
         }}
       />
     ),

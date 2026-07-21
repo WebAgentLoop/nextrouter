@@ -78,9 +78,16 @@ export interface ToolDefinition {
 export interface AgentConfig {
   model: string
   group: string
-  temperature: number
-  max_tokens: number
+  system_prompt: string
+  temperature: number | null
+  max_tokens: number | null
+  max_iterations: number
   stream: boolean
+}
+
+export type AgentSettings = Omit<AgentConfig, 'model' | 'group' | 'stream'> & {
+  default_model: string
+  default_group: string
 }
 
 export interface ModelOption {
