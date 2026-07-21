@@ -292,6 +292,12 @@ func UpdateOptionsBulk(values map[string]string) error {
 
 func updateOptionMap(key string, value string) (err error) {
 	value = normalizeOptionValue(key, value)
+	if key == retiredThemeOptionKey {
+		common.OptionMapRWMutex.Lock()
+		delete(common.OptionMap, key)
+		common.OptionMapRWMutex.Unlock()
+		return nil
+	}
 	common.OptionMapRWMutex.Lock()
 	defer common.OptionMapRWMutex.Unlock()
 	common.OptionMap[key] = value
@@ -648,8 +654,6 @@ func handleConfigUpdate(key, value string) bool {
 		ratio_setting.InvalidateExposedDataCache()
 	} else if configName == "global" && configKey == "model_square_only_configured_models" {
 		InvalidatePricingCache()
-	} else if configName == "theme" {
-		system_setting.UpdateAndSyncTheme()
 	}
 
 	return true // 已处理
