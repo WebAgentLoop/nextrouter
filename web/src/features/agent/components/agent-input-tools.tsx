@@ -38,7 +38,9 @@ import type { ExaMcpStatus } from '../hooks/use-exa-mcp'
 interface AgentInputToolsProps {
   disabled?: boolean
   hasMessages: boolean
+  modelDocumentationEnabled: boolean
   onClearMessages: () => void
+  onToggleModelDocumentation: () => void
   exaMcpStatus: ExaMcpStatus
   onToggleExaMcp: () => void
 }
@@ -60,6 +62,10 @@ export function AgentInputTools(props: AgentInputToolsProps) {
     searchLabel = t('Disconnect web search')
   }
 
+  const documentationLabel = props.modelDocumentationEnabled
+    ? t('Disable model documentation')
+    : t('Enable model documentation')
+
   return (
     <>
       <PromptInputTools className='bg-background/70 border-border/60 rounded-lg border p-1 shadow-xs'>
@@ -67,12 +73,11 @@ export function AgentInputTools(props: AgentInputToolsProps) {
           <TooltipTrigger
             render={
               <PromptInputButton
-                aria-label={t('API documentation')}
-                className='text-muted-foreground hover:text-foreground hover:bg-muted/70 font-medium'
+                aria-label={documentationLabel}
+                aria-pressed={props.modelDocumentationEnabled}
+                className='text-muted-foreground hover:text-foreground hover:bg-muted/70 aria-pressed:bg-primary/10 aria-pressed:text-primary font-medium'
                 disabled={props.disabled}
-                onClick={() =>
-                  toast.info(t('API documentation assistant is in development'))
-                }
+                onClick={props.onToggleModelDocumentation}
                 variant='ghost'
               >
                 <BookOpenIcon size={16} />
@@ -80,7 +85,7 @@ export function AgentInputTools(props: AgentInputToolsProps) {
             }
           />
           <TooltipContent>
-            <p>{t('API documentation')}</p>
+            <p>{documentationLabel}</p>
           </TooltipContent>
         </Tooltip>
 

@@ -26,6 +26,25 @@ export interface RegisteredTool {
   execute: (args: unknown, signal: AbortSignal) => Promise<ToolExecuteResult>
 }
 
+export interface AgentToolPack {
+  id: string
+  tools: RegisteredTool[]
+  systemInstructions?: string
+}
+
+export function getToolPackTools(toolPacks: AgentToolPack[]): RegisteredTool[] {
+  return toolPacks.flatMap((toolPack) => toolPack.tools)
+}
+
+export function getToolPackSystemInstructions(
+  toolPacks: AgentToolPack[]
+): string[] {
+  return toolPacks.flatMap((toolPack) => {
+    const instructions = toolPack.systemInstructions?.trim()
+    return instructions ? [instructions] : []
+  })
+}
+
 // Static, deterministic registry of built-in tools. Add new tools here.
 const tools: RegisteredTool[] = [calculatorTool]
 

@@ -27,6 +27,11 @@ export type PricingVendor = {
   description?: string
 }
 
+export type PricingEndpoint = {
+  path?: string
+  method?: string
+}
+
 export type PricingModel = {
   id: number
   model_name: string
@@ -96,7 +101,7 @@ export type PricingData = {
   vendors: PricingVendor[]
   group_ratio: Record<string, number>
   usable_group: Record<string, { desc: string; ratio: number }>
-  supported_endpoint: Record<string, string>
+  supported_endpoint: Record<string, PricingEndpoint>
   auto_groups: string[]
 }
 

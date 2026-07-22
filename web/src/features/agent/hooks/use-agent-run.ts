@@ -27,9 +27,11 @@ import {
   buildAgentPayload,
   computeRegenerateSeed,
   getTool,
+  getToolPackSystemInstructions,
+  getToolPackTools,
   listToolDefinitions,
 } from '../lib'
-import type { RegisteredTool } from '../lib/tools/registry'
+import type { AgentToolPack, RegisteredTool } from '../lib/tools/registry'
 import type {
   AgentConfig,
   AgentMessage,
@@ -50,6 +52,7 @@ interface UseAgentRunOptions {
   // Seed messages at run start (the persisted conversation before this turn).
   messagesRef: { current: AgentMessage[] }
   additionalTools?: RegisteredTool[]
+  toolPacks?: AgentToolPack[]
 }
 
 function createId(): string {
@@ -91,6 +94,7 @@ export function useAgentRun({
   updateMessages,
   messagesRef,
   additionalTools = [],
+  toolPacks = [],
 }: UseAgentRunOptions) {
   const { t } = useTranslation()
   const { streamOneRound, closeStream } = useAgentStream()
@@ -117,6 +121,9 @@ export function useAgentRun({
       commit()
 
       try {
+        const activeTools = [...additionalTools, ...getToolPackTools(toolPacks)]
+        const toolPackSystemInstructions =
+          getToolPackSystemInstructions(toolPacks)
         const iterationLimit = Math.min(
           config.max_iterations,
           ABSOLUTE_MAX_AGENT_ITERATIONS
@@ -133,7 +140,8 @@ export function useAgentRun({
           const payload = buildAgentPayload(
             roundMessages,
             config,
-            listToolDefinitions(additionalTools)
+            listToolDefinitions(activeTools),
+            toolPackSystemInstructions
           )
 
           const assistantId = createId()
@@ -237,7 +245,7 @@ export function useAgentRun({
               ),
             }))
 
-            const tool = getTool(call.name, additionalTools)
+            const tool = getTool(call.name, activeTools)
             let execResult: {
               content: string
               isError?: boolean
@@ -327,7 +335,15 @@ export function useAgentRun({
         abortControllerRef.current = null
       }
     },
-    [additionalTools, config, setStatus, streamOneRound, t, updateMessages]
+    [
+      additionalTools,
+      config,
+      setStatus,
+      streamOneRound,
+      t,
+      toolPacks,
+      updateMessages,
+    ]
   )
 
   const run = useCallback(

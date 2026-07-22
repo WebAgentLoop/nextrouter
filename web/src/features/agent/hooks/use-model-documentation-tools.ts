@@ -16,13 +16,20 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-export { useAgentRun } from './use-agent-run'
-export { useAgentState } from './use-agent-state'
-export { useExaMcp } from './use-exa-mcp'
-export { useModelDocumentationTools } from './use-model-documentation-tools'
-export {
-  AgentStreamError,
-  useAgentStream,
-  type StreamRoundHandlers,
-  type StreamRoundResult,
-} from './use-agent-stream'
+import { useCallback, useState } from 'react'
+
+import { modelDocumentationToolPack } from '../lib/tools/builtins/model-documentation'
+
+const ENABLED_TOOL_PACKS = [modelDocumentationToolPack]
+const DISABLED_TOOL_PACKS: typeof ENABLED_TOOL_PACKS = []
+
+export function useModelDocumentationTools() {
+  const [enabled, setEnabled] = useState(false)
+  const toggle = useCallback(() => setEnabled((current) => !current), [])
+
+  return {
+    enabled,
+    toggle,
+    toolPacks: enabled ? ENABLED_TOOL_PACKS : DISABLED_TOOL_PACKS,
+  }
+}

@@ -46,6 +46,8 @@ interface AgentInputProps {
   groups: GroupOption[]
   hasMessages: boolean
   onClearMessages: () => void
+  modelDocumentationEnabled: boolean
+  onToggleModelDocumentation: () => void
   exaMcpStatus: ExaMcpStatus
   onToggleExaMcp: () => void
 }
@@ -63,6 +65,8 @@ export function AgentInput({
   groups,
   hasMessages,
   onClearMessages,
+  modelDocumentationEnabled,
+  onToggleModelDocumentation,
   exaMcpStatus,
   onToggleExaMcp,
 }: AgentInputProps) {
@@ -126,7 +130,9 @@ export function AgentInput({
               <AgentInputTools
                 disabled={disabled}
                 hasMessages={hasMessages}
+                modelDocumentationEnabled={modelDocumentationEnabled}
                 onClearMessages={onClearMessages}
+                onToggleModelDocumentation={onToggleModelDocumentation}
                 exaMcpStatus={exaMcpStatus}
                 onToggleExaMcp={onToggleExaMcp}
               />

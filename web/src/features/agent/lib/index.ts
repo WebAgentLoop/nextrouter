@@ -26,7 +26,22 @@ export type {
   ToolExecuteResult,
   ToolExecutor,
 } from './tools/builtins/calculator'
-export { getTool, listToolDefinitions } from './tools/registry'
+export {
+  getTool,
+  getToolPackSystemInstructions,
+  getToolPackTools,
+  listToolDefinitions,
+} from './tools/registry'
+export type { AgentToolPack, RegisteredTool } from './tools/registry'
+export {
+  buildModelCatalogPage,
+  getModelDocumentationTool,
+  listAvailableModelsTool,
+  modelCatalogArgsSchema,
+  modelDocumentationArgsSchema,
+  modelDocumentationToolPack,
+  MODEL_DOCUMENTATION_SYSTEM_INSTRUCTIONS,
+} from './tools/builtins/model-documentation'
 export {
   resolveAgentModel,
   resolveInitialAgentGroup,
