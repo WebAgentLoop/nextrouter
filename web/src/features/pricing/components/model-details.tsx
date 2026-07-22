@@ -30,7 +30,7 @@ import {
   Sparkles,
   Timer,
 } from 'lucide-react'
-import { useMemo } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { CopyButton } from '@/components/copy-button'
@@ -80,6 +80,12 @@ import { DynamicPricingBreakdown } from './dynamic-pricing-breakdown'
 import { ModelBillingModeBadge } from './model-billing-mode-badge'
 import { ModelDetailsApi } from './model-details-api'
 import { ModelDetailsPerformance } from './model-details-performance'
+
+const ModelDocumentation = lazy(() =>
+  import('./model-documentation').then((module) => ({
+    default: module.ModelDocumentation,
+  }))
+)
 
 // ----------------------------------------------------------------------------
 // Local UI helpers
@@ -1120,7 +1126,7 @@ function GroupPricingSection(props: {
   )
 }
 
-const TAB_VALUES = ['overview', 'performance', 'api'] as const
+const TAB_VALUES = ['overview', 'performance', 'api', 'documentation'] as const
 type TabValue = (typeof TAB_VALUES)[number]
 
 const TAB_META: Record<
@@ -1128,6 +1134,7 @@ const TAB_META: Record<
   { icon: React.ComponentType<{ className?: string }>; labelKey: string }
 > = {
   overview: { icon: Info, labelKey: 'Overview' },
+  documentation: { icon: FileText, labelKey: 'Documentation' },
   performance: { icon: HeartPulse, labelKey: 'Performance' },
   api: { icon: Code2, labelKey: 'API' },
 }
@@ -1145,8 +1152,16 @@ export interface ModelDetailsContentProps {
 }
 
 export function ModelDetailsContent(props: ModelDetailsContentProps) {
+  return <ModelDetailsTabbedContent key={props.model.model_name} {...props} />
+}
+
+function ModelDetailsTabbedContent(props: ModelDetailsContentProps) {
   const { t } = useTranslation()
+  const [activeTab, setActiveTab] = useState<TabValue>('overview')
   const showRechargePrice = props.showRechargePrice ?? false
+  const tabValues = props.model.has_documentation
+    ? TAB_VALUES
+    : TAB_VALUES.filter((value) => value !== 'documentation')
 
   const isDynamic =
     props.model.billing_mode === 'tiered_expr' &&
@@ -1156,9 +1171,18 @@ export function ModelDetailsContent(props: ModelDetailsContentProps) {
     <div className='@container/details space-y-4'>
       <ModelHeader model={props.model} />
 
-      <Tabs defaultValue='overview' className='gap-4'>
-        <TabsList className='bg-muted/60 grid w-full grid-cols-3 gap-1 rounded-lg p-1 group-data-horizontal/tabs:h-auto'>
-          {TAB_VALUES.map((value) => {
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as TabValue)}
+        className='gap-4'
+      >
+        <TabsList
+          className={cn(
+            'bg-muted/60 grid w-full gap-1 rounded-lg p-1 group-data-horizontal/tabs:h-auto',
+            props.model.has_documentation ? 'grid-cols-4' : 'grid-cols-3'
+          )}
+        >
+          {tabValues.map((value) => {
             const Icon = TAB_META[value].icon
             return (
               <TabsTrigger
@@ -1202,6 +1226,25 @@ export function ModelDetailsContent(props: ModelDetailsContentProps) {
 
           <ModelBackendDetailsSection model={props.model} />
         </TabsContent>
+
+        {props.model.has_documentation && (
+          <TabsContent value='documentation' className='outline-none'>
+            <Suspense
+              fallback={
+                <div className='space-y-3'>
+                  <Skeleton className='h-7 w-2/5' />
+                  <Skeleton className='h-4 w-full' />
+                  <Skeleton className='h-24 w-full' />
+                </div>
+              }
+            >
+              <ModelDocumentation
+                active={activeTab === 'documentation'}
+                modelName={props.model.model_name}
+              />
+            </Suspense>
+          </TabsContent>
+        )}
 
         <TabsContent value='performance' className='outline-none'>
           <ModelDetailsPerformance model={props.model} />

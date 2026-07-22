@@ -31,6 +31,7 @@ export type PricingModel = {
   id: number
   model_name: string
   description?: string
+  has_documentation: boolean
   icon?: string
   vendor_id?: number
   vendor_name?: string
@@ -97,6 +98,17 @@ export type PricingData = {
   usable_group: Record<string, { desc: string; ratio: number }>
   supported_endpoint: Record<string, string>
   auto_groups: string[]
+}
+
+export type ModelDocumentationData = {
+  model_name: string
+  documentation: string
+}
+
+export type ModelDocumentationResponse = {
+  success: boolean
+  message?: string
+  data?: ModelDocumentationData
 }
 
 export type TokenUnit = 'M' | 'K'

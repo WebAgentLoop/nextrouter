@@ -16,25 +16,12 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { api } from '@/lib/api'
+export const MAX_MODEL_DOCUMENTATION_BYTES = 32 * 1024
 
-import type { ModelDocumentationResponse, PricingData } from './types'
-
-// ----------------------------------------------------------------------------
-// Pricing APIs
-// ----------------------------------------------------------------------------
-
-// Get model pricing data
-export async function getPricing(): Promise<PricingData> {
-  const res = await api.get('/api/pricing')
-  return res.data
+export function getModelDocumentationByteLength(value: string): number {
+  return new TextEncoder().encode(value).length
 }
 
-export async function getModelDocumentation(
-  modelName: string
-): Promise<ModelDocumentationResponse> {
-  const res = await api.get('/api/pricing/documentation', {
-    params: { model: modelName },
-  })
-  return res.data
+export function isModelDocumentationWithinLimit(value: string): boolean {
+  return getModelDocumentationByteLength(value) <= MAX_MODEL_DOCUMENTATION_BYTES
 }

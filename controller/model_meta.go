@@ -1,7 +1,7 @@
 package controller
 
 import (
-	"encoding/json"
+	"net/http"
 	"sort"
 	"strconv"
 	"strings"
@@ -97,6 +97,13 @@ func CreateModelMeta(c *gin.Context) {
 		common.ApiErrorMsg(c, "模型名称不能为空")
 		return
 	}
+	if len(m.Documentation) > model.MaxModelDocumentationBytes {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "模型文档不能超过 32 KiB",
+		})
+		return
+	}
 	// 名称冲突检查
 	if dup, err := model.IsModelNameDuplicated(0, m.ModelName); err != nil {
 		common.ApiError(c, err)
@@ -125,6 +132,13 @@ func UpdateModelMeta(c *gin.Context) {
 	}
 	if m.Id == 0 {
 		common.ApiErrorMsg(c, "缺少模型 ID")
+		return
+	}
+	if !statusOnly && len(m.Documentation) > model.MaxModelDocumentationBytes {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "模型文档不能超过 32 KiB",
+		})
 		return
 	}
 
@@ -201,7 +215,7 @@ func enrichModels(models []*model.Model) {
 			mm := models[idx]
 			if mm.Endpoints == "" {
 				eps := model.GetModelSupportEndpointTypes(mm.ModelName)
-				if b, err := json.Marshal(eps); err == nil {
+				if b, err := common.Marshal(eps); err == nil {
 					mm.Endpoints = string(b)
 				}
 			}
@@ -291,7 +305,7 @@ func enrichModels(models []*model.Model) {
 			for et := range es {
 				eps = append(eps, et)
 			}
-			if b, err := json.Marshal(eps); err == nil {
+			if b, err := common.Marshal(eps); err == nil {
 				mm.Endpoints = string(b)
 			}
 		}

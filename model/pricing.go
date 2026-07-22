@@ -19,6 +19,7 @@ import (
 type Pricing struct {
 	ModelName              string                  `json:"model_name"`
 	Description            string                  `json:"description,omitempty"`
+	HasDocumentation       bool                    `json:"has_documentation"`
 	Icon                   string                  `json:"icon,omitempty"`
 	Tags                   string                  `json:"tags,omitempty"`
 	VendorID               int                     `json:"vendor_id,omitempty"`
@@ -37,6 +38,7 @@ type Pricing struct {
 	BillingMode            string                  `json:"billing_mode,omitempty"`
 	BillingExpr            string                  `json:"billing_expr,omitempty"`
 	PricingVersion         string                  `json:"pricing_version,omitempty"`
+	DocumentationModelID   int                     `json:"-"`
 }
 
 type PricingVendor struct {
@@ -187,7 +189,15 @@ func updatePricing() {
 	}
 	// 预加载模型元数据与供应商一次，避免循环查询
 	var allMeta []Model
-	_ = DB.Find(&allMeta).Error
+	_ = DB.Select(modelMetadataSelectColumns).Find(&allMeta).Error
+	var documentationModelIDs []int
+	_ = DB.Model(&Model{}).
+		Where("documentation IS NOT NULL AND TRIM(documentation) <> ''").
+		Pluck("id", &documentationModelIDs).Error
+	documentedModels := make(map[int]struct{}, len(documentationModelIDs))
+	for _, modelID := range documentationModelIDs {
+		documentedModels[modelID] = struct{}{}
+	}
 	metaMap := make(map[string]*Model)
 	prefixList := make([]*Model, 0)
 	suffixList := make([]*Model, 0)
@@ -380,6 +390,8 @@ func updatePricing() {
 				continue
 			}
 			pricing.Description = meta.Description
+			_, pricing.HasDocumentation = documentedModels[meta.Id]
+			pricing.DocumentationModelID = meta.Id
 			pricing.Icon = meta.Icon
 			pricing.Tags = meta.Tags
 			pricing.VendorID = meta.VendorID

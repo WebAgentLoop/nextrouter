@@ -52,6 +52,7 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Markdown } from '@/components/ui/markdown'
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import {
   Select,
@@ -71,6 +72,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Switch } from '@/components/ui/switch'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import {
   useSystemOptions,
@@ -84,6 +86,11 @@ import { safeJsonParse } from '@/features/system-settings/utils/json-parser'
 import { createModel, updateModel, getModel, getVendors } from '../../api'
 import { getNameRuleOptions, ENDPOINT_TEMPLATES } from '../../constants'
 import { modelsQueryKeys, vendorsQueryKeys, parseModelTags } from '../../lib'
+import {
+  getModelDocumentationByteLength,
+  isModelDocumentationWithinLimit,
+  MAX_MODEL_DOCUMENTATION_BYTES,
+} from '../../lib/model-documentation'
 import type { Model } from '../../types'
 
 // Extended schema for ratio configuration (internal form state only)
@@ -91,6 +98,7 @@ const extendedModelFormSchema = z.object({
   id: z.number().optional(),
   model_name: z.string().min(1, 'Model name is required'),
   description: z.string(),
+  documentation: z.string(),
   icon: z.string(),
   tags: z.array(z.string()),
   vendor_id: z.number().optional(),
@@ -111,6 +119,7 @@ type ExtendedModelFormValues = z.infer<typeof extendedModelFormSchema>
 
 type PricingMode = 'per-token' | 'per-request'
 type PricingSubMode = 'ratio' | 'price'
+type DocumentationMode = 'edit' | 'preview'
 
 type ModelMutateDrawerProps = {
   open: boolean
@@ -131,6 +140,8 @@ export function ModelMutateDrawer({
   const [pricingMode, setPricingMode] = useState<PricingMode>('per-token')
   const [pricingSubMode, setPricingSubMode] = useState<PricingSubMode>('ratio')
   const [advancedOpen, setAdvancedOpen] = useState(false)
+  const [documentationMode, setDocumentationMode] =
+    useState<DocumentationMode>('edit')
   const [promptPrice, setPromptPrice] = useState('')
   const [completionPrice, setCompletionPrice] = useState('')
   const [oldModelName, setOldModelName] = useState<string>('')
@@ -231,6 +242,7 @@ export function ModelMutateDrawer({
     defaultValues: {
       model_name: '',
       description: '',
+      documentation: '',
       icon: '',
       tags: [],
       vendor_id: undefined,
@@ -285,12 +297,14 @@ export function ModelMutateDrawer({
     if (open && isEditing && modelData?.data) {
       const model = modelData.data
       setOldModelName(model.model_name)
+      setDocumentationMode('edit')
 
       // Base model data reset
       const baseModelData = {
         id: model.id,
         model_name: model.model_name,
         description: model.description || '',
+        documentation: model.documentation || '',
         icon: model.icon || '',
         tags: parseModelTags(model.tags),
         vendor_id: model.vendor_id,
@@ -387,6 +401,7 @@ export function ModelMutateDrawer({
     } else if (open && !isEditing) {
       // Pre-fill model name if passed from missing models
       setOldModelName('')
+      setDocumentationMode('edit')
       setPricingMode('per-token')
       setPricingSubMode('ratio')
       setPromptPrice('')
@@ -395,6 +410,7 @@ export function ModelMutateDrawer({
       form.reset({
         model_name: currentRow?.model_name || '',
         description: '',
+        documentation: '',
         icon: '',
         tags: [],
         vendor_id: undefined,
@@ -415,6 +431,14 @@ export function ModelMutateDrawer({
 
   const onSubmit = useCallback(
     async (values: ExtendedModelFormValues): Promise<void> => {
+      if (!isModelDocumentationWithinLimit(values.documentation)) {
+        setDocumentationMode('edit')
+        form.setError('documentation', {
+          message: t('Documentation must not exceed 32 KiB.'),
+        })
+        return
+      }
+
       setIsSubmitting(true)
       try {
         const submitData = {
@@ -630,6 +654,7 @@ export function ModelMutateDrawer({
               : 'Model created successfully'
           )
           queryClient.invalidateQueries({ queryKey: modelsQueryKeys.lists() })
+          queryClient.invalidateQueries({ queryKey: ['pricing'] })
           queryClient.invalidateQueries({ queryKey: ['system-options'] })
           onOpenChange(false)
         } else {
@@ -650,6 +675,8 @@ export function ModelMutateDrawer({
       oldModelName,
       modelSettings,
       updateOption,
+      form,
+      t,
     ]
   )
 
@@ -666,7 +693,9 @@ export function ModelMutateDrawer({
           parsed = raw as Record<string, unknown>
         }
       } catch {
-        toast.warning(t('Existing endpoint configuration is invalid and will be replaced'))
+        toast.warning(
+          t('Existing endpoint configuration is invalid and will be replaced')
+        )
       }
       if (parsed) {
         existingEndpoints = parsed
@@ -825,6 +854,93 @@ export function ModelMutateDrawer({
                     <FormMessage />
                   </FormItem>
                 )}
+              />
+            </SideDrawerSection>
+
+            <SideDrawerSection>
+              <h3 className='text-sm font-semibold'>
+                {t('Model Documentation')}
+              </h3>
+
+              <FormField
+                control={form.control}
+                name='documentation'
+                render={({ field }) => {
+                  const byteLength = getModelDocumentationByteLength(
+                    field.value
+                  )
+                  const isOverLimit = byteLength > MAX_MODEL_DOCUMENTATION_BYTES
+
+                  return (
+                    <FormItem>
+                      <Tabs
+                        value={documentationMode}
+                        onValueChange={(value) =>
+                          setDocumentationMode(value as DocumentationMode)
+                        }
+                      >
+                        <TabsList className='grid w-full grid-cols-2'>
+                          <TabsTrigger value='edit'>{t('Edit')}</TabsTrigger>
+                          <TabsTrigger value='preview'>
+                            {t('Preview')}
+                          </TabsTrigger>
+                        </TabsList>
+                        <TabsContent value='edit'>
+                          <FormControl>
+                            <Textarea
+                              {...field}
+                              onChange={(event) => {
+                                field.onChange(event)
+                                if (
+                                  isModelDocumentationWithinLimit(
+                                    event.target.value
+                                  )
+                                ) {
+                                  form.clearErrors('documentation')
+                                }
+                              }}
+                              aria-label={t('Model Documentation')}
+                              className='min-h-64 resize-y font-mono text-sm'
+                              placeholder={t(
+                                'Write Markdown documentation for this model...'
+                              )}
+                              rows={14}
+                            />
+                          </FormControl>
+                        </TabsContent>
+                        <TabsContent value='preview'>
+                          <div
+                            aria-label={t('Markdown preview')}
+                            className='bg-muted/20 min-h-64 overflow-auto rounded-md border p-4'
+                          >
+                            {field.value.trim() ? (
+                              <Markdown>{field.value}</Markdown>
+                            ) : (
+                              <p className='text-muted-foreground text-sm'>
+                                {t('Nothing to preview.')}
+                              </p>
+                            )}
+                          </div>
+                        </TabsContent>
+                      </Tabs>
+                      <div
+                        className={
+                          isOverLimit
+                            ? 'text-destructive text-xs'
+                            : 'text-muted-foreground text-xs'
+                        }
+                      >
+                        {(byteLength / 1024).toFixed(1)} / 32 KiB
+                      </div>
+                      <FormDescription>
+                        {t(
+                          'Add detailed usage guidance, examples, limitations, and best practices in Markdown.'
+                        )}
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )
+                }}
               />
             </SideDrawerSection>
 

@@ -544,7 +544,7 @@ func SyncUpstreamPreview(c *gin.Context) {
 	// 2) 本地已有模型
 	var locals []model.Model
 	if len(upstreamNames) > 0 {
-		_ = model.DB.Where("model_name IN ? AND sync_official <> 0", upstreamNames).Find(&locals).Error
+		_ = model.DB.Omit("documentation").Where("model_name IN ? AND sync_official <> 0", upstreamNames).Find(&locals).Error
 	}
 
 	// 本地 vendor 名称映射

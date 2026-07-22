@@ -37,6 +37,7 @@ export interface Model {
   id: number
   model_name: string
   description?: string
+  documentation?: string
   icon?: string
   tags?: string
   vendor_id?: number
