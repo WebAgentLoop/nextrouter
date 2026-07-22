@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { AgentChat } from './components/agent-chat'
 import { AgentHeader } from './components/agent-header'
@@ -64,14 +64,18 @@ export function Agent() {
     messagesRef.current = messages
   }, [messages])
 
+  const activeToolPacks = useMemo(
+    () => [...modelDocumentation.toolPacks, ...exaMcp.toolPacks],
+    [modelDocumentation.toolPacks, exaMcp.toolPacks]
+  )
+
   const { run, regenerate, editMessage, stop, isGenerating } = useAgentRun({
     config,
     status,
     setStatus,
     updateMessages,
     messagesRef,
-    additionalTools: exaMcp.tools,
-    toolPacks: modelDocumentation.toolPacks,
+    toolPacks: activeToolPacks,
   })
 
   const [editingId, setEditingId] = useState<string | null>(null)

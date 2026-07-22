@@ -21,23 +21,27 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 
 import type { ExaMcpConnection } from '../lib/tools/mcp/exa-client'
-import type { RegisteredTool } from '../lib/tools/registry'
+import type { AgentToolPack } from '../lib/tools/registry'
 
 export type ExaMcpStatus = 'disconnected' | 'connecting' | 'connected'
+
+const DISCONNECTED_TOOL_PACKS: AgentToolPack[] = []
 
 export function useExaMcp() {
   const { t } = useTranslation()
   const connectionRef = useRef<ExaMcpConnection | null>(null)
   const connectControllerRef = useRef<AbortController | null>(null)
   const [status, setStatus] = useState<ExaMcpStatus>('disconnected')
-  const [tools, setTools] = useState<RegisteredTool[]>([])
+  const [toolPacks, setToolPacks] = useState<AgentToolPack[]>(
+    DISCONNECTED_TOOL_PACKS
+  )
 
   const disconnect = useCallback(() => {
     connectControllerRef.current?.abort()
     connectControllerRef.current = null
     const connection = connectionRef.current
     connectionRef.current = null
-    setTools([])
+    setToolPacks(DISCONNECTED_TOOL_PACKS)
     setStatus('disconnected')
     if (connection) {
       void connection.close()
@@ -61,7 +65,7 @@ export function useExaMcp() {
         return
       }
       connectionRef.current = connection
-      setTools(connection.tools)
+      setToolPacks([connection.toolPack])
       setStatus('connected')
     } catch {
       if (!controller.signal.aborted) {
@@ -88,5 +92,5 @@ export function useExaMcp() {
     void connect()
   }, [connect])
 
-  return { status, tools, toggle }
+  return { status, toolPacks, toggle }
 }

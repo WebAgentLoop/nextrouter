@@ -31,7 +31,7 @@ import {
   getToolPackTools,
   listToolDefinitions,
 } from '../lib'
-import type { AgentToolPack, RegisteredTool } from '../lib/tools/registry'
+import type { AgentToolPack } from '../lib/tools/registry'
 import type {
   AgentConfig,
   AgentMessage,
@@ -51,7 +51,6 @@ interface UseAgentRunOptions {
   updateMessages: (updater: (prev: AgentMessage[]) => AgentMessage[]) => void
   // Seed messages at run start (the persisted conversation before this turn).
   messagesRef: { current: AgentMessage[] }
-  additionalTools?: RegisteredTool[]
   toolPacks?: AgentToolPack[]
 }
 
@@ -93,7 +92,6 @@ export function useAgentRun({
   setStatus,
   updateMessages,
   messagesRef,
-  additionalTools = [],
   toolPacks = [],
 }: UseAgentRunOptions) {
   const { t } = useTranslation()
@@ -121,7 +119,7 @@ export function useAgentRun({
       commit()
 
       try {
-        const activeTools = [...additionalTools, ...getToolPackTools(toolPacks)]
+        const activeTools = getToolPackTools(toolPacks)
         const toolPackSystemInstructions =
           getToolPackSystemInstructions(toolPacks)
         const iterationLimit = Math.min(
@@ -335,15 +333,7 @@ export function useAgentRun({
         abortControllerRef.current = null
       }
     },
-    [
-      additionalTools,
-      config,
-      setStatus,
-      streamOneRound,
-      t,
-      toolPacks,
-      updateMessages,
-    ]
+    [config, setStatus, streamOneRound, t, toolPacks, updateMessages]
   )
 
   const run = useCallback(
