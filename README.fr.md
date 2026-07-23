@@ -4,7 +4,7 @@
 
 # NextRouter
 
-🍥 **Un fork amélioré en publication roulante de [new-api](https://github.com/QuantumNous/new-api) — passerelle LLM + boucle d'agent côté navigateur**
+🍥 **Une passerelle LLM intelligente basée sur [new-api](https://github.com/QuantumNous/new-api) — API unifiées, Agent conscient de la passerelle et connaissances multilingues sur les modèles**
 
 <p align="center">
   <a href="./README.zh_CN.md">简体中文</a> |
@@ -47,7 +47,7 @@
 
 ## 🧭 Qu'est-ce que NextRouter
 
-**NextRouter** est un fork communautaire de [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api) qui suit de près la branche `main` amont. Il conserve tout ce que new-api propose — agrégation de plus de 40 fournisseurs d'IA en amont (OpenAI, Claude, Gemini, Azure, AWS Bedrock, …) derrière une API unifiée, ainsi que gestion des utilisateurs, facturation, limitation de débit et tableau de bord d'administration — et ajoute un ensemble ciblé d'améliorations de passerelle et d'interface (voir [Les nouveautés](#-les-nouveautés-de-nextrouter)).
+**NextRouter** est une passerelle LLM intelligente et un fork communautaire de [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api) qui suit de près la branche `main` amont. Il conserve tout ce que new-api propose — agrégation de plus de 40 fournisseurs d'IA en amont (OpenAI, Claude, Gemini, Azure, AWS Bedrock, …) derrière une API unifiée, ainsi que gestion des utilisateurs, facturation, limitation de débit et tableau de bord d'administration — tout en reliant les connaissances de la passerelle à des workflows assistés par les modèles. Son Agent côté navigateur peut consulter les modèles exposés par la passerelle et la documentation maintenue par les administrateurs afin de répondre aux questions sur les modèles, les endpoints et l'intégration. Les administrateurs peuvent également utiliser un LLM pour générer et conserver les traductions des descriptions et documentations dynamiques des modèles (voir [Les nouveautés](#-les-nouveautés-de-nextrouter)).
 
 Pour l'ensemble des fonctionnalités, la prise en charge des modèles, les formats d'API et la configuration, reportez-vous à la **documentation amont** : <https://docs.newapi.pro/en/docs>.
 
@@ -69,17 +69,19 @@ Voir [Licence](#-licence) et [`NOTICE`](./NOTICE) pour les conditions complètes
 <!-- FORK-DELTA: NextRouter changes vs upstream QuantumNous/new-api.
      Update after merging any fork-only branch.
      Completeness check: git log --oneline --no-merges upstream/main..HEAD
-     Last verified: 2026-07-21 -->
+     Last verified: 2026-07-23 -->
 
 ## ✨ Les nouveautés de NextRouter
 
 > La liste ci-dessous présente les principales différences avec l'amont, sans prétendre être exhaustive. Consultez les [GitHub Releases](https://github.com/WebAgentLoop/nextrouter/releases) pour les changements complets de chaque version publiée ; pour les fonctionnalités amont, consultez la documentation officielle.
 
-### 🤖 Boucle d'agent côté navigateur
+### 🤖 Agent navigateur conscient de la passerelle
 
 Un nouveau module de barre latérale **Agent** (`/agent`, à activer sous *Profile → Sidebar modules*) implémente une boucle de conversation d'agent complète qui s'exécute entièrement dans le navigateur.
 
 - Réutilise le relais playground `/pg/chat/completions` avec le format OpenAI function-calling ; fournit un registre d'outils intégré et un outil **calculatrice** (évaluation sûre d'expressions).
+- **Pack d'outils de connaissance de la passerelle** : liste les modèles actuellement exposés et lit la documentation Markdown maintenue par les administrateurs, afin que l'Agent réponde aux questions propres à la plateforme sur les modèles, les endpoints et l'intégration.
+- **Packs d'outils extensibles** : les administrateurs peuvent activer les connaissances intégrées de la passerelle et la recherche web optionnelle via Exa MCP, puis configurer le modèle, le groupe et les instructions système par défaut de l'Agent.
 - Analyse en flux les appels d'outils ; agrège chaque tour de l'assistant en une seule carte avec un panneau **Process** repliable.
 - Actions sur les messages : copier / régénérer / éditer (avec ou sans renvoi) / supprimer.
 - Historique multi-sessions persisté dans **IndexedDB** (jusqu'à 50 sessions), avec renommer / basculer / supprimer.
@@ -96,6 +98,8 @@ Un nouveau module de barre latérale **Agent** (`/agent`, à activer sous *Profi
 - **Boîte de dialogue de gestion des vendeurs** : liste tous les vendeurs de modèles avec édition / suppression / ajout (auparavant uniquement la création), avec réessai en cas d'erreur.
 - **Fusion du modèle d'endpoints** : l'enregistrement fusionne désormais au lieu de tout remplacer ; un JSON d'endpoints existant invalide déclenche un avertissement avant la fusion.
 - **Visibilité configurable de la place des modèles** : les administrateurs peuvent exiger une configuration de modèle activée (correspondance exacte ou par règle de nom) avant l'affichage dans le catalogue, sans modifier le routage des canaux.
+- **Documentation Markdown des modèles** : les administrateurs peuvent maintenir des guides propres à chaque modèle, affichés dans le catalogue et accessibles à l'Agent conscient de la passerelle.
+- **Traductions persistantes du contenu des modèles** : les administrateurs déclenchent manuellement la traduction LLM des descriptions et de la documentation ; traductions, empreintes du contenu source, états et erreurs sont conservés par langue, avec langue source/par défaut configurable et détection du contenu obsolète.
 
 ### 📊 Observabilité des performances
 

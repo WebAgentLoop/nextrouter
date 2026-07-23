@@ -4,7 +4,7 @@
 
 # NextRouter
 
-🍥 **[new-api](https://github.com/QuantumNous/new-api) 的滾動發布增強版 Fork — LLM 閘道 + 瀏覽器端 Agent 迴圈**
+🍥 **基於 [new-api](https://github.com/QuantumNous/new-api) 的智慧 LLM 閘道 — 統一 API、閘道知識 Agent 與多語言模型內容**
 
 <p align="center">
   <a href="./README.zh_CN.md">简体中文</a> |
@@ -47,7 +47,7 @@
 
 ## 🧭 NextRouter 是什麼
 
-**NextRouter** 是 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api) 的社群 Fork，持續追蹤上游 `main`。它保留了 new-api 的全部能力——在統一 API 後聚合 40+ 上游 AI 提供商（OpenAI、Claude、Gemini、Azure、AWS Bedrock 等），並配套使用者管理、計費、限流與管理後台——同時新增了一批聚焦閘道與前端的增強（見[相比上游的改進](#-nextrouter-相比上游的改進)）。
+**NextRouter** 是一個智慧 LLM 閘道，也是 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api) 的社群 Fork，持續追蹤上游 `main`。它保留了 new-api 的全部能力——在統一 API 後聚合 40+ 上游 AI 提供商（OpenAI、Claude、Gemini、Azure、AWS Bedrock 等），並配套使用者管理、計費、限流與管理後台——同時將閘道知識接入模型輔助工作流程。瀏覽器端 Agent 可以查詢閘道實際提供的模型與管理員維護的文件，回答有關模型、端點和接入方式的問題；管理員也可以呼叫 LLM 翻譯動態的模型描述與文件，並將譯文持久化（見[相比上游的改進](#-nextrouter-相比上游的改進)）。
 
 完整功能、模型支援、API 格式與設定，請參閱**上游官方文件**：<https://docs.newapi.pro>。
 
@@ -69,17 +69,19 @@ NextRouter **基於 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-a
 <!-- FORK-DELTA: NextRouter changes vs upstream QuantumNous/new-api.
      Update after merging any fork-only branch.
      Completeness check: git log --oneline --no-merges upstream/main..HEAD
-     Last verified: 2026-07-21 -->
+     Last verified: 2026-07-23 -->
 
 ## ✨ NextRouter 相比上游的改進
 
 > 下方列出與上游的主要差異，但可能並不詳盡。每個已發布版本的完整變更請參見 [GitHub Releases](https://github.com/WebAgentLoop/nextrouter/releases)；上游既有功能請見官方文件。
 
-### 🤖 瀏覽器端 Agent 迴圈
+### 🤖 閘道知識 Agent
 
 新增 **Agent** 側邊欄模組（`/agent`，在「個人資料 → 側邊欄模組」開關），實作完全在瀏覽器端執行的 Agent 對話迴圈。
 
 - 複用 playground relay `/pg/chat/completions`，採用 OpenAI function-calling 格式；內建工具登錄表與**計算機**工具（安全運算式求值）。
+- **閘道知識工具包**：列出閘道目前實際提供的模型，並讀取管理員維護的 Markdown 文件，讓 Agent 能回答與本平台模型、端點和接入方式相關的問題。
+- **可擴充工具包**：管理員可以啟用內建閘道知識和可選的 Exa MCP 網路搜尋，並設定 Agent 的預設模型、分組與系統指令。
 - 串流解析 tool-call；將每個 AI 回合聚合成一張卡片，附可摺疊的 **Process** 過程面板。
 - 訊息操作：複製 / 重新生成 / 編輯（可選擇是否重新提交） / 刪除。
 - 多會話歷史持久化於 **IndexedDB**（最多 50 個會話），支援重新命名 / 切換 / 刪除。
@@ -96,6 +98,8 @@ NextRouter **基於 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-a
 - **廠商（Vendor）管理對話框**：列出全部模型廠商，支援編輯 / 刪除 / 新增（此前僅能建立），含錯誤重試。
 - **端點範本合併**：儲存時改為合併而非整體覆蓋；既有端點 JSON 非法時於合併前告警。
 - **可設定的模型廣場可見性**：管理員可要求模型必須具備已啟用的模型設定（精確比對或名稱規則比對）才能顯示於目錄中，且不影響通道路由。
+- **Markdown 模型文件**：管理員可以維護各模型的專屬指南，文件會顯示於模型目錄中，並可供閘道知識 Agent 查詢。
+- **模型內容持久化翻譯**：管理員手動觸發 LLM 翻譯模型描述與文件；依語言持久化譯文、來源內容雜湊、狀態與錯誤，並支援設定來源語言/預設語言及過期內容偵測。
 
 ### 📊 效能可觀測性
 

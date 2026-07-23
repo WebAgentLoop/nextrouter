@@ -4,7 +4,7 @@
 
 # NextRouter
 
-🍥 **An enhanced, rolling-release fork of [new-api](https://github.com/QuantumNous/new-api) — LLM gateway + browser-side agent loop**
+🍥 **An intelligent LLM gateway built on [new-api](https://github.com/QuantumNous/new-api) — unified APIs, a gateway-aware Agent, and multilingual model knowledge**
 
 <p align="center">
   <a href="./README.zh_CN.md">简体中文</a> |
@@ -47,7 +47,7 @@
 
 ## 🧭 What is NextRouter
 
-**NextRouter** is a community fork of [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api) that tracks upstream `main` closely. It keeps everything new-api offers — aggregation of 40+ upstream AI providers (OpenAI, Claude, Gemini, Azure, AWS Bedrock, …) behind a unified API, plus user management, billing, rate limiting, and an admin dashboard — and adds a focused set of gateway and frontend enhancements (see [What's new](#-whats-new-in-nextrouter)).
+**NextRouter** is an intelligent LLM gateway and community fork of [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api) that tracks upstream `main` closely. It keeps everything new-api offers — aggregation of 40+ upstream AI providers (OpenAI, Claude, Gemini, Azure, AWS Bedrock, …) behind a unified API, plus user management, billing, rate limiting, and an admin dashboard — while connecting gateway knowledge to model-assisted workflows. Its browser-side Agent can inspect the models exposed by the gateway and administrator-maintained documentation to answer questions about models, endpoints, and integration. Administrators can also use an LLM to generate persistent translations for dynamic model descriptions and documentation (see [What's new](#-whats-new-in-nextrouter)).
 
 For the full feature set, model support, API formats, and configuration, refer to the **upstream documentation**: <https://docs.newapi.pro/en/docs>.
 
@@ -69,17 +69,19 @@ See [License](#-license) and [`NOTICE`](./NOTICE) for the complete terms.
 <!-- FORK-DELTA: NextRouter changes vs upstream QuantumNous/new-api.
      Update after merging any fork-only branch.
      Completeness check: git log --oneline --no-merges upstream/main..HEAD
-     Last verified: 2026-07-21 -->
+     Last verified: 2026-07-23 -->
 
 ## ✨ What's new in NextRouter
 
 > The list below highlights major differences from upstream and may not be exhaustive. See [GitHub Releases](https://github.com/WebAgentLoop/nextrouter/releases) for the complete changes in each published version; for upstream features, see the official docs.
 
-### 🤖 Browser-side Agent loop
+### 🤖 Gateway-aware browser Agent
 
 A new **Agent** sidebar module (`/agent`, toggle it under *Profile → Sidebar modules*) implements a complete agent conversation loop that runs entirely in the browser.
 
 - Reuses the playground relay `/pg/chat/completions` with the OpenAI function-calling format; ships a built-in tool registry and a **calculator** tool (safe expression evaluation).
+- **Gateway knowledge tool pack**: lists the models currently exposed by the gateway and reads administrator-maintained Markdown documentation, allowing the Agent to answer platform-specific questions about models, endpoints, and integration.
+- **Extensible tool packs**: administrators can enable built-in gateway knowledge and optional Exa MCP web search, and configure the Agent's default model, group, and system instructions.
 - Streams and parses tool calls; aggregates each assistant turn into a single card with a collapsible **Process** panel.
 - Message actions: copy / regenerate / edit (optionally re-submit) / delete.
 - Multi-session history persisted in **IndexedDB** (up to 50 sessions), with rename / switch / delete.
@@ -96,6 +98,8 @@ A new **Agent** sidebar module (`/agent`, toggle it under *Profile → Sidebar m
 - **Vendor management dialog**: lists all model vendors with edit / delete / add (previously only create), including error retry.
 - **Endpoint template merge**: saving now merges instead of replacing everything; invalid existing endpoint JSON is warned about before merge.
 - **Configurable Model Square visibility**: administrators can require models to have an enabled model configuration (exact or name-rule match) before they appear in the catalog, without changing channel routing.
+- **Markdown model documentation**: administrators can maintain model-specific guides that are displayed in the catalog and available to the gateway-aware Agent.
+- **Persistent model content translations**: administrators manually trigger LLM translation of model descriptions and documentation; results, source hashes, status, and errors are stored per locale, with configurable source/default language and stale-content detection.
 
 ### 📊 Performance observability
 

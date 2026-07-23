@@ -4,7 +4,7 @@
 
 # NextRouter
 
-🍥 **[new-api](https://github.com/QuantumNous/new-api) 的滚动发布增强版 Fork — LLM 网关 + 浏览器端 Agent 循环**
+🍥 **基于 [new-api](https://github.com/QuantumNous/new-api) 的智能 LLM 网关 — 统一 API、网关知识 Agent 与多语言模型内容**
 
 <p align="center">
   <strong>简体中文</strong> |
@@ -47,7 +47,7 @@
 
 ## 🧭 NextRouter 是什么
 
-**NextRouter** 是 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api) 的社区 Fork，持续跟踪上游 `main`。它保留了 new-api 的全部能力——在统一 API 后聚合 40+ 上游 AI 提供商（OpenAI、Claude、Gemini、Azure、AWS Bedrock 等），并配套用户管理、计费、限流与管理后台——同时新增了一批聚焦网关与前端的增强（见[相比上游的改进](#-nextrouter-相比上游的改进)）。
+**NextRouter** 是一个智能 LLM 网关，也是 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api) 的社区 Fork，持续跟踪上游 `main`。它保留了 new-api 的全部能力——在统一 API 后聚合 40+ 上游 AI 提供商（OpenAI、Claude、Gemini、Azure、AWS Bedrock 等），并配套用户管理、计费、限流与管理后台——同时将网关知识接入模型辅助工作流。浏览器端 Agent 可以查询网关实际提供的模型与管理员维护的文档，回答有关模型、端点和接入方式的问题；管理员也可以调用 LLM 翻译动态的模型描述与文档，并将译文持久化（见[相比上游的改进](#-nextrouter-相比上游的改进)）。
 
 完整功能、模型支持、API 格式与配置，请参阅**上游官方文档**：<https://docs.newapi.pro>。
 
@@ -69,17 +69,19 @@ NextRouter **基于 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-a
 <!-- FORK-DELTA: NextRouter changes vs upstream QuantumNous/new-api.
      Update after merging any fork-only branch.
      Completeness check: git log --oneline --no-merges upstream/main..HEAD
-     Last verified: 2026-07-21 -->
+     Last verified: 2026-07-23 -->
 
 ## ✨ NextRouter 相比上游的改进
 
 > 下方列出与上游的主要差异，但可能并不详尽。每个已发布版本的完整变更请参见 [GitHub Releases](https://github.com/WebAgentLoop/nextrouter/releases)；上游既有功能请见官方文档。
 
-### 🤖 浏览器端 Agent 循环
+### 🤖 网关知识 Agent
 
 新增 **Agent** 侧边栏模块（`/agent`，在“个人资料 → 侧边栏模块”开关），实现完全在浏览器端运行的 Agent 对话循环。
 
 - 复用 playground relay `/pg/chat/completions`，采用 OpenAI function-calling 格式；内置工具注册表与**计算器**工具（安全表达式求值）。
+- **网关知识工具包**：列出网关当前实际提供的模型，并读取管理员维护的 Markdown 文档，让 Agent 能回答与本平台模型、端点和接入方式相关的问题。
+- **可扩展工具包**：管理员可以启用内置网关知识和可选的 Exa MCP 联网搜索，并配置 Agent 的默认模型、分组与系统指令。
 - 流式解析 tool-call；将每个 AI 回合聚合成一张卡片，带可折叠的 **Process** 过程面板。
 - 消息操作：复制 / 重新生成 / 编辑（可选是否重提） / 删除。
 - 多会话历史持久化于 **IndexedDB**（最多 50 个会话），支持重命名 / 切换 / 删除。
@@ -96,6 +98,8 @@ NextRouter **基于 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-a
 - **厂商（Vendor）管理对话框**：列出全部模型厂商，支持编辑 / 删除 / 新增（此前仅能创建），含错误重试。
 - **端点模板合并**：保存时改为合并而非整体覆盖；既有端点 JSON 非法时在合并前告警。
 - **可配置的模型广场可见性**：管理员可要求模型必须存在已启用的模型配置（精确匹配或名称规则匹配）才能出现在目录中，且不影响渠道路由。
+- **Markdown 模型文档**：管理员可以维护各模型的专属指南，文档会展示在模型目录中，并可供网关知识 Agent 查询。
+- **模型内容持久化翻译**：管理员手动触发 LLM 翻译模型描述与文档；按语言持久化译文、源内容哈希、状态与错误，并支持配置源语言/默认语言及过期内容检测。
 
 ### 📊 性能可观测性
 
