@@ -24,7 +24,7 @@ const ENABLED_TOOL_PACKS = [modelDocumentationToolPack]
 const DISABLED_TOOL_PACKS: typeof ENABLED_TOOL_PACKS = []
 
 export function useModelDocumentationTools() {
-  const [enabled, setEnabled] = useState(false)
+  const [enabled, setEnabled] = useState(true)
   const toggle = useCallback(() => setEnabled((current) => !current), [])
 
   return {
