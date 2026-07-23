@@ -298,6 +298,9 @@ export const MODEL_DOCUMENTATION_SYSTEM_INSTRUCTIONS = `## Model documentation c
 - When a model has documentation, read it before answering model-specific parameter, limitation, or integration questions.
 - Do not invent models, endpoints, parameters, or capabilities that are absent from tool results.
 - If documentation is unavailable, clearly distinguish general API guidance from verified model-specific information.
+- When the user asks how to call or integrate with an API, honor any explicitly requested programming language, SDK, or tool. If none is specified, provide a minimal cURL example.
+- Use only endpoint paths, HTTP methods, parameters, and authentication schemes verified by the model catalog or documentation.
+- Reference the API key as $NEW_API_KEY in every example. Never expose, invent, or use a real API key.
 - When the catalog reports has_more as true, use next_skip to continue only when more results are needed.`
 
 export const modelDocumentationToolPack: AgentToolPack = {

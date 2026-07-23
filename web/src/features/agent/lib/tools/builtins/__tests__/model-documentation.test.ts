@@ -25,6 +25,7 @@ import {
   buildModelCatalogPage,
   getModelDocumentationTool,
   listAvailableModelsTool,
+  MODEL_DOCUMENTATION_SYSTEM_INSTRUCTIONS,
 } from '../model-documentation'
 
 function pricingModel(
@@ -135,6 +136,13 @@ describe('buildModelCatalogPage', () => {
 })
 
 describe('model documentation tools', () => {
+  test('defaults unspecified integration examples to cURL with a safe API key placeholder', () => {
+    expect(MODEL_DOCUMENTATION_SYSTEM_INSTRUCTIONS).toContain(
+      'If none is specified, provide a minimal cURL example.'
+    )
+    expect(MODEL_DOCUMENTATION_SYSTEM_INSTRUCTIONS).toContain('$NEW_API_KEY')
+  })
+
   test('validates catalog pagination before making a request', async () => {
     const get = vi.spyOn(api, 'get')
 
