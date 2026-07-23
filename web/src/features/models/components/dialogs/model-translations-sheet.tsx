@@ -96,7 +96,7 @@ function statusVariant(status: ModelTranslationStatus) {
 
 function statusClassName(status: ModelTranslationStatus): string | undefined {
   if (status === 'completed') return 'text-success'
-  if (status === 'stale') return 'text-warning-foreground'
+  if (status === 'stale') return 'text-warning-foreground dark:text-warning'
   return undefined
 }
 
