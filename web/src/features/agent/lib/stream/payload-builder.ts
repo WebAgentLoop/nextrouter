@@ -138,7 +138,8 @@ export function buildAgentPayload(
   messages: AgentMessage[],
   config: AgentConfig,
   tools?: ToolDefinition[],
-  toolPackSystemInstructions: string[] = []
+  toolPackSystemInstructions: string[] = [],
+  runtimeContext = ''
 ): ChatCompletionRequest {
   const apiMessages = repairMessageSequence(
     messages.filter((message) => !message.isError)
@@ -146,7 +147,11 @@ export function buildAgentPayload(
     .map(toApiMessage)
     .filter((message): message is ApiChatMessage => message !== null)
 
-  const systemSections = [config.system_prompt, ...toolPackSystemInstructions]
+  const systemSections = [
+    config.system_prompt,
+    ...toolPackSystemInstructions,
+    runtimeContext,
+  ]
     .map((section) => section.trim())
     .filter(Boolean)
   if (systemSections.length > 0) {

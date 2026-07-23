@@ -16,8 +16,12 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
+import { useStatus } from '@/hooks/use-status'
+
+import { getAgentCheckinStatus } from './api'
 import { AgentChat } from './components/agent-chat'
 import { AgentHeader } from './components/agent-header'
 import { AgentHistorySheet } from './components/agent-history-sheet'
@@ -28,9 +32,12 @@ import {
   useExaMcp,
   useModelDocumentationTools,
 } from './hooks'
+import { buildAgentRuntimeContext } from './lib'
 import type { AgentMessage } from './types'
 
 export function Agent() {
+  const { i18n } = useTranslation()
+  const { status: systemStatus } = useStatus()
   const exaMcp = useExaMcp()
   const modelDocumentation = useModelDocumentationTools()
   const {
@@ -69,6 +76,35 @@ export function Agent() {
     [modelDocumentation.toolPacks, exaMcp.toolPacks]
   )
 
+  const getRuntimeContext = useCallback(
+    async (requestedModel: string, signal: AbortSignal) => {
+      const checkinEnabled =
+        typeof systemStatus?.checkin_enabled === 'boolean'
+          ? systemStatus.checkin_enabled
+          : null
+      let checkedInToday: boolean | null = null
+      if (checkinEnabled) {
+        try {
+          checkedInToday = await getAgentCheckinStatus(signal)
+        } catch {
+          if (signal.aborted) {
+            throw new DOMException('The operation was aborted.', 'AbortError')
+          }
+        }
+      }
+
+      return buildAgentRuntimeContext({
+        now: new Date(),
+        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+        locale: i18n.resolvedLanguage ?? i18n.language,
+        requestedModel,
+        checkinEnabled,
+        checkedInToday,
+      })
+    },
+    [i18n.language, i18n.resolvedLanguage, systemStatus?.checkin_enabled]
+  )
+
   const { run, regenerate, editMessage, stop, isGenerating } = useAgentRun({
     config,
     status,
@@ -76,6 +112,7 @@ export function Agent() {
     updateMessages,
     messagesRef,
     toolPacks: activeToolPacks,
+    getRuntimeContext,
   })
 
   const [editingId, setEditingId] = useState<string | null>(null)

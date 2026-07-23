@@ -101,4 +101,26 @@ describe('buildAgentPayload Agent settings', () => {
       content: 'Use web search for current information.',
     })
   })
+
+  test('appends generated runtime context after administrator and tool instructions', () => {
+    const runtimeContext = `<AUTO_GEN_INFO>
+CURRENT_DATE: 2026-07-23
+</AUTO_GEN_INFO>`
+    const payload = buildAgentPayload(
+      [message],
+      config({ system_prompt: 'Follow the administrator policy.' }),
+      undefined,
+      ['Use available tools when needed.'],
+      runtimeContext
+    )
+
+    assert.deepEqual(payload.messages[0], {
+      role: 'system',
+      content: `Follow the administrator policy.
+
+Use available tools when needed.
+
+${runtimeContext}`,
+    })
+  })
 })

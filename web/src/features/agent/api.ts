@@ -49,6 +49,17 @@ export async function getAgentSettings(): Promise<AgentSettings> {
   }
 }
 
+export async function getAgentCheckinStatus(
+  signal: AbortSignal
+): Promise<boolean | null> {
+  const res = await api.get('/api/user/checkin', {
+    signal,
+    skipErrorHandler: true,
+  })
+  const checkedInToday = res.data?.data?.stats?.checked_in_today
+  return typeof checkedInToday === 'boolean' ? checkedInToday : null
+}
+
 /**
  * Fetch the models available to the current user for a given group.
  */

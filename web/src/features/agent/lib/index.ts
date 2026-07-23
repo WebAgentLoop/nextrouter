@@ -47,6 +47,10 @@ export {
   resolveInitialAgentGroup,
 } from './config/resolve-agent-config'
 export {
+  buildAgentRuntimeContext,
+  type AgentRuntimeContextInput,
+} from './runtime-context'
+export {
   ToolCallAccumulator,
   parseToolCallArguments,
 } from './stream/parse-tool-calls'

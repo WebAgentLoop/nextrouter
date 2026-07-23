@@ -52,6 +52,10 @@ interface UseAgentRunOptions {
   // Seed messages at run start (the persisted conversation before this turn).
   messagesRef: { current: AgentMessage[] }
   toolPacks?: AgentToolPack[]
+  getRuntimeContext?: (
+    requestedModel: string,
+    signal: AbortSignal
+  ) => Promise<string>
 }
 
 function createId(): string {
@@ -93,6 +97,7 @@ export function useAgentRun({
   updateMessages,
   messagesRef,
   toolPacks = [],
+  getRuntimeContext,
 }: UseAgentRunOptions) {
   const { t } = useTranslation()
   const { streamOneRound, closeStream } = useAgentStream()
@@ -122,6 +127,9 @@ export function useAgentRun({
         const activeTools = getToolPackTools(toolPacks)
         const toolPackSystemInstructions =
           getToolPackSystemInstructions(toolPacks)
+        const runtimeContext = getRuntimeContext
+          ? await getRuntimeContext(config.model, controller.signal)
+          : ''
         const iterationLimit = Math.min(
           config.max_iterations,
           ABSOLUTE_MAX_AGENT_ITERATIONS
@@ -139,7 +147,8 @@ export function useAgentRun({
             roundMessages,
             config,
             listToolDefinitions(activeTools),
-            toolPackSystemInstructions
+            toolPackSystemInstructions,
+            runtimeContext
           )
 
           const assistantId = createId()
@@ -333,7 +342,15 @@ export function useAgentRun({
         abortControllerRef.current = null
       }
     },
-    [config, setStatus, streamOneRound, t, toolPacks, updateMessages]
+    [
+      config,
+      getRuntimeContext,
+      setStatus,
+      streamOneRound,
+      t,
+      toolPacks,
+      updateMessages,
+    ]
   )
 
   const run = useCallback(
