@@ -17,9 +17,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import {
-  CalculatorIcon,
-  SparklesIcon,
-  TrendingUpIcon,
+  BookOpenIcon,
+  Code2Icon,
+  GlobeIcon,
+  ServerIcon,
   WandSparklesIcon,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -35,20 +36,20 @@ export function AgentEmptyState({ onSelectPrompt }: AgentEmptyStateProps) {
 
   const starterPrompts = [
     {
-      icon: CalculatorIcon,
-      text: 'Calculate (12 + 8) * 5 - 3^2',
+      icon: ServerIcon,
+      text: 'Which models are available on this gateway?',
     },
     {
-      icon: TrendingUpIcon,
-      text: 'What is 15% of 240, then divide by 6?',
+      icon: Code2Icon,
+      text: 'How do I call a chat model with cURL?',
     },
     {
-      icon: SparklesIcon,
-      text: 'Compute the average of 12, 45, 78 and 103',
+      icon: BookOpenIcon,
+      text: 'Find a documented model and summarize its capabilities and limitations',
     },
     {
-      icon: WandSparklesIcon,
-      text: 'How many seconds are in a leap year?',
+      icon: GlobeIcon,
+      text: 'Search the web for the latest AI API updates',
     },
   ]
 
@@ -61,11 +62,11 @@ export function AgentEmptyState({ onSelectPrompt }: AgentEmptyStateProps) {
 
         <div className='grid gap-2'>
           <h2 className='text-xl font-semibold tracking-tight text-balance md:text-2xl'>
-            {t('Start an agent task')}
+            {t('Explore your AI gateway')}
           </h2>
           <p className='text-muted-foreground mx-auto max-w-lg text-sm leading-6 text-balance'>
             {t(
-              'Ask the agent a question. It can use tools like a calculator to work out the answer step by step.'
+              'Ask about available models and API integration, or connect web search for up-to-date information.'
             )}
           </p>
         </div>
