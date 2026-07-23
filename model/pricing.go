@@ -17,8 +17,11 @@ import (
 )
 
 type Pricing struct {
+	ModelID                int                     `json:"-"`
 	ModelName              string                  `json:"model_name"`
 	Description            string                  `json:"description,omitempty"`
+	SourceLanguage         string                  `json:"source_language,omitempty"`
+	DescriptionLanguage    string                  `json:"description_language,omitempty"`
 	HasDocumentation       bool                    `json:"has_documentation"`
 	Icon                   string                  `json:"icon,omitempty"`
 	Tags                   string                  `json:"tags,omitempty"`
@@ -385,11 +388,13 @@ func updatePricing() {
 
 		// 补充模型元数据（描述、标签、供应商、状态）
 		if configured {
+			pricing.ModelID = meta.Id
 			// 若模型被禁用(status!=1)，则直接跳过，不返回给前端
 			if meta.Status != 1 {
 				continue
 			}
 			pricing.Description = meta.Description
+			pricing.SourceLanguage = meta.SourceLanguage
 			_, pricing.HasDocumentation = documentedModels[meta.Id]
 			pricing.DocumentationModelID = meta.Id
 			pricing.Icon = meta.Icon

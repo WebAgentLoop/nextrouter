@@ -171,3 +171,58 @@ func TestGetModelDocumentationHonorsPricingVisibilityAndNameRules(t *testing.T) 
 		assert.Equal(t, http.StatusNotFound, recorder.Code, modelName)
 	}
 }
+
+func TestGetModelDocumentationUsesRequestedThenEnglishFallback(t *testing.T) {
+	db := setupModelListControllerTestDB(t)
+	originalUsableGroups := setting.UserUsableGroups2JSONString()
+	t.Cleanup(func() {
+		require.NoError(t, setting.UpdateUserUsableGroupsByJSONString(originalUsableGroups))
+	})
+	require.NoError(t, setting.UpdateUserUsableGroupsByJSONString(`{"default":"Default"}`))
+	require.NoError(t, db.Create(&model.Channel{Id: 9101, Name: "localized-documentation", Key: "test-key", Status: common.ChannelStatusEnabled}).Error)
+	require.NoError(t, db.Create(&model.Ability{Group: "default", Model: "localized-model", ChannelId: 9101, Enabled: true}).Error)
+	source := model.Model{ModelName: "localized-model", Description: "中文描述", Documentation: "# 中文文档", SourceLanguage: "zh-CN", Status: 1}
+	require.NoError(t, db.Create(&source).Error)
+	require.NoError(t, db.Create(&[]model.ModelTranslation{
+		{
+			ModelID: source.Id, Locale: "en", Description: "English description", Documentation: "# English guide",
+			DescriptionSourceHash: model.ModelContentHash(source.Description), DescriptionStatus: model.TranslationStatusCompleted,
+			DocumentationSourceHash: model.ModelContentHash(source.Documentation), DocumentationStatus: model.TranslationStatusCompleted,
+		},
+		{
+			ModelID: source.Id, Locale: "fr", Description: "Ancienne description", Documentation: "# Ancien guide",
+			DescriptionSourceHash: "stale", DescriptionStatus: model.TranslationStatusCompleted,
+			DocumentationSourceHash: "stale", DocumentationStatus: model.TranslationStatusCompleted,
+		},
+	}).Error)
+	model.InitChannelCache()
+	model.InvalidatePricingCache()
+
+	query := url.Values{"model": {source.ModelName}, "lang": {"fr"}}
+	recorder := performModelDocumentationRequest(t, http.MethodGet, "/api/pricing/documentation?"+query.Encode(), nil, GetModelDocumentation)
+	require.Equal(t, http.StatusOK, recorder.Code)
+	var response struct {
+		Success bool `json:"success"`
+		Data    struct {
+			Documentation   string `json:"documentation"`
+			ContentLanguage string `json:"content_language"`
+		} `json:"data"`
+	}
+	require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &response))
+	assert.True(t, response.Success)
+	assert.Equal(t, "# English guide", response.Data.Documentation)
+	assert.Equal(t, "en", response.Data.ContentLanguage)
+
+	recorder = performModelDocumentationRequest(t, http.MethodGet, "/api/pricing?lang=fr", nil, GetPricing)
+	require.Equal(t, http.StatusOK, recorder.Code)
+	var pricingResponse struct {
+		Success bool            `json:"success"`
+		Data    []model.Pricing `json:"data"`
+	}
+	require.NoError(t, common.Unmarshal(recorder.Body.Bytes(), &pricingResponse))
+	assert.True(t, pricingResponse.Success)
+	pricing := pricingByModelName(pricingResponse.Data)
+	require.Contains(t, pricing, source.ModelName)
+	assert.Equal(t, "English description", pricing[source.ModelName].Description)
+	assert.Equal(t, "en", pricing[source.ModelName].DescriptionLanguage)
+}

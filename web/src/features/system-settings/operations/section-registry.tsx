@@ -26,6 +26,7 @@ import { UpdateCheckerSection } from '../maintenance/update-checker-section'
 import type { OperationsSettings } from '../types'
 import { createSectionRegistry } from '../utils/section-registry'
 import { AgentSettingsSection } from './agent-settings-section'
+import { TranslationSettingsSection } from './translation-settings-section'
 
 const OPERATIONS_SECTIONS = [
   {
@@ -73,6 +74,23 @@ const OPERATIONS_SECTIONS = [
             settings['perf_metrics_setting.bucket_time'] ?? 'hour',
           'perf_metrics_setting.retention_days':
             settings['perf_metrics_setting.retention_days'] ?? 0,
+        }}
+      />
+    ),
+  },
+  {
+    id: 'translation',
+    titleKey: 'Content translation',
+    build: (settings: OperationsSettings) => (
+      <TranslationSettingsSection
+        autoGroups={settings.AutoGroups}
+        defaultValues={{
+          enabled: settings['translation_setting.enabled'],
+          default_source_language:
+            settings['translation_setting.default_source_language'],
+          fallback_language: settings['translation_setting.fallback_language'],
+          model: settings['translation_setting.model'],
+          group: settings['translation_setting.group'],
         }}
       />
     ),

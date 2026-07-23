@@ -62,6 +62,11 @@ const defaultOperationsSettings: OperationsSettings = {
   'agent_setting.temperature': null,
   'agent_setting.max_tokens': null,
   'agent_setting.max_iterations': 10,
+  'translation_setting.enabled': false,
+  'translation_setting.default_source_language': 'en',
+  'translation_setting.fallback_language': 'en',
+  'translation_setting.model': 'gpt-4o-mini',
+  'translation_setting.group': 'default',
   AutoGroups: '[]',
 }
 

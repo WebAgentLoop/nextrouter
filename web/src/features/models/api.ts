@@ -36,6 +36,8 @@ import type {
   SyncOverwritePayload,
   DeploymentSettingsResponse,
   ListDeploymentsResponse,
+  GetModelTranslationsResponse,
+  ModelTranslation,
 } from './types'
 
 // ============================================================================
@@ -108,6 +110,49 @@ export async function deleteModel(
   id: number
 ): Promise<{ success: boolean; message?: string }> {
   const res = await api.delete(`/api/models/${id}`)
+  return res.data
+}
+
+export async function getModelTranslations(
+  modelId: number
+): Promise<GetModelTranslationsResponse> {
+  const res = await api.get(`/api/models/${modelId}/translations`)
+  return res.data
+}
+
+export async function generateModelTranslations(
+  modelId: number,
+  data: { locales: string[]; contents: string[] }
+): Promise<{ success: boolean; message?: string }> {
+  const res = await api.post(
+    `/api/models/${modelId}/translations/generate`,
+    data
+  )
+  return res.data
+}
+
+export async function updateModelTranslation(
+  modelId: number,
+  locale: string,
+  data: {
+    description?: string
+    documentation?: string
+    description_source_version?: string
+    documentation_source_version?: string
+  }
+): Promise<{ success: boolean; message?: string; data?: ModelTranslation }> {
+  const res = await api.put(
+    `/api/models/${modelId}/translations/${locale}`,
+    data
+  )
+  return res.data
+}
+
+export async function deleteModelTranslation(
+  modelId: number,
+  locale: string
+): Promise<{ success: boolean; message?: string }> {
+  const res = await api.delete(`/api/models/${modelId}/translations/${locale}`)
   return res.data
 }
 

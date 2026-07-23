@@ -9,8 +9,10 @@ import (
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/constant"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/setting/translation_setting"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // GetAllModelsMeta 获取模型列表（分页）
@@ -97,6 +99,10 @@ func CreateModelMeta(c *gin.Context) {
 		common.ApiErrorMsg(c, "模型名称不能为空")
 		return
 	}
+	m.SourceLanguage = translation_setting.NormalizeLanguage(m.SourceLanguage)
+	if m.SourceLanguage == "" {
+		m.SourceLanguage = translation_setting.GetTranslationSetting().DefaultSourceLanguage
+	}
 	if len(m.Documentation) > model.MaxModelDocumentationBytes {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
@@ -149,6 +155,10 @@ func UpdateModelMeta(c *gin.Context) {
 			return
 		}
 	} else {
+		m.SourceLanguage = translation_setting.NormalizeLanguage(m.SourceLanguage)
+		if m.SourceLanguage == "" {
+			m.SourceLanguage = translation_setting.GetTranslationSetting().DefaultSourceLanguage
+		}
 		// 名称冲突检查
 		if dup, err := model.IsModelNameDuplicated(m.Id, m.ModelName); err != nil {
 			common.ApiError(c, err)
@@ -175,7 +185,12 @@ func DeleteModelMeta(c *gin.Context) {
 		common.ApiError(c, err)
 		return
 	}
-	if err := model.DB.Delete(&model.Model{}, id).Error; err != nil {
+	if err := model.DB.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Where("model_id = ?", id).Delete(&model.ModelTranslation{}).Error; err != nil {
+			return err
+		}
+		return tx.Delete(&model.Model{}, id).Error
+	}); err != nil {
 		common.ApiError(c, err)
 		return
 	}

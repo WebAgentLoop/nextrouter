@@ -89,6 +89,24 @@ func TestSystemTaskActiveKeyPreventsDuplicateActiveRun(t *testing.T) {
 	assert.Equal(t, task.TaskID, activeTask.TaskID)
 }
 
+func TestSystemTaskCustomActiveKeysQueueDifferentModels(t *testing.T) {
+	truncateTables(t)
+
+	first, err := CreateSystemTaskWithActiveKey(SystemTaskTypeModelTranslation, "model_translation:1", map[string]int{"model_id": 1}, nil)
+	require.NoError(t, err)
+	second, err := CreateSystemTaskWithActiveKey(SystemTaskTypeModelTranslation, "model_translation:2", map[string]int{"model_id": 2}, nil)
+	require.NoError(t, err)
+	assert.NotEqual(t, first.TaskID, second.TaskID)
+
+	active, err := GetActiveSystemTaskByKey("model_translation:1")
+	require.NoError(t, err)
+	require.NotNil(t, active)
+	assert.Equal(t, first.TaskID, active.TaskID)
+
+	_, err = CreateSystemTaskWithActiveKey(SystemTaskTypeModelTranslation, "model_translation:1", nil, nil)
+	assert.Error(t, err)
+}
+
 func TestSystemTaskLockPreventsConcurrentClaim(t *testing.T) {
 	truncateTables(t)
 

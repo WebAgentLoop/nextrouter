@@ -91,6 +91,7 @@ import {
   isModelDocumentationWithinLimit,
   MAX_MODEL_DOCUMENTATION_BYTES,
 } from '../../lib/model-documentation'
+import { MODEL_CONTENT_LANGUAGES } from '../../lib/model-translations'
 import type { Model } from '../../types'
 
 // Extended schema for ratio configuration (internal form state only)
@@ -99,6 +100,7 @@ const extendedModelFormSchema = z.object({
   model_name: z.string().min(1, 'Model name is required'),
   description: z.string(),
   documentation: z.string(),
+  source_language: z.string(),
   icon: z.string(),
   tags: z.array(z.string()),
   vendor_id: z.number().optional(),
@@ -237,12 +239,19 @@ export function ModelMutateDrawer({
     return getOptionValue(systemOptionsData.data, defaultModelSettings)
   }, [systemOptionsData])
 
+  const defaultSourceLanguage = useMemo(() => {
+    return getOptionValue(systemOptionsData?.data, {
+      'translation_setting.default_source_language': 'en',
+    })['translation_setting.default_source_language']
+  }, [systemOptionsData?.data])
+
   const form = useForm<ExtendedModelFormValues>({
     resolver: zodResolver(extendedModelFormSchema),
     defaultValues: {
       model_name: '',
       description: '',
       documentation: '',
+      source_language: 'en',
       icon: '',
       tags: [],
       vendor_id: undefined,
@@ -305,6 +314,7 @@ export function ModelMutateDrawer({
         model_name: model.model_name,
         description: model.description || '',
         documentation: model.documentation || '',
+        source_language: model.source_language || 'en',
         icon: model.icon || '',
         tags: parseModelTags(model.tags),
         vendor_id: model.vendor_id,
@@ -411,6 +421,7 @@ export function ModelMutateDrawer({
         model_name: currentRow?.model_name || '',
         description: '',
         documentation: '',
+        source_language: defaultSourceLanguage,
         icon: '',
         tags: [],
         vendor_id: undefined,
@@ -427,7 +438,15 @@ export function ModelMutateDrawer({
         audioCompletionRatio: '',
       })
     }
-  }, [open, isEditing, modelData, currentRow, form, modelSettings])
+  }, [
+    open,
+    isEditing,
+    modelData,
+    currentRow,
+    form,
+    modelSettings,
+    defaultSourceLanguage,
+  ])
 
   const onSubmit = useCallback(
     async (values: ExtendedModelFormValues): Promise<void> => {
@@ -769,6 +788,48 @@ export function ModelMutateDrawer({
                         {...field}
                       />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name='source_language'
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('Source language')}</FormLabel>
+                    <Select
+                      items={MODEL_CONTENT_LANGUAGES.map((language) => ({
+                        value: language.code,
+                        label: language.label,
+                      }))}
+                      value={field.value}
+                      onValueChange={field.onChange}
+                    >
+                      <FormControl>
+                        <SelectTrigger className='w-full'>
+                          <SelectValue />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent alignItemWithTrigger={false}>
+                        <SelectGroup>
+                          {MODEL_CONTENT_LANGUAGES.map((language) => (
+                            <SelectItem
+                              key={language.code}
+                              value={language.code}
+                            >
+                              {language.label}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      {t(
+                        'Language used by the original model description and documentation.'
+                      )}
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}

@@ -25,16 +25,19 @@ import type { ModelDocumentationResponse, PricingData } from './types'
 // ----------------------------------------------------------------------------
 
 // Get model pricing data
-export async function getPricing(): Promise<PricingData> {
-  const res = await api.get('/api/pricing')
+export async function getPricing(lang?: string): Promise<PricingData> {
+  const res = await api.get('/api/pricing', {
+    params: lang ? { lang } : undefined,
+  })
   return res.data
 }
 
 export async function getModelDocumentation(
-  modelName: string
+  modelName: string,
+  lang?: string
 ): Promise<ModelDocumentationResponse> {
   const res = await api.get('/api/pricing/documentation', {
-    params: { model: modelName },
+    params: { model: modelName, ...(lang ? { lang } : {}) },
   })
   return res.data
 }

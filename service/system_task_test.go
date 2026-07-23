@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 	"testing"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gorm.io/gorm"
 )
 
 // withSystemTaskRegistry swaps the package registry for the given handlers for
@@ -231,4 +233,41 @@ func TestEnqueueSystemTaskReportsCreatedAndExistingActive(t *testing.T) {
 	require.True(t, created)
 	require.NotNil(t, second)
 	assert.NotEqual(t, first.TaskID, second.TaskID)
+}
+
+func TestEnqueueSystemTaskWithActiveKeyRunsSetupOnlyForCreatedTask(t *testing.T) {
+	truncate(t)
+
+	setupCalls := 0
+	first, created, err := EnqueueSystemTaskWithActiveKeyAndSetup("test_atomic_enqueue", "test_atomic_enqueue:1", nil, func(_ *gorm.DB) error {
+		setupCalls++
+		return nil
+	})
+	require.NoError(t, err)
+	require.True(t, created)
+	require.NotNil(t, first)
+	assert.Equal(t, 1, setupCalls)
+
+	existing, created, err := EnqueueSystemTaskWithActiveKeyAndSetup("test_atomic_enqueue", "test_atomic_enqueue:1", nil, func(_ *gorm.DB) error {
+		setupCalls++
+		return nil
+	})
+	require.NoError(t, err)
+	require.False(t, created)
+	require.NotNil(t, existing)
+	assert.Equal(t, first.TaskID, existing.TaskID)
+	assert.Equal(t, 1, setupCalls)
+}
+
+func TestEnqueueSystemTaskWithActiveKeyRollsBackWhenSetupFails(t *testing.T) {
+	truncate(t)
+
+	setupErr := errors.New("setup failed")
+	task, created, err := EnqueueSystemTaskWithActiveKeyAndSetup("test_atomic_rollback", "test_atomic_rollback:1", nil, func(_ *gorm.DB) error {
+		return setupErr
+	})
+	require.ErrorIs(t, err, setupErr)
+	assert.False(t, created)
+	assert.Nil(t, task)
+	assert.Equal(t, int64(0), countSystemTasks(t, "test_atomic_rollback"))
 }

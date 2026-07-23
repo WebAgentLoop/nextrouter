@@ -18,6 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { DescriptionDialog } from './dialogs/description-dialog'
 import { MissingModelsDialog } from './dialogs/missing-models-dialog'
+import { ModelTranslationsSheet } from './dialogs/model-translations-sheet'
 import { PrefillGroupManagement } from './dialogs/prefill-group-management'
 import { SyncWizardDialog } from './dialogs/sync-wizard-dialog'
 import { UpstreamConflictDialog } from './dialogs/upstream-conflict-dialog'
@@ -26,13 +27,8 @@ import { ModelMutateDrawer } from './drawers/model-mutate-drawer'
 import { useModels } from './models-provider'
 
 export function ModelsDialogs() {
-  const {
-    open,
-    setOpen,
-    currentRow,
-    descriptionData,
-    setDescriptionData,
-  } = useModels()
+  const { open, setOpen, currentRow, descriptionData, setDescriptionData } =
+    useModels()
 
   return (
     <>
@@ -84,6 +80,12 @@ export function ModelsDialogs() {
         }}
         modelName={descriptionData?.modelName || ''}
         description={descriptionData?.description || ''}
+      />
+
+      <ModelTranslationsSheet
+        open={open === 'translations'}
+        onOpenChange={(value) => !value && setOpen(null)}
+        model={currentRow}
       />
     </>
   )

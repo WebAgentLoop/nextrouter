@@ -366,6 +366,11 @@ export type OperationsSettings = {
   'agent_setting.temperature': number | null
   'agent_setting.max_tokens': number | null
   'agent_setting.max_iterations': number
+  'translation_setting.enabled': boolean
+  'translation_setting.default_source_language': string
+  'translation_setting.fallback_language': string
+  'translation_setting.model': string
+  'translation_setting.group': string
   AutoGroups: string
 }
 

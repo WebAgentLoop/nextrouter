@@ -38,6 +38,7 @@ export interface Model {
   model_name: string
   description?: string
   documentation?: string
+  source_language: string
   icon?: string
   tags?: string
   vendor_id?: number
@@ -53,6 +54,52 @@ export interface Model {
   quota_types?: number[]
   matched_models?: string[]
   matched_count?: number
+}
+
+export type ModelTranslationStatus =
+  | ''
+  | 'pending'
+  | 'translating'
+  | 'completed'
+  | 'failed'
+  | 'stale'
+
+export interface ModelTranslation {
+  id: number
+  model_id: number
+  locale: string
+  description: string
+  documentation: string
+  description_source_hash: string
+  documentation_source_hash: string
+  description_status: ModelTranslationStatus
+  documentation_status: ModelTranslationStatus
+  description_error: string
+  documentation_error: string
+  translated_time: number
+  updated_time: number
+}
+
+export interface TranslationSettings {
+  enabled: boolean
+  default_source_language: string
+  fallback_language: string
+  model: string
+  group: string
+}
+
+export interface GetModelTranslationsResponse {
+  success: boolean
+  message?: string
+  data?: {
+    model: Model
+    translations: ModelTranslation[]
+    settings: TranslationSettings
+    source_versions: {
+      description: string
+      documentation: string
+    }
+  }
 }
 
 /**

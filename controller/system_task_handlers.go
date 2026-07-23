@@ -22,6 +22,15 @@ func RegisterScheduledSystemTasks() {
 	service.RegisterSystemTaskHandler(modelUpdateHandler{})
 	service.RegisterSystemTaskHandler(midjourneyPollHandler{})
 	service.RegisterSystemTaskHandler(asyncTaskPollHandler{})
+	service.RegisterSystemTaskHandler(modelTranslationHandler{})
+}
+
+type modelTranslationHandler struct{}
+
+func (modelTranslationHandler) Type() string { return model.SystemTaskTypeModelTranslation }
+
+func (modelTranslationHandler) Run(ctx context.Context, task *model.SystemTask, runnerID string) {
+	runModelTranslationTask(ctx, task, runnerID)
 }
 
 // channelTestHandler runs the scheduled "test all channels" job. Enablement and

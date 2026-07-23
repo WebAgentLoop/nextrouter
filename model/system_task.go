@@ -16,11 +16,12 @@ const (
 	SystemTaskStatusSucceeded SystemTaskStatus = "succeeded"
 	SystemTaskStatusFailed    SystemTaskStatus = "failed"
 
-	SystemTaskTypeLogCleanup     = "log_cleanup"
-	SystemTaskTypeChannelTest    = "channel_test"
-	SystemTaskTypeModelUpdate    = "model_update"
-	SystemTaskTypeMidjourneyPoll = "midjourney_poll"
-	SystemTaskTypeAsyncTaskPoll  = "async_task_poll"
+	SystemTaskTypeLogCleanup       = "log_cleanup"
+	SystemTaskTypeChannelTest      = "channel_test"
+	SystemTaskTypeModelUpdate      = "model_update"
+	SystemTaskTypeMidjourneyPoll   = "midjourney_poll"
+	SystemTaskTypeAsyncTaskPoll    = "async_task_poll"
+	SystemTaskTypeModelTranslation = "model_translation"
 )
 
 var ErrSystemTaskLockLost = errors.New("system task lock lost")
@@ -90,6 +91,20 @@ func GenerateSystemTaskID() (string, error) {
 }
 
 func CreateSystemTask(taskType string, payload any, state any) (*SystemTask, error) {
+	return CreateSystemTaskWithActiveKey(taskType, taskType, payload, state)
+}
+
+func CreateSystemTaskWithActiveKey(taskType string, activeKey string, payload any, state any) (*SystemTask, error) {
+	var task *SystemTask
+	err := DB.Transaction(func(tx *gorm.DB) error {
+		var err error
+		task, err = CreateSystemTaskWithActiveKeyTx(tx, taskType, activeKey, payload, state)
+		return err
+	})
+	return task, err
+}
+
+func CreateSystemTaskWithActiveKeyTx(tx *gorm.DB, taskType string, activeKey string, payload any, state any) (*SystemTask, error) {
 	taskID, err := GenerateSystemTaskID()
 	if err != nil {
 		return nil, err
@@ -107,15 +122,24 @@ func CreateSystemTask(taskType string, payload any, state any) (*SystemTask, err
 		TaskID:    taskID,
 		Type:      taskType,
 		Status:    SystemTaskStatusPending,
-		ActiveKey: &taskType,
+		ActiveKey: &activeKey,
 		Payload:   payloadText,
 		State:     stateText,
 	}
 
-	if err := DB.Create(task).Error; err != nil {
+	if err := tx.Create(task).Error; err != nil {
 		return nil, err
 	}
 	return task, nil
+}
+
+func GetActiveSystemTaskByKey(activeKey string) (*SystemTask, error) {
+	var task SystemTask
+	err := DB.Where("active_key = ? AND status IN ?", activeKey, activeSystemTaskStatuses()).Order("id desc").First(&task).Error
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, nil
+	}
+	return &task, err
 }
 
 func GetSystemTaskByTaskID(taskID string) (*SystemTask, error) {

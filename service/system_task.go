@@ -12,6 +12,7 @@ import (
 	"github.com/QuantumNous/new-api/model"
 
 	"github.com/bytedance/gopkg/util/gopool"
+	"gorm.io/gorm"
 )
 
 const (
@@ -210,6 +211,51 @@ func EnqueueSystemTask(taskType string, payload any) (*model.SystemTask, bool, e
 	task, err := model.CreateSystemTask(taskType, payload, nil)
 	if err != nil {
 		activeTask, activeErr := model.GetActiveSystemTask(taskType)
+		if activeErr == nil && activeTask != nil {
+			return activeTask, false, nil
+		}
+		return nil, false, err
+	}
+	notifySystemTaskRunner()
+	return task, true, nil
+}
+
+func EnqueueSystemTaskWithActiveKey(taskType string, activeKey string, payload any) (*model.SystemTask, bool, error) {
+	activeTask, err := model.GetActiveSystemTaskByKey(activeKey)
+	if err != nil {
+		return nil, false, err
+	}
+	if activeTask != nil {
+		return activeTask, false, nil
+	}
+
+	task, err := model.CreateSystemTaskWithActiveKey(taskType, activeKey, payload, nil)
+	if err != nil {
+		activeTask, activeErr := model.GetActiveSystemTaskByKey(activeKey)
+		if activeErr == nil && activeTask != nil {
+			return activeTask, false, nil
+		}
+		return nil, false, err
+	}
+	notifySystemTaskRunner()
+	return task, true, nil
+}
+
+func EnqueueSystemTaskWithActiveKeyAndSetup(taskType string, activeKey string, payload any, setup func(tx *gorm.DB) error) (*model.SystemTask, bool, error) {
+	var task *model.SystemTask
+	err := model.DB.Transaction(func(tx *gorm.DB) error {
+		var createErr error
+		task, createErr = model.CreateSystemTaskWithActiveKeyTx(tx, taskType, activeKey, payload, nil)
+		if createErr != nil {
+			return createErr
+		}
+		if setup != nil {
+			return setup(tx)
+		}
+		return nil
+	})
+	if err != nil {
+		activeTask, activeErr := model.GetActiveSystemTaskByKey(activeKey)
 		if activeErr == nil && activeTask != nil {
 			return activeTask, false, nil
 		}

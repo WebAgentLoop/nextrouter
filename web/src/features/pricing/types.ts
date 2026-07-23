@@ -36,6 +36,8 @@ export type PricingModel = {
   id: number
   model_name: string
   description?: string
+  source_language?: string
+  description_language?: string
   has_documentation: boolean
   icon?: string
   vendor_id?: number
@@ -108,6 +110,7 @@ export type PricingData = {
 export type ModelDocumentationData = {
   model_name: string
   documentation: string
+  content_language: string
 }
 
 export type ModelDocumentationResponse = {

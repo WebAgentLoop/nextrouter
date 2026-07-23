@@ -1,3 +1,5 @@
+import { RefreshIcon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 /*
 Copyright (C) 2023-2026 QuantumNous
 
@@ -17,12 +19,12 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useQuery } from '@tanstack/react-query'
-import { RefreshCw } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
 import { Button } from '@/components/ui/button'
 import { Markdown } from '@/components/ui/markdown'
 import { Skeleton } from '@/components/ui/skeleton'
+import { toIntlLocale } from '@/i18n/languages'
 
 import { getModelDocumentation } from '../api'
 
@@ -32,10 +34,11 @@ type ModelDocumentationProps = {
 }
 
 export function ModelDocumentation(props: ModelDocumentationProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const lang = toIntlLocale(i18n.resolvedLanguage ?? i18n.language)
   const query = useQuery({
-    queryKey: ['pricing', 'documentation', props.modelName],
-    queryFn: () => getModelDocumentation(props.modelName),
+    queryKey: ['pricing', 'documentation', props.modelName, lang],
+    queryFn: () => getModelDocumentation(props.modelName, lang),
     enabled: props.active,
     staleTime: 5 * 60 * 1000,
   })
@@ -64,7 +67,11 @@ export function ModelDocumentation(props: ModelDocumentationProps) {
           size='sm'
           onClick={() => query.refetch()}
         >
-          <RefreshCw className='size-3.5' />
+          <HugeiconsIcon
+            icon={RefreshIcon}
+            strokeWidth={2}
+            data-icon='inline-start'
+          />
           {t('Retry')}
         </Button>
       </div>

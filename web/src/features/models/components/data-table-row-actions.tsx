@@ -16,6 +16,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { TranslateIcon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { Row } from '@tanstack/react-table'
 import { Pencil, Power, PowerOff, Trash2 } from 'lucide-react'
@@ -65,6 +67,11 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
     handleToggleModelStatus(model.id, model.status, queryClient)
   }
 
+  const handleTranslations = () => {
+    setCurrentRow(model)
+    setOpen('translations')
+  }
+
   const toggleLabel = isEnabled ? t('Disable') : t('Enable')
 
   return (
@@ -83,6 +90,22 @@ export function DataTableRowActions({ row }: DataTableRowActionsProps) {
           <Pencil />
         </TooltipTrigger>
         <TooltipContent>{t('Edit')}</TooltipContent>
+      </Tooltip>
+
+      <Tooltip>
+        <TooltipTrigger
+          render={
+            <Button
+              variant='ghost'
+              size='icon-sm'
+              onClick={handleTranslations}
+              aria-label={t('Manage translations')}
+            />
+          }
+        >
+          <HugeiconsIcon icon={TranslateIcon} strokeWidth={2} />
+        </TooltipTrigger>
+        <TooltipContent>{t('Manage translations')}</TooltipContent>
       </Tooltip>
 
       <Tooltip>

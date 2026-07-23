@@ -1,10 +1,13 @@
 package model
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"strconv"
 	"strings"
 
 	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/setting/translation_setting"
 
 	"gorm.io/gorm"
 )
@@ -22,6 +25,7 @@ var modelMetadataSelectColumns = []string{
 	"models.id",
 	"models.model_name",
 	"models.description",
+	"models.source_language",
 	"models.icon",
 	"models.tags",
 	"models.vendor_id",
@@ -39,19 +43,20 @@ type BoundChannel struct {
 }
 
 type Model struct {
-	Id            int            `json:"id"`
-	ModelName     string         `json:"model_name" gorm:"size:128;not null;uniqueIndex:uk_model_name_delete_at,priority:1"`
-	Description   string         `json:"description,omitempty" gorm:"type:text"`
-	Documentation string         `json:"documentation,omitempty" gorm:"type:text"`
-	Icon          string         `json:"icon,omitempty" gorm:"type:varchar(128)"`
-	Tags          string         `json:"tags,omitempty" gorm:"type:varchar(255)"`
-	VendorID      int            `json:"vendor_id,omitempty" gorm:"index"`
-	Endpoints     string         `json:"endpoints,omitempty" gorm:"type:text"`
-	Status        int            `json:"status" gorm:"default:1"`
-	SyncOfficial  int            `json:"sync_official" gorm:"default:1"`
-	CreatedTime   int64          `json:"created_time" gorm:"bigint"`
-	UpdatedTime   int64          `json:"updated_time" gorm:"bigint"`
-	DeletedAt     gorm.DeletedAt `json:"-" gorm:"index;uniqueIndex:uk_model_name_delete_at,priority:2"`
+	Id             int            `json:"id"`
+	ModelName      string         `json:"model_name" gorm:"size:128;not null;uniqueIndex:uk_model_name_delete_at,priority:1"`
+	Description    string         `json:"description,omitempty" gorm:"type:text"`
+	Documentation  string         `json:"documentation,omitempty" gorm:"type:text"`
+	SourceLanguage string         `json:"source_language" gorm:"type:varchar(16)"`
+	Icon           string         `json:"icon,omitempty" gorm:"type:varchar(128)"`
+	Tags           string         `json:"tags,omitempty" gorm:"type:varchar(255)"`
+	VendorID       int            `json:"vendor_id,omitempty" gorm:"index"`
+	Endpoints      string         `json:"endpoints,omitempty" gorm:"type:text"`
+	Status         int            `json:"status" gorm:"default:1"`
+	SyncOfficial   int            `json:"sync_official" gorm:"default:1"`
+	CreatedTime    int64          `json:"created_time" gorm:"bigint"`
+	UpdatedTime    int64          `json:"updated_time" gorm:"bigint"`
+	DeletedAt      gorm.DeletedAt `json:"-" gorm:"index;uniqueIndex:uk_model_name_delete_at,priority:2"`
 
 	BoundChannels []BoundChannel `json:"bound_channels,omitempty" gorm:"-"`
 	EnableGroups  []string       `json:"enable_groups,omitempty" gorm:"-"`
@@ -63,6 +68,7 @@ type Model struct {
 }
 
 func (mi *Model) Insert() error {
+	mi.normalizeSourceLanguage()
 	now := common.GetTimestamp()
 	mi.CreatedTime = now
 	mi.UpdatedTime = now
@@ -93,15 +99,73 @@ func IsModelNameDuplicated(id int, name string) (bool, error) {
 }
 
 func (mi *Model) Update() error {
+	return DB.Transaction(func(tx *gorm.DB) error {
+		return mi.UpdateWithTx(tx)
+	})
+}
+
+func (mi *Model) UpdateWithTx(tx *gorm.DB) error {
+	mi.normalizeSourceLanguage()
 	mi.UpdatedTime = common.GetTimestamp()
-	// 使用 Select 强制更新所有字段，包括零值
-	return DB.Model(&Model{}).Where("id = ?", mi.Id).
-		Select("model_name", "description", "documentation", "icon", "tags", "vendor_id", "endpoints", "status", "sync_official", "name_rule", "updated_time").
-		Updates(mi).Error
+	var previous Model
+	if err := lockForUpdate(tx).Select("source_language").First(&previous, mi.Id).Error; err != nil {
+		return err
+	}
+	if err := tx.Model(&Model{}).Where("id = ?", mi.Id).
+		Select("model_name", "description", "documentation", "source_language", "icon", "tags", "vendor_id", "endpoints", "status", "sync_official", "name_rule", "updated_time").
+		Updates(mi).Error; err != nil {
+		return err
+	}
+	if previous.SourceLanguage != mi.SourceLanguage {
+		return tx.Model(&ModelTranslation{}).
+			Where("model_id = ?", mi.Id).
+			Updates(map[string]any{
+				"description_status":   TranslationStatusStale,
+				"documentation_status": TranslationStatusStale,
+				"updated_time":         mi.UpdatedTime,
+			}).Error
+	}
+	return markModelTranslationsStale(tx, mi)
+}
+
+func (mi *Model) normalizeSourceLanguage() {
+	mi.SourceLanguage = translation_setting.NormalizeLanguage(mi.SourceLanguage)
+	if mi.SourceLanguage == "" {
+		mi.SourceLanguage = translation_setting.GetTranslationSetting().DefaultSourceLanguage
+	}
 }
 
 func (mi *Model) Delete() error {
 	return DB.Delete(mi).Error
+}
+
+func ModelContentHash(content string) string {
+	hash := sha256.Sum256([]byte(strings.TrimSpace(content)))
+	return hex.EncodeToString(hash[:])
+}
+
+func ModelSourceVersionHash(sourceLanguage, content string) string {
+	hash := sha256.Sum256([]byte(sourceLanguage + "\x00" + strings.TrimSpace(content)))
+	return hex.EncodeToString(hash[:])
+}
+
+func initializeExistingModelSourceLanguages() error {
+	return DB.Model(&Model{}).
+		Where("source_language IS NULL OR source_language = ?", "").
+		Update("source_language", "zh-CN").Error
+}
+
+func markModelTranslationsStale(tx *gorm.DB, source *Model) error {
+	descriptionHash := ModelContentHash(source.Description)
+	documentationHash := ModelContentHash(source.Documentation)
+	if err := tx.Model(&ModelTranslation{}).
+		Where("model_id = ? AND description_status = ? AND description_source_hash <> ?", source.Id, TranslationStatusCompleted, descriptionHash).
+		Updates(map[string]any{"description_status": TranslationStatusStale, "updated_time": source.UpdatedTime}).Error; err != nil {
+		return err
+	}
+	return tx.Model(&ModelTranslation{}).
+		Where("model_id = ? AND documentation_status = ? AND documentation_source_hash <> ?", source.Id, TranslationStatusCompleted, documentationHash).
+		Updates(map[string]any{"documentation_status": TranslationStatusStale, "updated_time": source.UpdatedTime}).Error
 }
 
 func GetVendorModelCounts() (map[int64]int64, error) {

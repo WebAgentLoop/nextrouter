@@ -15,6 +15,7 @@ import (
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/setting/translation_setting"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -351,6 +352,10 @@ func SyncUpstreamModels(c *gin.Context) {
 
 	// 本地缓存：vendorName -> id
 	vendorIDCache := make(map[string]int)
+	sourceLanguage := translation_setting.NormalizeLanguage(req.Locale)
+	if sourceLanguage == "" {
+		sourceLanguage = translation_setting.GetTranslationSetting().DefaultSourceLanguage
+	}
 
 	for _, name := range missing {
 		up, ok := modelByName[name]
@@ -373,13 +378,14 @@ func SyncUpstreamModels(c *gin.Context) {
 
 		// 创建模型
 		mi := &model.Model{
-			ModelName:   name,
-			Description: up.Description,
-			Icon:        up.Icon,
-			Tags:        up.Tags,
-			VendorID:    vendorID,
-			Status:      chooseStatus(up.Status, 1),
-			NameRule:    up.NameRule,
+			ModelName:      name,
+			Description:    up.Description,
+			SourceLanguage: sourceLanguage,
+			Icon:           up.Icon,
+			Tags:           up.Tags,
+			VendorID:       vendorID,
+			Status:         chooseStatus(up.Status, 1),
+			NameRule:       up.NameRule,
 		}
 		if err := mi.Insert(); err == nil {
 			createdModels++
@@ -415,6 +421,7 @@ func SyncUpstreamModels(c *gin.Context) {
 				needUpdate := false
 				if containsField(ow.Fields, "description") {
 					local.Description = up.Description
+					local.SourceLanguage = sourceLanguage
 					needUpdate = true
 				}
 				if containsField(ow.Fields, "icon") {
@@ -440,7 +447,7 @@ func SyncUpstreamModels(c *gin.Context) {
 				if !needUpdate {
 					return nil
 				}
-				if err := tx.Save(&local).Error; err != nil {
+				if err := local.UpdateWithTx(tx); err != nil {
 					return err
 				}
 				updatedModels++
