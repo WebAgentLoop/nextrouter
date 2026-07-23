@@ -49,7 +49,7 @@ export function AgentEmptyState({ onSelectPrompt }: AgentEmptyStateProps) {
     },
     {
       icon: GlobeIcon,
-      text: 'Search the web for the latest AI API updates',
+      text: "Search the web and summarize today's top technology news",
     },
   ]
 

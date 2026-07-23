@@ -39,6 +39,8 @@ describe('AgentEmptyState', () => {
     expect(markup).toContain(
       'Find a documented model and summarize its capabilities and limitations'
     )
-    expect(markup).toContain('Search the web for the latest AI API updates')
+    expect(markup).toContain(
+      'Search the web and summarize today&#x27;s top technology news'
+    )
   })
 })
