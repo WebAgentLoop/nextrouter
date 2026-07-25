@@ -57,7 +57,7 @@
 
 NextRouter **基于 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api)**（AGPLv3），后者又基于 [One API](https://github.com/songquanpeng/one-api)（MIT）。本 Fork：
 
-- 持续跟踪上游 `main`；当前已同步至上游提交 `e0d51561`。Fork 独有的改动自成一体，列于下方。
+- 持续跟踪上游 `main`；当前已同步至上游提交 `08f88d25`。Fork 独有的改动自成一体，列于下方。
 - 对自身修改负责，并按 AGPLv3 第 7(c) 条标注修改。
 - **保留必需的署名声明：** `Frontend design and development by New API contributors.`
 - **保留指向原始项目的可见链接：** <https://github.com/QuantumNous/new-api>
@@ -69,7 +69,7 @@ NextRouter **基于 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-a
 <!-- FORK-DELTA: NextRouter changes vs upstream QuantumNous/new-api.
      Update after merging any fork-only branch.
      Completeness check: git log --oneline --no-merges upstream/main..HEAD
-     Last verified: 2026-07-23 -->
+     Last verified: 2026-07-25 -->
 
 ## ✨ NextRouter 相比上游的改进
 
@@ -82,6 +82,7 @@ NextRouter **基于 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-a
 - 复用 playground relay `/pg/chat/completions`，采用 OpenAI function-calling 格式；内置工具注册表与**计算器**工具（安全表达式求值）。
 - **网关知识工具包**：列出网关当前实际提供的模型，并读取管理员维护的 Markdown 文档，让 Agent 能回答与本平台模型、端点和接入方式相关的问题。
 - **可扩展工具包**：管理员可以启用内置网关知识和可选的 Exa MCP 联网搜索，并配置 Agent 的默认模型、分组与系统指令。
+- 自动将当前网关/运行时上下文附加到提示词，并提供网关知识与实时联网搜索的起始入口；输入控制支持选择工具和清空对话。
 - 流式解析 tool-call；将每个 AI 回合聚合成一张卡片，带可折叠的 **Process** 过程面板。
 - 消息操作：复制 / 重新生成 / 编辑（可选是否重提） / 删除。
 - 多会话历史持久化于 **IndexedDB**（最多 50 个会话），支持重命名 / 切换 / 删除。
@@ -92,6 +93,8 @@ NextRouter **基于 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-a
 - **Force Stream** 渠道设置：针对“只支持流式”的上游，当客户端发非流式请求时，网关缓冲 SSE 流并返回单条非流式 JSON 响应（含后端缓冲逻辑与单元测试）。
 - **Force Format / Force Stream** 开关对**高级自定义（Advanced Custom）**渠道开放（此前仅 OpenAI 渠道）。
 - `/pg/chat/completions` 作为高级自定义入站路径选项。
+- **异步图片生成任务**：提供 OpenAI 兼容的提交/查询路由，并通过能力感知调度，在需要时让异步请求使用支持同步图片生成的渠道。
+- Claude 格式转换会保留 OpenAI 工具结果中的图片内容，并规范化工具结果载荷以兼容上游协议。
 
 ### 🧩 模型管理
 
@@ -105,6 +108,11 @@ NextRouter **基于 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-a
 
 - **Token 级缓存命中率**：记录缓存命中的输入 Token 与总输入 Token，按模型、分组和时间段计算缓存命中率，并在模型性能徽标与性能详情中展示当前及近期缓存表现。
 
+### 🧭 控制台易用性与分析
+
+- 可直接从 API Key 表格复制密钥名称。
+- 用量排行榜在现有时间范围之外增加全部时间维度。
+
 ### 💰 钱包与支付
 
 - 修正自定义货币（CUSTOM）模式与 Waffo Pancake 支付方式的钱包金额展示。
@@ -113,6 +121,8 @@ NextRouter **基于 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-a
 
 - 手动 Docker 发布工作流原生构建并签名 amd64 / arm64 镜像，仅在多架构 manifest 成功后才更新 `latest`。
 - 每次发布都会创建不可变的 `latest-YYYY.MM.DD.N` 镜像 tag，以及包含分类变更、镜像 digest 和回滚命令的 GitHub Release。
+- 维护页面的更新检查器跟踪 NextRouter Release，而非仅检查上游 Release。
+- 提供可选的 Cloudflare Worker，作为轻量代理部署方式。
 
 <!-- /FORK-DELTA -->
 

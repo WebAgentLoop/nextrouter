@@ -57,7 +57,7 @@ Pour l'ensemble des fonctionnalités, la prise en charge des modèles, les forma
 
 NextRouter est **basé sur [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api)** (AGPLv3), lui-même basé sur [One API](https://github.com/songquanpeng/one-api) (MIT). Ce fork :
 
-- Suit en continu la branche `main` amont ; actuellement synchronisé jusqu'au commit amont `e0d51561`. Les modifications spécifiques au fork sont autonomes et listées ci-dessous.
+- Suit en continu la branche `main` amont ; actuellement synchronisé jusqu'au commit amont `08f88d25`. Les modifications spécifiques au fork sont autonomes et listées ci-dessous.
 - Est responsable de ses propres modifications et les signale conformément à la section 7(c) de l'AGPLv3.
 - **Préserve la mention d'attribution requise :** `Frontend design and development by New API contributors.`
 - **Préserve un lien visible vers le projet original :** <https://github.com/QuantumNous/new-api>
@@ -69,7 +69,7 @@ Voir [Licence](#-licence) et [`NOTICE`](./NOTICE) pour les conditions complètes
 <!-- FORK-DELTA: NextRouter changes vs upstream QuantumNous/new-api.
      Update after merging any fork-only branch.
      Completeness check: git log --oneline --no-merges upstream/main..HEAD
-     Last verified: 2026-07-23 -->
+     Last verified: 2026-07-25 -->
 
 ## ✨ Les nouveautés de NextRouter
 
@@ -82,6 +82,7 @@ Un nouveau module de barre latérale **Agent** (`/agent`, à activer sous *Profi
 - Réutilise le relais playground `/pg/chat/completions` avec le format OpenAI function-calling ; fournit un registre d'outils intégré et un outil **calculatrice** (évaluation sûre d'expressions).
 - **Pack d'outils de connaissance de la passerelle** : liste les modèles actuellement exposés et lit la documentation Markdown maintenue par les administrateurs, afin que l'Agent réponde aux questions propres à la plateforme sur les modèles, les endpoints et l'intégration.
 - **Packs d'outils extensibles** : les administrateurs peuvent activer les connaissances intégrées de la passerelle et la recherche web optionnelle via Exa MCP, puis configurer le modèle, le groupe et les instructions système par défaut de l'Agent.
+- Ajoute automatiquement le contexte actuel de la passerelle et de l'exécution aux prompts, et propose des points de départ pour la connaissance de la passerelle et la recherche web en temps réel ; les contrôles de saisie permettent de choisir les outils et d'effacer la conversation.
 - Analyse en flux les appels d'outils ; agrège chaque tour de l'assistant en une seule carte avec un panneau **Process** repliable.
 - Actions sur les messages : copier / régénérer / éditer (avec ou sans renvoi) / supprimer.
 - Historique multi-sessions persisté dans **IndexedDB** (jusqu'à 50 sessions), avec renommer / basculer / supprimer.
@@ -92,6 +93,8 @@ Un nouveau module de barre latérale **Agent** (`/agent`, à activer sous *Profi
 - **Force Stream** (paramètre de canal) : pour les amonts qui ne prennent en charge *que* le streaming, lorsqu'un client envoie une requête non streamée, la passerelle met en mémoire tampon le flux SSE et renvoie une seule réponse JSON non streamée (logique de mise en tampon côté backend + tests unitaires).
 - Les commutateurs **Force Format / Force Stream** sont désormais disponibles pour les canaux **Advanced Custom** (auparavant uniquement pour le canal OpenAI).
 - `/pg/chat/completions` est désormais proposé comme option de chemin entrant pour Advanced Custom.
+- **Tâches de génération d'images asynchrones** : fournit des routes de soumission/consultation compatibles OpenAI et un routage conscient des capacités afin que les requêtes asynchrones utilisent, si nécessaire, des canaux d'images synchrones.
+- La conversion Claude préserve les images contenues dans les résultats d'outils OpenAI et normalise ces résultats pour assurer la compatibilité avec le protocole amont.
 
 ### 🧩 Gestion des modèles
 
@@ -105,6 +108,11 @@ Un nouveau module de barre latérale **Agent** (`/agent`, à activer sous *Profi
 
 - **Taux de cache hit au niveau des tokens** : enregistre les tokens d'entrée mis en cache et le total des tokens d'entrée, calcule le taux de cache hit par modèle, groupe et période, puis affiche les performances actuelles et récentes du cache dans les badges et les détails de performance des modèles.
 
+### 🧭 Ergonomie de la console et analyses
+
+- Les noms des clés API peuvent être copiés directement depuis leur tableau.
+- Les classements d'utilisation proposent une période couvrant tout l'historique en plus des plages existantes.
+
 ### 💰 Portefeuille et paiements
 
 - Correction de l'affichage du montant du portefeuille pour le mode de devise personnalisée (CUSTOM) et le fournisseur de paiement Waffo Pancake.
@@ -113,6 +121,8 @@ Un nouveau module de barre latérale **Agent** (`/agent`, à activer sous *Profi
 
 - Le workflow Docker manuel construit et signe nativement les images amd64 / arm64, puis ne promeut `latest` qu'après la réussite du manifeste multi-architecture.
 - Chaque version crée un tag d'image immuable `latest-YYYY.MM.DD.N` et une GitHub Release contenant les changements classés, le digest de l'image et la commande de retour arrière.
+- Le vérificateur de mises à jour de la maintenance suit les versions de NextRouter plutôt que les seules versions amont.
+- Un Cloudflare Worker optionnel fournit un mode de déploiement proxy léger.
 
 <!-- /FORK-DELTA -->
 

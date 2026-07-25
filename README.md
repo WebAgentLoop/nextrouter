@@ -57,7 +57,7 @@ For the full feature set, model support, API formats, and configuration, refer t
 
 NextRouter is **based on [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api)** (AGPLv3), which is itself based on [One API](https://github.com/songquanpeng/one-api) (MIT). This fork:
 
-- Continuously tracks upstream `main`; currently synchronized through upstream commit `e0d51561`. The fork-specific changes are self-contained and listed below.
+- Continuously tracks upstream `main`; currently synchronized through upstream commit `08f88d25`. The fork-specific changes are self-contained and listed below.
 - Takes responsibility for its own modifications and marks them per AGPLv3 Section 7(c).
 - **Preserves the required attribution notice:** `Frontend design and development by New API contributors.`
 - **Preserves a visible link to the original project:** <https://github.com/QuantumNous/new-api>
@@ -69,7 +69,7 @@ See [License](#-license) and [`NOTICE`](./NOTICE) for the complete terms.
 <!-- FORK-DELTA: NextRouter changes vs upstream QuantumNous/new-api.
      Update after merging any fork-only branch.
      Completeness check: git log --oneline --no-merges upstream/main..HEAD
-     Last verified: 2026-07-23 -->
+     Last verified: 2026-07-25 -->
 
 ## ✨ What's new in NextRouter
 
@@ -82,6 +82,7 @@ A new **Agent** sidebar module (`/agent`, toggle it under *Profile → Sidebar m
 - Reuses the playground relay `/pg/chat/completions` with the OpenAI function-calling format; ships a built-in tool registry and a **calculator** tool (safe expression evaluation).
 - **Gateway knowledge tool pack**: lists the models currently exposed by the gateway and reads administrator-maintained Markdown documentation, allowing the Agent to answer platform-specific questions about models, endpoints, and integration.
 - **Extensible tool packs**: administrators can enable built-in gateway knowledge and optional Exa MCP web search, and configure the Agent's default model, group, and system instructions.
+- Automatically appends current gateway/runtime context to prompts and presents gateway-knowledge and real-time web-search starters; input controls support tool selection and clearing the conversation.
 - Streams and parses tool calls; aggregates each assistant turn into a single card with a collapsible **Process** panel.
 - Message actions: copy / regenerate / edit (optionally re-submit) / delete.
 - Multi-session history persisted in **IndexedDB** (up to 50 sessions), with rename / switch / delete.
@@ -92,6 +93,8 @@ A new **Agent** sidebar module (`/agent`, toggle it under *Profile → Sidebar m
 - **Force Stream** channel setting: for upstreams that *only* support streaming, when a client sends a non-streaming request the gateway buffers the SSE stream and returns a single non-streaming JSON response (backend buffering logic + unit tests).
 - **Force Format / Force Stream** toggles are now available for **Advanced Custom** channels (previously OpenAI channel only).
 - `/pg/chat/completions` is now offered as an Advanced Custom incoming-path option.
+- **Asynchronous image generation tasks** expose OpenAI-compatible submit/query routes and use capability-aware dispatch so async submissions can run through sync-capable image channels when required.
+- Claude conversion preserves image content inside OpenAI tool results and normalizes tool-result payloads for upstream compatibility.
 
 ### 🧩 Model management
 
@@ -105,6 +108,11 @@ A new **Agent** sidebar module (`/agent`, toggle it under *Profile → Sidebar m
 
 - **Token-level cache hit rate**: records cached and total input tokens, calculates cache hit rates by model, group, and time bucket, and displays current and recent cache performance in model badges and performance details.
 
+### 🧭 Console usability & analytics
+
+- API key names can be copied directly from the key table.
+- Usage rankings include an all-time period alongside the existing time ranges.
+
 ### 💰 Wallet & payments
 
 - Fixed wallet amount display for the custom-currency (CUSTOM) mode and the Waffo Pancake payment provider.
@@ -113,6 +121,8 @@ A new **Agent** sidebar module (`/agent`, toggle it under *Profile → Sidebar m
 
 - The manual Docker release workflow builds and signs native amd64 / arm64 images, then promotes `latest` only after the multi-arch manifest succeeds.
 - Every release creates an immutable `latest-YYYY.MM.DD.N` image tag plus a GitHub Release with categorized changes, image digest, and rollback command.
+- The maintenance update checker follows NextRouter releases rather than upstream-only releases.
+- An optional Cloudflare Worker provides a lightweight proxy deployment path.
 
 <!-- /FORK-DELTA -->
 

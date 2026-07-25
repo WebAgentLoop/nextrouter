@@ -57,7 +57,7 @@
 
 NextRouter は [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api)（AGPLv3）をベースにしており、これはさらに [One API](https://github.com/songquanpeng/one-api)（MIT）をベースとしています。本 Fork は次の通りです：
 
-- 上流の `main` を継続的に追跡し、現在は上流コミット `e0d51561` まで同期済みです。Fork 固有の変更は自己完結しており、以下に列挙します。
+- 上流の `main` を継続的に追跡し、現在は上流コミット `08f88d25` まで同期済みです。Fork 固有の変更は自己完結しており、以下に列挙します。
 - 自身の変更に責任を持ち、AGPLv3 第 7(c) 条に従って変更を明示します。
 - **必須の帰属表示を保持します：** `Frontend design and development by New API contributors.`
 - **オリジナルプロジェクトへの可視リンクを保持します：** <https://github.com/QuantumNous/new-api>
@@ -69,7 +69,7 @@ NextRouter は [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api)�
 <!-- FORK-DELTA: NextRouter changes vs upstream QuantumNous/new-api.
      Update after merging any fork-only branch.
      Completeness check: git log --oneline --no-merges upstream/main..HEAD
-     Last verified: 2026-07-23 -->
+     Last verified: 2026-07-25 -->
 
 ## ✨ NextRouter の新機能
 
@@ -82,6 +82,7 @@ NextRouter は [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api)�
 - playground relay `/pg/chat/completions` を OpenAI function-calling 形式で再利用し、ビルトインのツールレジストリと**電卓**ツール（安全な式評価）を同梱。
 - **ゲートウェイ知識ツールパック**：現在ゲートウェイが公開しているモデルを一覧化し、管理者が整備した Markdown ドキュメントを読み込むことで、Agent がモデル、エンドポイント、導入方法に関するプラットフォーム固有の質問へ回答できます。
 - **拡張可能なツールパック**：管理者は組み込みのゲートウェイ知識と任意の Exa MCP Web 検索を有効化し、Agent のデフォルトモデル、グループ、システム指示を設定できます。
+- 現在のゲートウェイ/実行時コンテキストをプロンプトへ自動追加し、ゲートウェイ知識とリアルタイム Web 検索の開始候補を表示します。入力コントロールではツール選択と会話のクリアが可能です。
 - ツール呼び出しをストリーミング解析し、各アシスタントターンを折りたたみ可能な **Process** パネル付きの 1 枚のカードに集約。
 - メッセージ操作：コピー / 再生成 / 編集（再送の有無を選択可） / 削除。
 - 複数セッションの履歴を **IndexedDB** に永続化（最大 50 セッション）、リネーム / 切替 / 削除に対応。
@@ -92,6 +93,8 @@ NextRouter は [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api)�
 - **Force Stream**（チャネル設定）：ストリーミングのみをサポートする上流向けに、クライアントが非ストリーミングリクエストを送信した際、ゲートウェイが SSE ストリームをバッファリングして単一の非ストリーミング JSON レスポンスを返します（バックエンドのバッファリングロジック + ユニットテスト付き）。
 - **Force Format / Force Stream** の切替が **Advanced Custom** チャネルでも利用可能になりました（以前は OpenAI チャネルのみ）。
 - `/pg/chat/completions` が Advanced Custom の受信パスオプションとして追加されました。
+- **非同期画像生成タスク**：OpenAI 互換の送信/照会ルートを提供し、必要に応じて非同期リクエストを同期画像対応チャネルへ送る機能対応ルーティングを行います。
+- Claude 形式への変換では OpenAI ツール結果内の画像を保持し、上流プロトコルとの互換性のためにツール結果を正規化します。
 
 ### 🧩 モデル管理
 
@@ -105,6 +108,11 @@ NextRouter は [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api)�
 
 - **Token 単位のキャッシュヒット率**：キャッシュ済み入力 Token と総入力 Token を記録し、モデル・グループ・時間帯ごとのキャッシュヒット率を算出して、モデルのパフォーマンスバッジと詳細画面に現在および直近のキャッシュ性能を表示します。
 
+### 🧭 コンソール操作性と分析
+
+- API キー名をキーテーブルから直接コピーできます。
+- 利用ランキングで既存の期間に加えて全期間を選択できます。
+
 ### 💰 ウォレットと決済
 
 - カスタム通貨（CUSTOM）モードと Waffo Pancake 決済プロバイダーのウォレット金額表示を修正。
@@ -113,6 +121,8 @@ NextRouter は [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api)�
 
 - 手動 Docker リリースワークフローは amd64 / arm64 イメージをネイティブにビルドして署名し、マルチアーキテクチャ manifest の成功後にのみ `latest` を更新します。
 - 各リリースは不変の `latest-YYYY.MM.DD.N` イメージタグと、分類済みの変更、イメージ digest、ロールバックコマンドを含む GitHub Release を作成します。
+- メンテナンス画面の更新チェッカーは上流だけでなく NextRouter のリリースを追跡します。
+- オプションの Cloudflare Worker により、軽量なプロキシとしてデプロイできます。
 
 <!-- /FORK-DELTA -->
 
