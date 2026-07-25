@@ -21,8 +21,12 @@ import * as katex from 'katex'
 
 import 'katex/dist/katex.min.css'
 import { Marked, Renderer, type MarkedExtension, type Tokens } from 'marked'
-import { useMemo } from 'react'
+import { useLayoutEffect, useMemo, useRef } from 'react'
+import { createPortal } from 'react-dom'
+import { createRoot } from 'react-dom/client'
+import { useTranslation } from 'react-i18next'
 
+import { CopyButton } from '@/components/copy-button'
 import { cn } from '@/lib/utils'
 
 interface MarkdownProps {
@@ -745,10 +749,52 @@ function renderMarkdown(markdown: string, breaks = false): string {
 }
 
 export function Markdown(props: MarkdownProps) {
+  const { t } = useTranslation()
+  const containerRef = useRef<HTMLDivElement>(null)
   const html = useMemo(
     () => renderMarkdown(props.children, props.breaks),
     [props.breaks, props.children]
   )
+
+  useLayoutEffect(() => {
+    const container = containerRef.current
+    if (!container) {
+      return
+    }
+
+    const codeBlocks = Array.from(
+      container.querySelectorAll<HTMLPreElement>('pre')
+    ).flatMap((element) => {
+      const code = element.querySelector('code')
+      return code ? [{ element, value: code.textContent ?? '' }] : []
+    })
+    if (codeBlocks.length === 0) {
+      return
+    }
+
+    const portalHost = document.createElement('div')
+    const portalRoot = createRoot(portalHost)
+    portalRoot.render(
+      <>
+        {codeBlocks.map((codeBlock, index) =>
+          createPortal(
+            <CopyButton
+              aria-label={t('Copy code')}
+              className='not-prose bg-background/90 absolute top-2 right-2 z-10 shadow-xs backdrop-blur-sm'
+              iconClassName='size-3.5'
+              successTooltip={t('Copied!')}
+              tooltip={t('Copy code')}
+              value={codeBlock.value}
+            />,
+            codeBlock.element,
+            index
+          )
+        )}
+      </>
+    )
+
+    return () => queueMicrotask(() => portalRoot.unmount())
+  }, [html, t])
 
   return (
     <div
@@ -763,7 +809,7 @@ export function Markdown(props: MarkdownProps) {
         '[&_ol]:my-2 [&_ul]:my-2 [&_ol]:list-decimal [&_ul]:list-disc [&_ol]:pl-5 [&_ul]:pl-5 [&_li]:my-1 [&_li]:pl-1',
         '[&_blockquote]:my-3 [&_blockquote]:border-l-2 [&_blockquote]:border-primary [&_blockquote]:bg-muted/50 [&_blockquote]:py-1 [&_blockquote]:pl-4',
         '[&_code]:rounded [&_code]:bg-muted [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono',
-        '[&_pre]:my-3 [&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:border [&_pre]:bg-muted [&_pre]:p-3 [&_table]:my-4 [&_table]:block [&_table]:w-full [&_table]:overflow-x-auto',
+        '[&_pre]:relative [&_pre]:my-3 [&_pre]:overflow-x-auto [&_pre]:rounded-md [&_pre]:border [&_pre]:bg-muted [&_pre]:p-3 [&_pre]:pr-12 [&_table]:my-4 [&_table]:block [&_table]:w-full [&_table]:overflow-x-auto',
         '[&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:text-sm',
         '[&_thead]:bg-muted [&_th]:border [&_td]:border [&_th]:px-3 [&_td]:px-3 [&_th]:py-2 [&_td]:py-2 [&_th]:text-left',
         '[&_hr]:my-6 [&_img]:my-4 [&_img]:max-w-full [&_img]:rounded-lg',
@@ -784,6 +830,7 @@ export function Markdown(props: MarkdownProps) {
         props.className
       )}
       dangerouslySetInnerHTML={{ __html: html }}
+      ref={containerRef}
     />
   )
 }

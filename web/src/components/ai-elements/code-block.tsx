@@ -466,6 +466,7 @@ export const CodeBlock = ({
     previewLines,
     maxExpandedLines
   )
+  const codeActions = children ?? <CodeBlockCopyButton />
 
   const downloadCode = () => {
     if (typeof window === 'undefined') {
@@ -491,9 +492,9 @@ export const CodeBlock = ({
             {isCodeCollapsed && (
               <div className='from-muted/20 to-background pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-linear-to-b' />
             )}
-            {!showToolbar && children && (
+            {!showToolbar && (
               <div className='absolute top-2 right-2 flex items-center gap-1'>
-                {children}
+                {codeActions}
               </div>
             )}
           </>
@@ -526,7 +527,7 @@ export const CodeBlock = ({
                 </TooltipContent>
               </Tooltip>
             )}
-            {showToolbar && children}
+            {showToolbar && codeActions}
             <Tooltip>
               <TooltipTrigger
                 render={

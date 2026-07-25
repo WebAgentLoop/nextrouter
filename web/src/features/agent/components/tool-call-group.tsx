@@ -27,6 +27,7 @@ import {
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { CopyButton } from '@/components/copy-button'
 import {
   Collapsible,
   CollapsibleContent,
@@ -81,9 +82,20 @@ export function ToolCallRow({ toolCall }: ToolCallRowProps) {
             <p className='text-muted-foreground mb-1 font-medium tracking-wide uppercase'>
               {t('Arguments')}
             </p>
-            <pre className='bg-background/60 overflow-x-auto rounded-md p-2 text-xs'>
-              {toolCall.argumentsRaw || '{}'}
-            </pre>
+            <div className='relative'>
+              <pre className='bg-background/60 overflow-x-auto rounded-md p-2 pr-11 text-xs'>
+                {toolCall.argumentsRaw || '{}'}
+              </pre>
+              <CopyButton
+                aria-label={t('Copy code')}
+                className='bg-background/90 absolute top-1 right-1 size-7 shadow-xs'
+                iconClassName='size-3.5'
+                size='icon'
+                successTooltip={t('Copied!')}
+                tooltip={t('Copy code')}
+                value={toolCall.argumentsRaw || '{}'}
+              />
+            </div>
           </div>
           {toolCall.result !== undefined && (
             <div>
@@ -93,14 +105,25 @@ export function ToolCallRow({ toolCall }: ToolCallRowProps) {
                 )}
                 {isError ? t('Error') : t('Result')}
               </p>
-              <pre
-                className={cn(
-                  'bg-background/60 overflow-x-auto rounded-md p-2 text-xs',
-                  isError && 'text-destructive'
-                )}
-              >
-                {toolCall.result}
-              </pre>
+              <div className='relative'>
+                <pre
+                  className={cn(
+                    'bg-background/60 overflow-x-auto rounded-md p-2 pr-11 text-xs',
+                    isError && 'text-destructive'
+                  )}
+                >
+                  {toolCall.result}
+                </pre>
+                <CopyButton
+                  aria-label={t('Copy code')}
+                  className='bg-background/90 absolute top-1 right-1 size-7 shadow-xs'
+                  iconClassName='size-3.5'
+                  size='icon'
+                  successTooltip={t('Copied!')}
+                  tooltip={t('Copy code')}
+                  value={toolCall.result}
+                />
+              </div>
             </div>
           )}
         </div>
