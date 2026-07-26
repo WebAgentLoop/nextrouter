@@ -26,6 +26,7 @@ import { UpdateCheckerSection } from '../maintenance/update-checker-section'
 import type { OperationsSettings } from '../types'
 import { createSectionRegistry } from '../utils/section-registry'
 import { AgentSettingsSection } from './agent-settings-section'
+import { AsyncImageSettingsSection } from './async-image-settings-section'
 import { TranslationSettingsSection } from './translation-settings-section'
 
 const OPERATIONS_SECTIONS = [
@@ -55,6 +56,22 @@ const OPERATIONS_SECTIONS = [
           temperature: settings['agent_setting.temperature'],
           max_tokens: settings['agent_setting.max_tokens'],
           max_iterations: settings['agent_setting.max_iterations'],
+        }}
+      />
+    ),
+  },
+  {
+    id: 'async-images',
+    titleKey: 'Async image tasks',
+    build: (settings: OperationsSettings) => (
+      <AsyncImageSettingsSection
+        defaultValues={{
+          max_pending_per_user:
+            settings['async_image_setting.max_pending_per_user'],
+          upstream_timeout_seconds:
+            settings['async_image_setting.upstream_timeout_seconds'],
+          task_retention_hours:
+            settings['async_image_setting.task_retention_hours'],
         }}
       />
     ),

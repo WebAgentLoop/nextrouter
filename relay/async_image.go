@@ -19,16 +19,15 @@ import (
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
 	relayconstant "github.com/QuantumNous/new-api/relay/constant"
 	"github.com/QuantumNous/new-api/service"
+	"github.com/QuantumNous/new-api/setting/operation_setting"
 	"github.com/QuantumNous/new-api/types"
 	"github.com/gin-gonic/gin"
 )
 
 const (
-	asyncImageDefaultConcurrency = 4
-	asyncImageDefaultTimeout     = 10 * time.Minute
+	asyncImageDefaultConcurrency = 10
+	asyncImageMaxConcurrency     = 128
 	asyncImageLeaseDuration      = 60 * time.Second
-	asyncImageDefaultRetention   = 24 * time.Hour
-	asyncImageDefaultMaxPending  = 20
 	asyncImagePollInterval       = 2 * time.Second
 	asyncImageCleanupInterval    = 15 * time.Minute
 	asyncImageCleanupBatch       = 500
@@ -53,25 +52,35 @@ func AsyncImageGenerationEnabled() bool {
 }
 
 func AsyncImageMaxPendingPerUser() int {
-	if value, err := strconv.Atoi(os.Getenv("ASYNC_IMAGE_MAX_PENDING_PER_USER")); err == nil && value > 0 {
-		return value
-	}
-	return asyncImageDefaultMaxPending
+	return operation_setting.GetAsyncImageSetting().MaxPendingPerUser
 }
 
 func StartAsyncImageWorkers() {
 	if !AsyncImageGenerationEnabled() {
 		return
 	}
-	concurrency := asyncImageDefaultConcurrency
-	if value, err := strconv.Atoi(os.Getenv("ASYNC_IMAGE_WORKER_CONCURRENCY")); err == nil && value > 0 {
-		concurrency = value
-	}
+	concurrency := asyncImageWorkerConcurrency()
 	for i := 0; i < concurrency; i++ {
 		runnerID := fmt.Sprintf("%s-image-%d-%s", common.NodeName, i, common.GetRandomString(8))
 		go runAsyncImageWorker(runnerID)
 	}
 	go runAsyncImageCleanup()
+}
+
+func asyncImageWorkerConcurrency() int {
+	raw := strings.TrimSpace(os.Getenv("ASYNC_IMAGE_WORKER_CONCURRENCY"))
+	if raw == "" {
+		return asyncImageDefaultConcurrency
+	}
+	concurrency, err := strconv.Atoi(raw)
+	if err != nil || concurrency < 1 || concurrency > asyncImageMaxConcurrency {
+		logger.LogWarn(context.Background(), fmt.Sprintf(
+			"ASYNC_IMAGE_WORKER_CONCURRENCY must be between 1 and %d; using default %d",
+			asyncImageMaxConcurrency, asyncImageDefaultConcurrency,
+		))
+		return asyncImageDefaultConcurrency
+	}
+	return concurrency
 }
 
 func runAsyncImageWorker(runnerID string) {
@@ -238,17 +247,13 @@ func restoreAsyncImagePrice(snapshot *model.AsyncImagePriceSnapshot) types.Price
 }
 
 func asyncImageUpstreamTimeout() time.Duration {
-	if seconds, err := strconv.Atoi(os.Getenv("ASYNC_IMAGE_UPSTREAM_TIMEOUT_SECONDS")); err == nil && seconds > 0 {
-		return time.Duration(seconds) * time.Second
-	}
-	return asyncImageDefaultTimeout
+	seconds := operation_setting.GetAsyncImageSetting().UpstreamTimeoutSeconds
+	return time.Duration(seconds) * time.Second
 }
 
 func asyncImageRetentionDuration() time.Duration {
-	if hours, err := strconv.Atoi(os.Getenv("ASYNC_IMAGE_TASK_RETENTION_HOURS")); err == nil && hours > 0 {
-		return time.Duration(hours) * time.Hour
-	}
-	return asyncImageDefaultRetention
+	hours := operation_setting.GetAsyncImageSetting().TaskRetentionHours
+	return time.Duration(hours) * time.Hour
 }
 
 func runAsyncImageCleanup() {

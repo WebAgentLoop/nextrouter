@@ -371,6 +371,9 @@ export type OperationsSettings = {
   'translation_setting.fallback_language': string
   'translation_setting.model': string
   'translation_setting.group': string
+  'async_image_setting.max_pending_per_user': number
+  'async_image_setting.upstream_timeout_seconds': number
+  'async_image_setting.task_retention_hours': number
   AutoGroups: string
 }
 

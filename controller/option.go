@@ -216,6 +216,24 @@ func UpdateOption(c *gin.Context) {
 			common.ApiErrorMsg(c, "Agent max iterations must be between 1 and 50")
 			return
 		}
+	case "async_image_setting.max_pending_per_user":
+		maxPending, parseErr := strconv.Atoi(value)
+		if parseErr != nil || maxPending < operation_setting.MinAsyncImageMaxPendingPerUser || maxPending > operation_setting.MaxAsyncImageMaxPendingPerUser {
+			common.ApiErrorMsg(c, "Async image maximum pending tasks per user must be between 1 and 1000")
+			return
+		}
+	case "async_image_setting.upstream_timeout_seconds":
+		timeout, parseErr := strconv.Atoi(value)
+		if parseErr != nil || timeout < operation_setting.MinAsyncImageUpstreamTimeout || timeout > operation_setting.MaxAsyncImageUpstreamTimeout {
+			common.ApiErrorMsg(c, "Async image upstream timeout must be between 1 and 3600 seconds")
+			return
+		}
+	case "async_image_setting.task_retention_hours":
+		retention, parseErr := strconv.Atoi(value)
+		if parseErr != nil || retention < operation_setting.MinAsyncImageTaskRetention || retention > operation_setting.MaxAsyncImageTaskRetention {
+			common.ApiErrorMsg(c, "Async image task retention must be between 1 and 720 hours")
+			return
+		}
 	}
 	switch option.Key {
 	case "GitHubOAuthEnabled":

@@ -67,6 +67,9 @@ const defaultOperationsSettings: OperationsSettings = {
   'translation_setting.fallback_language': 'en',
   'translation_setting.model': 'gpt-4o-mini',
   'translation_setting.group': 'default',
+  'async_image_setting.max_pending_per_user': 20,
+  'async_image_setting.upstream_timeout_seconds': 600,
+  'async_image_setting.task_retention_hours': 24,
   AutoGroups: '[]',
 }
 
