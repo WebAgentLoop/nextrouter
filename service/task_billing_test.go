@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/constant"
 	"github.com/QuantumNous/new-api/model"
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
 	"github.com/QuantumNous/new-api/types"
@@ -336,8 +337,42 @@ func TestRefundTaskQuota_Wallet(t *testing.T) {
 	assert.Equal(t, model.LogTypeRefund, log.Type)
 	assert.Equal(t, preConsumed, log.Quota)
 	assert.Equal(t, "test-model", log.ModelName)
+	assert.Equal(t, int64(1), countLogs(t), "standard tasks already have a submit-time consume log and must not synthesize another")
 	assert.Zero(t, task.Quota)
 	assert.Zero(t, getTaskQuota(t, task.ID))
+}
+
+func TestRefundTaskQuota_AsyncImagePairsPreConsumeAndRefundLogs(t *testing.T) {
+	truncate(t)
+	ctx := context.Background()
+
+	const userID, tokenID, channelID = 6, 6, 6
+	const initQuota, preConsumed = 10000, 2500
+	const tokenRemain = 5000
+
+	seedUser(t, userID, initQuota)
+	seedToken(t, tokenID, userID, "sk-async-image", tokenRemain)
+	seedChannel(t, channelID)
+
+	task := makeTask(userID, channelID, preConsumed, tokenID, BillingSourceWallet, 0)
+	task.Platform = constant.TaskPlatformAsyncImage
+	require.NoError(t, model.DB.Create(task).Error)
+
+	require.True(t, RefundTaskQuota(ctx, task, "image generation failed"))
+
+	var logs []model.Log
+	require.NoError(t, model.LOG_DB.Order("id").Find(&logs).Error)
+	require.Len(t, logs, 2)
+	assert.Equal(t, model.LogTypeConsume, logs[0].Type)
+	assert.Equal(t, preConsumed, logs[0].Quota)
+	assert.Equal(t, model.LogTypeRefund, logs[1].Type)
+	assert.Equal(t, preConsumed, logs[1].Quota)
+	assert.Zero(t, logs[0].Quota-logs[1].Quota, "failed async image logs must have zero net consumption")
+
+	var consumeOther map[string]interface{}
+	require.NoError(t, common.UnmarshalJsonStr(logs[0].Other, &consumeOther))
+	assert.Equal(t, true, consumeOther["pre_consume"])
+	assert.Equal(t, task.TaskID, consumeOther["task_id"])
 }
 
 func TestRefundTaskQuota_Subscription(t *testing.T) {

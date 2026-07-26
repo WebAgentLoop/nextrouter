@@ -175,10 +175,30 @@ func RefundTaskQuota(ctx context.Context, task *model.Task, reason string) bool 
 		return false
 	}
 
+	// 异步图片在成功结算时才记录实际消费，失败时尚无消费日志；补记预扣日志，
+	// 使随后生成的退款日志有对应扣费。其他任务在提交成功时已记录消费，不能重复记录。
+	if task.Platform == constant.TaskPlatformAsyncImage {
+		preOther := taskBillingOther(task)
+		preOther["task_id"] = task.TaskID
+		preOther["pre_consume"] = true
+		model.RecordTaskBillingLog(model.RecordTaskBillingLogParams{
+			UserId:    task.UserId,
+			LogType:   model.LogTypeConsume,
+			Content:   "",
+			ChannelId: task.ChannelId,
+			ModelName: taskModelName(task),
+			Quota:     quota,
+			TokenId:   task.PrivateData.TokenId,
+			Group:     task.Group,
+			Other:     preOther,
+			NodeName:  task.PrivateData.NodeName,
+		})
+	}
+
 	// 2. 退还令牌额度
 	taskAdjustTokenQuota(ctx, task, -quota)
 
-	// 3. 记录日志
+	// 3. 记录退款日志
 	other := taskBillingOther(task)
 	other["task_id"] = task.TaskID
 	other["reason"] = reason
