@@ -285,7 +285,9 @@ export interface TaskLog {
   action: string // MUSIC, LYRICS, GENERATE, TEXT_GENERATE, etc.
   channel_id: number
   submit_time: number // seconds
+  start_time?: number // seconds
   finish_time?: number // seconds
+  attempts?: number
   progress?: string
   progress_message_en?: string
   data?: string // JSON string

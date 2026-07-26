@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import type { ColumnDef } from '@tanstack/react-table'
-import { Music } from 'lucide-react'
+import { Eye, Music } from 'lucide-react'
 /* eslint-disable react-refresh/only-export-components */
 import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -35,7 +35,7 @@ import {
   AudioPreviewDialog,
   type AudioClip,
 } from '../dialogs/audio-preview-dialog'
-import { FailReasonDialog } from '../dialogs/fail-reason-dialog'
+import { TaskDetailsDialog } from '../dialogs/task-details-dialog'
 import { useUsageLogsContext } from '../usage-logs-provider'
 import {
   createDurationColumn,
@@ -220,7 +220,26 @@ export function useTaskLogsColumns(isAdmin: boolean): ColumnDef<TaskLog>[] {
         const log = row.original
         const failReason = row.getValue('fail_reason') as string
         const status = log.status
-        const [dialogOpen, setDialogOpen] = useState(false)
+        const [detailsOpen, setDetailsOpen] = useState(false)
+
+        const detailsDialog = (
+          <TaskDetailsDialog
+            log={log}
+            open={detailsOpen}
+            onOpenChange={setDetailsOpen}
+          />
+        )
+
+        const detailsButton = (
+          <button
+            type='button'
+            className='text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs'
+            onClick={() => setDetailsOpen(true)}
+          >
+            <Eye className='size-3.5' aria-hidden='true' />
+            {t('View details')}
+          </button>
+        )
 
         const isSunoSuccess =
           log.platform === 'suno' && status === TASK_STATUS.SUCCESS
@@ -234,7 +253,13 @@ export function useTaskLogsColumns(isAdmin: boolean): ColumnDef<TaskLog>[] {
                 (c as Record<string, unknown>).audio_url
             )
           ) {
-            return <AudioPreviewCell log={log} />
+            return (
+              <div className='flex flex-col gap-1.5'>
+                <AudioPreviewCell log={log} />
+                {detailsButton}
+                {detailsDialog}
+              </div>
+            )
           }
         }
 
@@ -250,19 +275,28 @@ export function useTaskLogsColumns(isAdmin: boolean): ColumnDef<TaskLog>[] {
         if (isSuccess && isVideoTask && isUrl) {
           const videoUrl = `/v1/videos/${log.task_id}/content`
           return (
-            <a
-              href={videoUrl}
-              target='_blank'
-              rel='noopener noreferrer'
-              className='text-foreground text-xs hover:underline'
-            >
-              {t('Click to preview video')}
-            </a>
+            <div className='flex flex-col gap-1.5'>
+              <a
+                href={videoUrl}
+                target='_blank'
+                rel='noopener noreferrer'
+                className='text-foreground text-xs hover:underline'
+              >
+                {t('Click to preview video')}
+              </a>
+              {detailsButton}
+              {detailsDialog}
+            </div>
           )
         }
 
         if (!failReason) {
-          return <span className='text-muted-foreground/60 text-xs'>-</span>
+          return (
+            <>
+              {detailsButton}
+              {detailsDialog}
+            </>
+          )
         }
 
         return (
@@ -270,18 +304,14 @@ export function useTaskLogsColumns(isAdmin: boolean): ColumnDef<TaskLog>[] {
             <button
               type='button'
               className='group flex max-w-[200px] items-center gap-1 text-left text-xs'
-              onClick={() => setDialogOpen(true)}
-              title={t('Click to view full error message')}
+              onClick={() => setDetailsOpen(true)}
+              title={t('View details')}
             >
               <span className='truncate leading-snug text-red-600 group-hover:underline dark:text-red-400'>
                 {failReason}
               </span>
             </button>
-            <FailReasonDialog
-              failReason={failReason}
-              open={dialogOpen}
-              onOpenChange={setDialogOpen}
-            />
+            {detailsDialog}
           </>
         )
       },
