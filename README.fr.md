@@ -69,7 +69,7 @@ Voir [Licence](#-licence) et [`NOTICE`](./NOTICE) pour les conditions complètes
 <!-- FORK-DELTA: NextRouter changes vs upstream QuantumNous/new-api.
      Update after merging any fork-only branch.
      Completeness check: git log --oneline --no-merges upstream/main..HEAD
-     Last verified: 2026-07-25 -->
+     Last verified: 2026-07-27 -->
 
 ## ✨ Les nouveautés de NextRouter
 
@@ -119,8 +119,8 @@ Un nouveau module de barre latérale **Agent** (`/agent`, à activer sous *Profi
 
 ### 📦 Versions et déploiement
 
-- Le workflow Docker manuel construit et signe nativement les images amd64 / arm64, puis ne promeut `latest` qu'après la réussite du manifeste multi-architecture.
-- Chaque version crée un tag d'image immuable `latest-YYYY.MM.DD.N` et une GitHub Release contenant les changements classés, le digest de l'image et la commande de retour arrière.
+- Le workflow de publication manuel construit et signe nativement les images Docker amd64 / arm64, puis ne promeut `latest` qu'après la réussite du manifeste multi-architecture.
+- Chaque version publie aussi dans la GitHub Release des binaires Linux, macOS et Windows avec sommes de contrôle pour amd64 / arm64, avec les changements classés, le digest de l'image et la commande de retour arrière.
 - Le vérificateur de mises à jour de la maintenance suit les versions de NextRouter plutôt que les seules versions amont.
 - Un Cloudflare Worker optionnel fournit un mode de déploiement proxy léger.
 

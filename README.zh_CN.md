@@ -69,7 +69,7 @@ NextRouter **基于 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-a
 <!-- FORK-DELTA: NextRouter changes vs upstream QuantumNous/new-api.
      Update after merging any fork-only branch.
      Completeness check: git log --oneline --no-merges upstream/main..HEAD
-     Last verified: 2026-07-25 -->
+     Last verified: 2026-07-27 -->
 
 ## ✨ NextRouter 相比上游的改进
 
@@ -119,8 +119,8 @@ NextRouter **基于 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-a
 
 ### 📦 发布与部署
 
-- 手动 Docker 发布工作流原生构建并签名 amd64 / arm64 镜像，仅在多架构 manifest 成功后才更新 `latest`。
-- 每次发布都会创建不可变的 `latest-YYYY.MM.DD.N` 镜像 tag，以及包含分类变更、镜像 digest 和回滚命令的 GitHub Release。
+- 手动发布工作流原生构建并签名 amd64 / arm64 Docker 镜像，仅在多架构 manifest 成功后才更新 `latest`。
+- 每次发布还会在 GitHub Release 中提供带校验和的 Linux、macOS、Windows amd64 / arm64 二进制文件，以及分类变更、镜像 digest 和回滚命令。
 - 维护页面的更新检查器跟踪 NextRouter Release，而非仅检查上游 Release。
 - 提供可选的 Cloudflare Worker，作为轻量代理部署方式。
 

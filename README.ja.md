@@ -69,7 +69,7 @@ NextRouter は [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api)�
 <!-- FORK-DELTA: NextRouter changes vs upstream QuantumNous/new-api.
      Update after merging any fork-only branch.
      Completeness check: git log --oneline --no-merges upstream/main..HEAD
-     Last verified: 2026-07-25 -->
+     Last verified: 2026-07-27 -->
 
 ## ✨ NextRouter の新機能
 
@@ -119,8 +119,8 @@ NextRouter は [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api)�
 
 ### 📦 リリースとデプロイ
 
-- 手動 Docker リリースワークフローは amd64 / arm64 イメージをネイティブにビルドして署名し、マルチアーキテクチャ manifest の成功後にのみ `latest` を更新します。
-- 各リリースは不変の `latest-YYYY.MM.DD.N` イメージタグと、分類済みの変更、イメージ digest、ロールバックコマンドを含む GitHub Release を作成します。
+- 手動リリースワークフローは amd64 / arm64 Docker イメージをネイティブにビルドして署名し、マルチアーキテクチャ manifest の成功後にのみ `latest` を更新します。
+- 各リリースでは、チェックサム付きの Linux、macOS、Windows 向け amd64 / arm64 バイナリも、分類済みの変更、イメージ digest、ロールバックコマンドとともに GitHub Release で公開します。
 - メンテナンス画面の更新チェッカーは上流だけでなく NextRouter のリリースを追跡します。
 - オプションの Cloudflare Worker により、軽量なプロキシとしてデプロイできます。
 

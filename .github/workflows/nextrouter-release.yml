@@ -1,10 +1,10 @@
-name: Publish NextRouter Docker release
+name: Publish NextRouter release
 
 on:
   workflow_dispatch:
 
 concurrency:
-  group: nextrouter-docker-release
+  group: nextrouter-release
   cancel-in-progress: false
 
 env:
@@ -84,6 +84,111 @@ jobs:
           echo "previous_tag=$PREVIOUS_TAG" >> "$GITHUB_OUTPUT"
           echo "Prepared $GIT_TAG from $SHA (previous: ${PREVIOUS_TAG:-none})"
 
+  build_frontend:
+    name: Build frontend
+    needs: prepare
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out release commit
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 1
+          ref: ${{ needs.prepare.outputs.sha }}
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: latest
+
+      - name: Build frontend
+        working-directory: web
+        env:
+          CI: ''
+          VITE_REACT_APP_VERSION: ${{ needs.prepare.outputs.git_tag }}
+        run: |
+          bun install --frozen-lockfile
+          DISABLE_ESLINT_PLUGIN=true bun run build
+
+      - name: Upload frontend bundle
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: frontend-dist
+          path: web/dist
+          if-no-files-found: error
+          retention-days: 1
+
+  build_binaries:
+    name: Build binary (${{ matrix.goos }}/${{ matrix.goarch }})
+    needs: [prepare, build_frontend]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        goos: [linux, darwin, windows]
+        goarch: [amd64, arm64]
+    steps:
+      - name: Check out release commit
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 1
+          ref: ${{ needs.prepare.outputs.sha }}
+
+      - name: Download frontend bundle
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: frontend-dist
+          path: web/dist
+
+      - name: Set up Go
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build and package binary
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+          GIT_TAG: ${{ needs.prepare.outputs.git_tag }}
+        run: |
+          set -euo pipefail
+
+          PACKAGE="nextrouter-${RELEASE_VERSION}-${GOOS}-${GOARCH}"
+          BINARY=nextrouter
+          if [ "$GOOS" = windows ]; then
+            BINARY=nextrouter.exe
+          fi
+
+          mkdir -p "$RUNNER_TEMP/package"
+          CGO_ENABLED=0 GOEXPERIMENT=greenteagc go build \
+            -trimpath \
+            -ldflags "-s -w -X 'github.com/QuantumNous/new-api/common.Version=${GIT_TAG}'" \
+            -o "$RUNNER_TEMP/package/$BINARY" .
+          cp LICENSE NOTICE THIRD-PARTY-LICENSES.md "$RUNNER_TEMP/package/"
+
+          if [ "$GOOS" = windows ]; then
+            (cd "$RUNNER_TEMP/package" && zip -q -r "$GITHUB_WORKSPACE/${PACKAGE}.zip" .)
+            ARCHIVE="${PACKAGE}.zip"
+          else
+            tar -C "$RUNNER_TEMP/package" -czf "${PACKAGE}.tar.gz" .
+            ARCHIVE="${PACKAGE}.tar.gz"
+          fi
+          sha256sum "$ARCHIVE" > "${ARCHIVE}.sha256"
+
+      - name: Upload binary package
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: release-binary-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: |
+            nextrouter-${{ needs.prepare.outputs.version }}-${{ matrix.goos }}-${{ matrix.goarch }}.*
+          if-no-files-found: error
+          retention-days: 1
+
   build_single_arch:
     name: Build & push (${{ matrix.arch }})
     needs: prepare
@@ -158,7 +263,7 @@ jobs:
 
   publish:
     name: Publish manifests and release
-    needs: [prepare, build_single_arch]
+    needs: [prepare, build_binaries, build_single_arch]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -169,6 +274,13 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ needs.prepare.outputs.sha }}
+
+      - name: Download binary packages
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: release-binary-*
+          path: ${{ runner.temp }}/release-assets
+          merge-multiple: true
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
@@ -237,6 +349,7 @@ jobs:
           RELEASE_SHA: ${{ needs.prepare.outputs.sha }}
           RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
           NOTES_FILE: ${{ runner.temp }}/release-notes.md
+          ASSET_DIR: ${{ runner.temp }}/release-assets
         run: |
           set -euo pipefail
 
@@ -270,6 +383,10 @@ jobs:
               --latest
           fi
 
+          gh release upload "$GIT_TAG" "$ASSET_DIR"/* \
+            --repo "$GITHUB_REPOSITORY" \
+            --clobber
+
       - name: Write release summary
         run: |
           {
@@ -279,6 +396,7 @@ jobs:
             echo "- Immutable image: \`${IMAGE}:${{ needs.prepare.outputs.docker_tag }}\`"
             echo "- Rolling image: \`${IMAGE}:latest\`"
             echo "- Digest: \`${{ steps.manifest.outputs.digest }}\`"
+            echo "- Binaries: Linux, macOS, Windows (amd64 and arm64)"
             echo
             echo '### Roll back'
             echo '```bash'

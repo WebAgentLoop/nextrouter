@@ -54,7 +54,19 @@ while IFS=$'\t' read -r sha subject; do
 done < <(git log --no-merges --max-count="$MAX_CHANGELOG_ENTRIES" --format='%H%x09%s' "$RANGE")
 
 {
-  echo "Docker release for commit [\`${RELEASE_SHA}\`](${COMMIT_URL}/${RELEASE_SHA})."
+  echo "NextRouter release for commit [\`${RELEASE_SHA}\`](${COMMIT_URL}/${RELEASE_SHA})."
+  echo
+  echo "## Binaries"
+  echo
+  echo "Prebuilt archives include the NextRouter executable and required license notices."
+  echo
+  echo "| Platform | amd64 | arm64 |"
+  echo "| --- | --- | --- |"
+  echo "| Linux | \`nextrouter-${RELEASE_VERSION}-linux-amd64.tar.gz\` | \`nextrouter-${RELEASE_VERSION}-linux-arm64.tar.gz\` |"
+  echo "| macOS | \`nextrouter-${RELEASE_VERSION}-darwin-amd64.tar.gz\` | \`nextrouter-${RELEASE_VERSION}-darwin-arm64.tar.gz\` |"
+  echo "| Windows | \`nextrouter-${RELEASE_VERSION}-windows-amd64.zip\` | \`nextrouter-${RELEASE_VERSION}-windows-arm64.zip\` |"
+  echo
+  echo "Each archive has a matching \`.sha256\` checksum asset. The binaries are not yet Apple-notarized or Authenticode-signed."
   echo
   echo "## Docker images"
   echo
