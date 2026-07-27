@@ -57,7 +57,7 @@
 
 NextRouter は [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api)（AGPLv3）をベースにしており、これはさらに [One API](https://github.com/songquanpeng/one-api)（MIT）をベースとしています。本 Fork は次の通りです：
 
-- 上流の `main` を継続的に追跡し、現在は上流コミット `08f88d25` まで同期済みです。Fork 固有の変更は自己完結しており、以下に列挙します。
+- 上流の `main` を継続的に追跡しています。Fork 固有の変更は自己完結しており、以下に列挙します。
 - 自身の変更に責任を持ち、AGPLv3 第 7(c) 条に従って変更を明示します。
 - **必須の帰属表示を保持します：** `Frontend design and development by New API contributors.`
 - **オリジナルプロジェクトへの可視リンクを保持します：** <https://github.com/QuantumNous/new-api>

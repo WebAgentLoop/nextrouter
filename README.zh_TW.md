@@ -57,7 +57,7 @@
 
 NextRouter **基於 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api)**（AGPLv3），後者又基於 [One API](https://github.com/songquanpeng/one-api)（MIT）。本 Fork：
 
-- 持續追蹤上游 `main`；目前已同步至上游提交 `08f88d25`。Fork 獨有的改動自成一套，列於下方。
+- 持續追蹤上游 `main`。Fork 獨有的改動自成一套，列於下方。
 - 對自身修改負責，並依 AGPLv3 第 7(c) 條標註修改。
 - **保留必要的署名聲明：** `Frontend design and development by New API contributors.`
 - **保留指向原始專案的可見連結：** <https://github.com/QuantumNous/new-api>

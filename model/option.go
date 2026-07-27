@@ -241,6 +241,9 @@ func normalizeOptionValue(key, value string) string {
 
 func UpdateOption(key string, value string) error {
 	value = normalizeOptionValue(key, value)
+	if err := validateOptionValue(key, value); err != nil {
+		return err
+	}
 	// Save to database first
 	option := Option{
 		Key: key,
@@ -256,6 +259,13 @@ func UpdateOption(key string, value string) error {
 	return updateOptionMap(key, value)
 }
 
+func validateOptionValue(key string, value string) error {
+	if key == operation_setting.ToolPriceOptionKey {
+		return operation_setting.ValidateToolPricesJSON(value)
+	}
+	return nil
+}
+
 // UpdateOptionsBulk persists multiple key/value pairs in a single database
 // transaction, then dispatches them through updateOptionMap in one pass. If
 // any DB write fails the whole transaction rolls back and no in-memory state
@@ -264,6 +274,11 @@ func UpdateOption(key string, value string) error {
 func UpdateOptionsBulk(values map[string]string) error {
 	if len(values) == 0 {
 		return nil
+	}
+	for key, value := range values {
+		if err := validateOptionValue(key, value); err != nil {
+			return err
+		}
 	}
 	err := DB.Transaction(func(tx *gorm.DB) error {
 		for k, v := range values {
@@ -624,6 +639,11 @@ func updateOptionMap(key string, value string) (err error) {
 
 // handleConfigUpdate 处理分层配置更新，返回是否已处理
 func handleConfigUpdate(key, value string) bool {
+	if key == operation_setting.ToolPriceOptionKey {
+		operation_setting.LoadToolPricesFromJSONString(value)
+		return true
+	}
+
 	parts := strings.SplitN(key, ".", 2)
 	if len(parts) != 2 {
 		return false // 不是分层配置
@@ -647,8 +667,6 @@ func handleConfigUpdate(key, value string) bool {
 	// 特定配置的后处理
 	if configName == "performance_setting" {
 		performance_setting.UpdateAndSync()
-	} else if configName == "tool_price_setting" {
-		operation_setting.RebuildToolPriceIndex()
 	} else if configName == "billing_setting" {
 		InvalidatePricingCache()
 		ratio_setting.InvalidateExposedDataCache()
