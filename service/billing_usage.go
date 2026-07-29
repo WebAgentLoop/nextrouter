@@ -4,7 +4,7 @@ import (
 	"math"
 	"strings"
 
-	"github.com/QuantumNous/new-api/dto"
+	"github.com/QuantumNous/new-api/relaykit/dto"
 )
 
 func performanceInputTokenUsage(usage *dto.Usage, isClaudeUsageSemantic bool) (int64, int64) {

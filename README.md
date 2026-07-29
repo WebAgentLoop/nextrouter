@@ -69,7 +69,7 @@ See [License](#-license) and [`NOTICE`](./NOTICE) for the complete terms.
 <!-- FORK-DELTA: NextRouter changes vs upstream QuantumNous/new-api.
      Update after merging any fork-only branch.
      Completeness check: git log --oneline --no-merges upstream/main..HEAD
-     Last verified: 2026-07-27 -->
+     Last verified: 2026-07-29 -->
 
 ## ✨ What's new in NextRouter
 

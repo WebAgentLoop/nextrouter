@@ -12,12 +12,13 @@ import (
 	"time"
 
 	"github.com/QuantumNous/new-api/common"
-	"github.com/QuantumNous/new-api/dto"
 	"github.com/QuantumNous/new-api/logger"
 	"github.com/QuantumNous/new-api/middleware"
 	"github.com/QuantumNous/new-api/model"
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
 	relayconstant "github.com/QuantumNous/new-api/relay/constant"
+	"github.com/QuantumNous/new-api/relaykit/dto"
+	relaytypes "github.com/QuantumNous/new-api/relaykit/types"
 	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/setting/operation_setting"
 	"github.com/QuantumNous/new-api/types"
@@ -195,7 +196,7 @@ func executeAsyncImageTask(runnerID string, task *model.Task) {
 		TokenId: task.PrivateData.TokenId, TokenKey: token.Key, UserId: task.UserId,
 		UsingGroup: task.Group, UserGroup: user.Group, StartTime: time.Now(),
 		UserQuota: user.Quota, UserEmail: user.Email, UserSetting: user.GetSetting(),
-		RelayMode: relayconstant.RelayModeImagesGenerations, RelayFormat: types.RelayFormatOpenAIImage,
+		RelayMode: relayconstant.RelayModeImagesGenerations, RelayFormat: relaytypes.RelayFormatOpenAIImage,
 		OriginModelName: task.Properties.OriginModelName, RequestURLPath: "/v1/images/generations",
 		Request: &imageRequest, PriceData: priceData, FinalPreConsumedQuota: task.Quota,
 		BillingSource: task.PrivateData.BillingSource, SubscriptionId: task.PrivateData.SubscriptionId,
