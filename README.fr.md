@@ -58,6 +58,7 @@ Pour l'ensemble des fonctionnalités, la prise en charge des modèles, les forma
 NextRouter est **basé sur [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api)** (AGPLv3), lui-même basé sur [One API](https://github.com/songquanpeng/one-api) (MIT). Ce fork :
 
 - Suit en continu la branche `main` amont. Les modifications spécifiques au fork sont autonomes et listées ci-dessous.
+- Point de synchronisation amont actuel : `cb4c8c02` (2026-07-29).
 - Est responsable de ses propres modifications et les signale conformément à la section 7(c) de l'AGPLv3.
 - **Préserve la mention d'attribution requise :** `Frontend design and development by New API contributors.`
 - **Préserve un lien visible vers le projet original :** <https://github.com/QuantumNous/new-api>
