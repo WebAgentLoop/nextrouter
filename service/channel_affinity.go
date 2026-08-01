@@ -641,6 +641,15 @@ func ShouldSkipRetryAfterChannelAffinityFailure(c *gin.Context) bool {
 	return meta.SkipRetry
 }
 
+// RestoreChannelAffinitySkipRetry restores the retry constraint captured when
+// a durable task was submitted. Workers do not retain the original Gin context.
+func RestoreChannelAffinitySkipRetry(c *gin.Context, skipRetry bool) {
+	if c == nil || !skipRetry {
+		return
+	}
+	c.Set(ginKeyChannelAffinitySkipRetry, true)
+}
+
 func ClearCurrentChannelAffinityCache(c *gin.Context) bool {
 	if c == nil {
 		return false

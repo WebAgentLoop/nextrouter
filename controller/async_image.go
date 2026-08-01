@@ -105,6 +105,11 @@ func SubmitAsyncImageGeneration(c *gin.Context) {
 	task.PrivateData.TokenId = relayInfo.TokenId
 	task.PrivateData.NodeName = common.NodeName
 	task.PrivateData.TokenName = c.GetString("token_name")
+	_, specificChannel := c.Get("specific_channel_id")
+	task.PrivateData.AsyncImageRouting = &model.AsyncImageRoutingSnapshot{
+		SpecificChannel: specificChannel,
+		SkipRetry:       service.ShouldSkipRetryAfterChannelAffinityFailure(c),
+	}
 	task.PrivateData.AsyncImageRequest = requestJSON
 	task.PrivateData.TieredBilling = relayInfo.TieredBillingSnapshot
 	task.PrivateData.BillingRequest = relayInfo.BillingRequestInput

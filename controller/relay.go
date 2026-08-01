@@ -329,35 +329,7 @@ func getChannel(c *gin.Context, info *relaycommon.RelayInfo, retryParam *service
 }
 
 func shouldRetry(c *gin.Context, openaiErr *types.NewAPIError, retryTimes int) bool {
-	if openaiErr == nil {
-		return false
-	}
-	if service.ShouldSkipRetryAfterChannelAffinityFailure(c) {
-		return false
-	}
-	if types.IsChannelError(openaiErr) {
-		return true
-	}
-	if types.IsSkipRetryError(openaiErr) {
-		return false
-	}
-	if retryTimes <= 0 {
-		return false
-	}
-	if _, ok := c.Get("specific_channel_id"); ok {
-		return false
-	}
-	code := openaiErr.StatusCode
-	if code >= 200 && code < 300 {
-		return false
-	}
-	if code < 100 || code > 599 {
-		return true
-	}
-	if operation_setting.IsAlwaysSkipRetryCode(openaiErr.GetErrorCode()) {
-		return false
-	}
-	return operation_setting.ShouldRetryByStatusCode(code)
+	return service.ShouldRetryRelay(c, openaiErr, retryTimes)
 }
 
 func processChannelError(c *gin.Context, channelError types.ChannelError, err *types.NewAPIError) {

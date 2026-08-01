@@ -118,6 +118,16 @@ func refreshTieredBillingGroup(relayInfo *relaycommon.RelayInfo) (*billingexpr.B
 	return snap, nil
 }
 
+// RefreshTieredBillingForSelectedGroup updates the group-dependent part of a
+// tiered billing snapshot without changing any reservation. Durable async
+// tasks have already settled their submission-time reservation before the
+// worker runs, so their final settlement must use the selected retry group
+// while the task-level delta handles the resulting adjustment.
+func RefreshTieredBillingForSelectedGroup(relayInfo *relaycommon.RelayInfo) error {
+	_, err := refreshTieredBillingGroup(relayInfo)
+	return err
+}
+
 // PrepareTieredBillingForSelectedGroup refreshes routing-dependent billing
 // state before an upstream attempt. An existing session reserves any higher
 // estimate before sending. If the initial group was free and skipped

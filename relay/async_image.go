@@ -12,16 +12,19 @@ import (
 	"time"
 
 	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/constant"
 	"github.com/QuantumNous/new-api/logger"
 	"github.com/QuantumNous/new-api/middleware"
 	"github.com/QuantumNous/new-api/model"
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
 	relayconstant "github.com/QuantumNous/new-api/relay/constant"
+	"github.com/QuantumNous/new-api/relay/helper"
 	"github.com/QuantumNous/new-api/relaykit/dto"
 	relaytypes "github.com/QuantumNous/new-api/relaykit/types"
 	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/setting/operation_setting"
 	"github.com/QuantumNous/new-api/types"
+	"github.com/bytedance/gopkg/util/gopool"
 	"github.com/gin-gonic/gin"
 )
 
@@ -154,14 +157,10 @@ func executeAsyncImageTask(runnerID string, task *model.Task) {
 		fail(fmt.Errorf("decode async image request: %w", err))
 		return
 	}
+	var initialChannel *model.Channel
 	channel, err := model.GetChannelById(task.ChannelId, true)
-	if err != nil {
-		fail(fmt.Errorf("load channel: %w", err))
-		return
-	}
-	if channel.Status != common.ChannelStatusEnabled {
-		fail(fmt.Errorf("channel %d is disabled", channel.Id))
-		return
+	if err == nil && channel != nil && channel.Status == common.ChannelStatusEnabled {
+		initialChannel = channel
 	}
 	token, err := model.GetTokenById(task.PrivateData.TokenId)
 	if err != nil {
@@ -183,11 +182,43 @@ func executeAsyncImageTask(runnerID string, task *model.Task) {
 	}
 	request.Header.Set("Content-Type", "application/json")
 	c.Request = request
+	c.Set(common.RequestIdKey, common.NewRequestId())
+	c.Set("id", task.UserId)
+	c.Set("token_id", token.Id)
+	c.Set("token_key", token.Key)
 	c.Set("token_name", task.PrivateData.TokenName)
-	c.Set("use_channel", []string{strconv.Itoa(channel.Id)})
-	if apiErr := middleware.SetupContextForSelectedChannel(c, channel, task.Properties.OriginModelName); apiErr != nil {
-		fail(apiErr)
-		return
+	c.Set("token_unlimited_quota", token.UnlimitedQuota)
+	c.Set("token_quota", token.RemainQuota)
+	c.Set("group", task.Group)
+	c.Set("original_model", task.Properties.OriginModelName)
+	common.SetContextKey(c, constant.ContextKeyUserId, task.UserId)
+	common.SetContextKey(c, constant.ContextKeyUserGroup, user.Group)
+	common.SetContextKey(c, constant.ContextKeyUserQuota, user.Quota)
+	common.SetContextKey(c, constant.ContextKeyUserEmail, user.Email)
+	common.SetContextKey(c, constant.ContextKeyUserSetting, user.GetSetting())
+	common.SetContextKey(c, constant.ContextKeyUsingGroup, task.Group)
+	tokenGroup := token.Group
+	if tokenGroup == "" {
+		tokenGroup = user.Group
+	}
+	common.SetContextKey(c, constant.ContextKeyTokenGroup, tokenGroup)
+	common.SetContextKey(c, constant.ContextKeyTokenCrossGroupRetry, token.CrossGroupRetry)
+	common.SetContextKey(c, constant.ContextKeyRequestStartTime, time.Now())
+	if tokenGroup == "auto" {
+		common.SetContextKey(c, constant.ContextKeyAutoGroup, task.Group)
+		for index, group := range service.GetUserAutoGroup(user.Group) {
+			if group == task.Group {
+				common.SetContextKey(c, constant.ContextKeyAutoGroupIndex, index)
+				break
+			}
+		}
+	}
+	c.Set("use_channel", []string{})
+	if routing := task.PrivateData.AsyncImageRouting; routing != nil {
+		if routing.SpecificChannel {
+			c.Set("specific_channel_id", strconv.Itoa(task.ChannelId))
+		}
+		service.RestoreChannelAffinitySkipRetry(c, routing.SkipRetry)
 	}
 	defer common.CleanupBodyStorage(c)
 
@@ -195,6 +226,7 @@ func executeAsyncImageTask(runnerID string, task *model.Task) {
 	relayInfo := &relaycommon.RelayInfo{
 		TokenId: task.PrivateData.TokenId, TokenKey: token.Key, UserId: task.UserId,
 		UsingGroup: task.Group, UserGroup: user.Group, StartTime: time.Now(),
+		TokenGroup: tokenGroup, TokenUnlimited: token.UnlimitedQuota,
 		UserQuota: user.Quota, UserEmail: user.Email, UserSetting: user.GetSetting(),
 		RelayMode: relayconstant.RelayModeImagesGenerations, RelayFormat: relaytypes.RelayFormatOpenAIImage,
 		OriginModelName: task.Properties.OriginModelName, RequestURLPath: "/v1/images/generations",
@@ -202,7 +234,7 @@ func executeAsyncImageTask(runnerID string, task *model.Task) {
 		BillingSource: task.PrivateData.BillingSource, SubscriptionId: task.PrivateData.SubscriptionId,
 		TieredBillingSnapshot: task.PrivateData.TieredBilling, BillingRequestInput: task.PrivateData.BillingRequest,
 	}
-	usage, apiErr := ExecuteImage(c, relayInfo)
+	usage, apiErr := executeAsyncImageWithRetry(c, relayInfo, initialChannel)
 	if apiErr != nil {
 		fail(apiErr)
 		return
@@ -225,6 +257,95 @@ func executeAsyncImageTask(runnerID string, task *model.Task) {
 	won, err := model.FinishAsyncImageTask(task.TaskID, runnerID, model.TaskStatusSuccess, result, "", completedAt, completedAt+int64(asyncImageRetentionDuration().Seconds()))
 	if err != nil || !won {
 		logger.LogWarn(ctx, fmt.Sprintf("finish async image success task=%s won=%t err=%v", task.TaskID, won, err))
+	}
+}
+
+func executeAsyncImageWithRetry(c *gin.Context, relayInfo *relaycommon.RelayInfo, initialChannel *model.Channel) (*dto.Usage, *relaytypes.NewAPIError) {
+	retryParam := &service.RetryParam{
+		Ctx:         c,
+		TokenGroup:  relayInfo.TokenGroup,
+		ModelName:   relayInfo.OriginModelName,
+		RequestPath: c.Request.URL.Path,
+		Retry:       common.GetPointer(0),
+	}
+	relayInfo.RetryIndex = 0
+	relayInfo.LastError = nil
+
+	var usage *dto.Usage
+	var apiErr *relaytypes.NewAPIError
+	for ; retryParam.GetRetry() <= common.RetryTimes; retryParam.IncreaseRetry() {
+		relayInfo.RetryIndex = retryParam.GetRetry()
+		channel, channelErr := selectAsyncImageChannel(c, relayInfo, retryParam, initialChannel)
+		if channelErr != nil {
+			apiErr = channelErr
+			break
+		}
+
+		appendAsyncImageUsedChannel(c, channel.Id)
+		usage, apiErr = ExecuteImage(c, relayInfo)
+		if apiErr == nil {
+			relayInfo.LastError = nil
+			return usage, nil
+		}
+
+		apiErr = service.NormalizeViolationFeeError(apiErr)
+		relayInfo.LastError = apiErr
+		logAsyncImageChannelError(c, channel, apiErr)
+		if !service.ShouldRetryRelay(c, apiErr, common.RetryTimes-retryParam.GetRetry()) {
+			break
+		}
+	}
+	return usage, apiErr
+}
+
+func selectAsyncImageChannel(c *gin.Context, relayInfo *relaycommon.RelayInfo, retryParam *service.RetryParam, initialChannel *model.Channel) (*model.Channel, *relaytypes.NewAPIError) {
+	channel := initialChannel
+	if retryParam.GetRetry() > 0 || channel == nil {
+		if _, specificChannel := c.Get("specific_channel_id"); specificChannel {
+			return nil, relaytypes.NewError(fmt.Errorf("specified channel is unavailable"), relaytypes.ErrorCodeGetChannelFailed, relaytypes.ErrOptionWithSkipRetry())
+		}
+		if service.ShouldSkipRetryAfterChannelAffinityFailure(c) {
+			return nil, relaytypes.NewError(fmt.Errorf("affinity channel is unavailable and retry is disabled"), relaytypes.ErrorCodeGetChannelFailed, relaytypes.ErrOptionWithSkipRetry())
+		}
+		var selectGroup string
+		var err error
+		channel, selectGroup, err = service.CacheGetRandomSatisfiedChannel(retryParam)
+		if err != nil {
+			return nil, relaytypes.NewError(fmt.Errorf("获取分组 %s 下模型 %s 的可用渠道失败（retry）: %s", selectGroup, relayInfo.OriginModelName, err.Error()), relaytypes.ErrorCodeGetChannelFailed, relaytypes.ErrOptionWithSkipRetry())
+		}
+		if channel == nil {
+			return nil, relaytypes.NewError(fmt.Errorf("分组 %s 下模型 %s 的可用渠道不存在（retry）", selectGroup, relayInfo.OriginModelName), relaytypes.ErrorCodeGetChannelFailed, relaytypes.ErrOptionWithSkipRetry())
+		}
+		relayInfo.PriceData.GroupRatioInfo = helper.HandleGroupRatio(c, relayInfo)
+	}
+
+	if apiErr := middleware.SetupContextForSelectedChannel(c, channel, relayInfo.OriginModelName); apiErr != nil {
+		return nil, apiErr
+	}
+	if err := service.RefreshTieredBillingForSelectedGroup(relayInfo); err != nil {
+		return nil, relaytypes.NewErrorWithStatusCode(err, relaytypes.ErrorCodeModelPriceError, http.StatusBadRequest, relaytypes.ErrOptionWithSkipRetry())
+	}
+	return channel, nil
+}
+
+func appendAsyncImageUsedChannel(c *gin.Context, channelID int) {
+	usedChannels := c.GetStringSlice("use_channel")
+	c.Set("use_channel", append(usedChannels, strconv.Itoa(channelID)))
+}
+
+func logAsyncImageChannelError(c *gin.Context, channel *model.Channel, apiErr *relaytypes.NewAPIError) {
+	if channel == nil || apiErr == nil {
+		return
+	}
+	logger.LogError(c, fmt.Sprintf("channel error (channel #%d, status code: %d): %s", channel.Id, apiErr.StatusCode, common.LocalLogPreview(apiErr.Error())))
+	if service.ShouldDisableChannel(apiErr) && channel.GetAutoBan() {
+		channelError := *relaytypes.NewChannelError(
+			channel.Id, channel.Type, channel.Name, channel.ChannelInfo.IsMultiKey,
+			common.GetContextKeyString(c, constant.ContextKeyChannelKey), channel.GetAutoBan(),
+		)
+		gopool.Go(func() {
+			service.DisableChannel(channelError, apiErr.ErrorWithStatusCode())
+		})
 	}
 }
 

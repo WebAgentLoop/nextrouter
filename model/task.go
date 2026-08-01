@@ -127,6 +127,14 @@ type TaskPrivateData struct {
 	TieredBilling     *billingexpr.BillingSnapshot `json:"tiered_billing,omitempty"`
 	BillingRequest    *billingexpr.RequestInput    `json:"billing_request,omitempty"`
 	TokenName         string                       `json:"token_name,omitempty"`
+	AsyncImageRouting *AsyncImageRoutingSnapshot   `json:"async_image_routing,omitempty"`
+}
+
+// AsyncImageRoutingSnapshot preserves submission-time routing constraints for
+// durable image tasks whose worker runs with a newly constructed request context.
+type AsyncImageRoutingSnapshot struct {
+	SpecificChannel bool `json:"specific_channel,omitempty"`
+	SkipRetry       bool `json:"skip_retry,omitempty"`
 }
 
 type AsyncImagePriceSnapshot struct {

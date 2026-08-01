@@ -82,3 +82,21 @@ func TestAsyncImageTaskPollingExclusionAndExpiryCleanup(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(t, exists)
 }
+
+func TestAsyncImageRoutingSnapshotRoundTrip(t *testing.T) {
+	original := TaskPrivateData{
+		AsyncImageRouting: &AsyncImageRoutingSnapshot{SpecificChannel: true, SkipRetry: true},
+	}
+
+	data, err := original.Value()
+	require.NoError(t, err)
+	var restored TaskPrivateData
+	require.NoError(t, restored.Scan(data))
+	require.NotNil(t, restored.AsyncImageRouting)
+	assert.True(t, restored.AsyncImageRouting.SpecificChannel)
+	assert.True(t, restored.AsyncImageRouting.SkipRetry)
+
+	var legacy TaskPrivateData
+	require.NoError(t, legacy.Scan([]byte(`{"token_id":7}`)))
+	assert.Nil(t, legacy.AsyncImageRouting)
+}
