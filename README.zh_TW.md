@@ -58,7 +58,7 @@
 NextRouter **基於 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api)**（AGPLv3），後者又基於 [One API](https://github.com/songquanpeng/one-api)（MIT）。本 Fork：
 
 - 持續追蹤上游 `main`。Fork 獨有的改動自成一套，列於下方。
-- 目前上游同步點：`cb4c8c02`（2026-07-29）。
+- 目前上游同步點：`0ab02020`（2026-08-01）。
 - 對自身修改負責，並依 AGPLv3 第 7(c) 條標註修改。
 - **保留必要的署名聲明：** `Frontend design and development by New API contributors.`
 - **保留指向原始專案的可見連結：** <https://github.com/QuantumNous/new-api>
@@ -70,7 +70,7 @@ NextRouter **基於 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-a
 <!-- FORK-DELTA: NextRouter changes vs upstream QuantumNous/new-api.
      Update after merging any fork-only branch.
      Completeness check: git log --oneline --no-merges upstream/main..HEAD
-     Last verified: 2026-07-29 -->
+     Last verified: 2026-08-06 -->
 
 ## ✨ NextRouter 相比上游的改進
 
@@ -94,7 +94,7 @@ NextRouter **基於 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-a
 - **Force Stream** 通道設定：針對「只支援串流」的上游，當客戶端發非串流請求時，閘道緩衝 SSE 串流並回傳單一非串流 JSON 回應（含後端緩衝邏輯與單元測試）。
 - **Force Format / Force Stream** 開關對**進階自訂（Advanced Custom）**通道開放（此前僅 OpenAI 通道）。
 - `/pg/chat/completions` 作為進階自訂入站路徑選項。
-- **非同步圖片生成任務**：提供 OpenAI 相容的提交/查詢路由，並透過能力感知調度，在需要時讓非同步請求使用支援同步圖片生成的通道。
+- **非同步圖片生成任務**：提供 OpenAI 相容的提交/查詢路由，並透過能力感知調度，在需要時讓非同步請求使用支援同步圖片生成的通道，同時在回退過程中保留非同步重試約束。
 - Claude 格式轉換會保留 OpenAI 工具結果中的圖片內容，並正規化工具結果載荷以相容上游協定。
 
 ### 🧩 模型管理

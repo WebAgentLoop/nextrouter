@@ -58,7 +58,7 @@ Pour l'ensemble des fonctionnalités, la prise en charge des modèles, les forma
 NextRouter est **basé sur [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api)** (AGPLv3), lui-même basé sur [One API](https://github.com/songquanpeng/one-api) (MIT). Ce fork :
 
 - Suit en continu la branche `main` amont. Les modifications spécifiques au fork sont autonomes et listées ci-dessous.
-- Point de synchronisation amont actuel : `cb4c8c02` (2026-07-29).
+- Point de synchronisation amont actuel : `0ab02020` (2026-08-01).
 - Est responsable de ses propres modifications et les signale conformément à la section 7(c) de l'AGPLv3.
 - **Préserve la mention d'attribution requise :** `Frontend design and development by New API contributors.`
 - **Préserve un lien visible vers le projet original :** <https://github.com/QuantumNous/new-api>
@@ -70,7 +70,7 @@ Voir [Licence](#-licence) et [`NOTICE`](./NOTICE) pour les conditions complètes
 <!-- FORK-DELTA: NextRouter changes vs upstream QuantumNous/new-api.
      Update after merging any fork-only branch.
      Completeness check: git log --oneline --no-merges upstream/main..HEAD
-     Last verified: 2026-07-29 -->
+     Last verified: 2026-08-06 -->
 
 ## ✨ Les nouveautés de NextRouter
 
@@ -94,7 +94,7 @@ Un nouveau module de barre latérale **Agent** (`/agent`, à activer sous *Profi
 - **Force Stream** (paramètre de canal) : pour les amonts qui ne prennent en charge *que* le streaming, lorsqu'un client envoie une requête non streamée, la passerelle met en mémoire tampon le flux SSE et renvoie une seule réponse JSON non streamée (logique de mise en tampon côté backend + tests unitaires).
 - Les commutateurs **Force Format / Force Stream** sont désormais disponibles pour les canaux **Advanced Custom** (auparavant uniquement pour le canal OpenAI).
 - `/pg/chat/completions` est désormais proposé comme option de chemin entrant pour Advanced Custom.
-- **Tâches de génération d'images asynchrones** : fournit des routes de soumission/consultation compatibles OpenAI et un routage conscient des capacités afin que les requêtes asynchrones utilisent, si nécessaire, des canaux d'images synchrones.
+- **Tâches de génération d'images asynchrones** : fournit des routes de soumission/consultation compatibles OpenAI et un routage conscient des capacités afin que les requêtes asynchrones utilisent, si nécessaire, des canaux d'images synchrones, tout en préservant les contraintes de nouvelle tentative asynchrone lors du repli.
 - La conversion Claude préserve les images contenues dans les résultats d'outils OpenAI et normalise ces résultats pour assurer la compatibilité avec le protocole amont.
 
 ### 🧩 Gestion des modèles

@@ -58,7 +58,7 @@
 NextRouter は [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api)（AGPLv3）をベースにしており、これはさらに [One API](https://github.com/songquanpeng/one-api)（MIT）をベースとしています。本 Fork は次の通りです：
 
 - 上流の `main` を継続的に追跡しています。Fork 固有の変更は自己完結しており、以下に列挙します。
-- 現在の上流同期地点：`cb4c8c02`（2026-07-29）。
+- 現在の上流同期地点：`0ab02020`（2026-08-01）。
 - 自身の変更に責任を持ち、AGPLv3 第 7(c) 条に従って変更を明示します。
 - **必須の帰属表示を保持します：** `Frontend design and development by New API contributors.`
 - **オリジナルプロジェクトへの可視リンクを保持します：** <https://github.com/QuantumNous/new-api>
@@ -70,7 +70,7 @@ NextRouter は [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api)�
 <!-- FORK-DELTA: NextRouter changes vs upstream QuantumNous/new-api.
      Update after merging any fork-only branch.
      Completeness check: git log --oneline --no-merges upstream/main..HEAD
-     Last verified: 2026-07-29 -->
+     Last verified: 2026-08-06 -->
 
 ## ✨ NextRouter の新機能
 
@@ -94,7 +94,7 @@ NextRouter は [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api)�
 - **Force Stream**（チャネル設定）：ストリーミングのみをサポートする上流向けに、クライアントが非ストリーミングリクエストを送信した際、ゲートウェイが SSE ストリームをバッファリングして単一の非ストリーミング JSON レスポンスを返します（バックエンドのバッファリングロジック + ユニットテスト付き）。
 - **Force Format / Force Stream** の切替が **Advanced Custom** チャネルでも利用可能になりました（以前は OpenAI チャネルのみ）。
 - `/pg/chat/completions` が Advanced Custom の受信パスオプションとして追加されました。
-- **非同期画像生成タスク**：OpenAI 互換の送信/照会ルートを提供し、必要に応じて非同期リクエストを同期画像対応チャネルへ送る機能対応ルーティングを行います。
+- **非同期画像生成タスク**：OpenAI 互換の送信/照会ルートを提供し、必要に応じて非同期リクエストを同期画像対応チャネルへ送る機能対応ルーティングを行い、フォールバック時も非同期リトライの制約を保持します。
 - Claude 形式への変換では OpenAI ツール結果内の画像を保持し、上流プロトコルとの互換性のためにツール結果を正規化します。
 
 ### 🧩 モデル管理
