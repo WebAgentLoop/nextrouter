@@ -54,6 +54,12 @@ func Distribute() func(c *gin.Context) {
 				abortWithOpenAiMessage(c, http.StatusForbidden, i18n.T(c, i18n.MsgDistributorChannelDisabled))
 				return
 			}
+			if !service.AllowChannelRequest(channel) {
+				// A token pinned to a specific channel must not silently fall
+				// back to other channels: surface the throttle as 429 instead.
+				abortWithOpenAiMessage(c, http.StatusTooManyRequests, i18n.T(c, i18n.MsgChannelRateLimited), types.ErrorCodeChannelRateLimited)
+				return
+			}
 		} else {
 			// Select a channel for the user
 			// check token model mapping
@@ -105,10 +111,15 @@ func Distribute() func(c *gin.Context) {
 
 				if preferredChannelID, found := service.GetPreferredChannelByAffinity(c, modelRequest.Model, usingGroup); found {
 					affinityUsable := false
+					affinityRateLimited := false
 					preferred, err := model.CacheGetChannel(preferredChannelID)
 					if err == nil && preferred != nil && preferred.Status == common.ChannelStatusEnabled &&
 						channelSupportsRequestPath(preferred, requestPath, modelRequest.Model) {
-						if usingGroup == "auto" {
+						if !service.AllowChannelRequest(preferred) {
+							// Keep the affinity entry: the channel may recover within
+							// its window, and it is not a failure worth clearing.
+							affinityRateLimited = true
+						} else if usingGroup == "auto" {
 							userGroup := common.GetContextKeyString(c, constant.ContextKeyUserGroup)
 							autoGroups := service.GetRequestAutoGroups(c, userGroup)
 							for _, g := range autoGroups {
@@ -128,7 +139,7 @@ func Distribute() func(c *gin.Context) {
 							service.MarkChannelAffinityUsed(c, usingGroup, preferred.Id)
 						}
 					}
-					if !affinityUsable && !service.ShouldKeepChannelAffinityOnChannelDisabled() {
+					if !affinityUsable && !affinityRateLimited && !service.ShouldKeepChannelAffinityOnChannelDisabled() {
 						service.ClearCurrentChannelAffinityCache(c)
 					}
 				}
@@ -145,6 +156,10 @@ func Distribute() func(c *gin.Context) {
 						showGroup := usingGroup
 						if usingGroup == "auto" {
 							showGroup = fmt.Sprintf("auto(%s)", selectGroup)
+						}
+						if errors.Is(err, service.ErrChannelRateLimited) {
+							abortWithOpenAiMessage(c, http.StatusTooManyRequests, i18n.T(c, i18n.MsgChannelRateLimited), types.ErrorCodeChannelRateLimited)
+							return
 						}
 						message := i18n.T(c, i18n.MsgDistributorGetChannelFailed, map[string]any{"Group": showGroup, "Model": modelRequest.Model, "Error": err.Error()})
 						// 如果错误，但是渠道不为空，说明是数据库一致性问题

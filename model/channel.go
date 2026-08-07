@@ -979,6 +979,9 @@ func (channel *Channel) ValidateSettings() error {
 			return fmt.Errorf("advanced custom channels require a %s route when upstream model update checks are enabled", dto.AdvancedCustomModelListPath)
 		}
 	}
+	if err := channelOtherSettings.RateLimit.Validate(); err != nil {
+		return err
+	}
 	return nil
 }
 

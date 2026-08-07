@@ -104,7 +104,7 @@ func redisRateLimitHandler(duration int64, totalMaxCount, successMaxCount int) g
 				ctx,
 				totalKey,
 				limiter.WithCapacity(int64(totalMaxCount)*duration),
-				limiter.WithRate(int64(totalMaxCount)),
+				limiter.WithRate(float64(totalMaxCount)),
 				limiter.WithRequested(duration),
 			)
 

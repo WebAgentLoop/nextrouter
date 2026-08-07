@@ -3,6 +3,7 @@ package relay
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -300,6 +301,18 @@ func executeAsyncImageWithRetry(c *gin.Context, relayInfo *relaycommon.RelayInfo
 
 func selectAsyncImageChannel(c *gin.Context, relayInfo *relaycommon.RelayInfo, retryParam *service.RetryParam, initialChannel *model.Channel) (*model.Channel, *relaytypes.NewAPIError) {
 	channel := initialChannel
+	if channel != nil && retryParam.GetRetry() == 0 {
+		if !service.AllowChannelRequest(channel) {
+			// The stored channel is over its rate limit. When the task is
+			// pinned to it there is nothing else to try: answer 429 without a
+			// retry. Otherwise fall back to the normal selection so another
+			// channel can take the task.
+			if _, specificChannel := c.Get("specific_channel_id"); specificChannel {
+				return nil, relaytypes.NewError(service.ErrChannelRateLimited, relaytypes.ErrorCodeChannelRateLimited, relaytypes.ErrOptionWithSkipRetry(), relaytypes.ErrOptionWithStatusCode(http.StatusTooManyRequests))
+			}
+			channel = nil
+		}
+	}
 	if retryParam.GetRetry() > 0 || channel == nil {
 		if _, specificChannel := c.Get("specific_channel_id"); specificChannel {
 			return nil, relaytypes.NewError(fmt.Errorf("specified channel is unavailable"), relaytypes.ErrorCodeGetChannelFailed, relaytypes.ErrOptionWithSkipRetry())
@@ -311,6 +324,9 @@ func selectAsyncImageChannel(c *gin.Context, relayInfo *relaycommon.RelayInfo, r
 		var err error
 		channel, selectGroup, err = service.CacheGetRandomSatisfiedChannel(retryParam)
 		if err != nil {
+			if errors.Is(err, service.ErrChannelRateLimited) {
+				return nil, relaytypes.NewError(err, relaytypes.ErrorCodeChannelRateLimited, relaytypes.ErrOptionWithSkipRetry(), relaytypes.ErrOptionWithStatusCode(http.StatusTooManyRequests))
+			}
 			return nil, relaytypes.NewError(fmt.Errorf("获取分组 %s 下模型 %s 的可用渠道失败（retry）: %s", selectGroup, relayInfo.OriginModelName, err.Error()), relaytypes.ErrorCodeGetChannelFailed, relaytypes.ErrOptionWithSkipRetry())
 		}
 		if channel == nil {

@@ -166,6 +166,8 @@ import {
   findMissingModelsInMapping,
   validateModelMappingJson,
   hasAdvancedSettingsErrors,
+  MAX_CHANNEL_RATE_LIMIT_REQUESTS,
+  MAX_CHANNEL_RATE_LIMIT_WINDOW_SECONDS,
 } from '../../lib'
 import {
   collectInvalidStatusCodeEntries,
@@ -301,6 +303,9 @@ const SENSITIVE_FORM_FIELDS = [
   'upstream_model_update_check_enabled',
   'upstream_model_update_auto_sync_enabled',
   'upstream_model_update_ignored_models',
+  'rate_limit_enabled',
+  'rate_limit_requests',
+  'rate_limit_window_seconds',
 ] satisfies (keyof ChannelFormValues)[]
 
 function readAdvancedSettingsPreference(): boolean {
@@ -348,7 +353,8 @@ function hasAdvancedSettingsValues(values: ChannelFormValues): boolean {
     values.claude_beta_query ||
     values.upstream_model_update_check_enabled ||
     values.upstream_model_update_auto_sync_enabled ||
-    values.upstream_model_update_ignored_models?.trim()
+    values.upstream_model_update_ignored_models?.trim() ||
+    values.rate_limit_enabled
   )
 }
 
@@ -769,6 +775,7 @@ export function ChannelMutateDrawer({
   const currentUpstreamModelUpdateIgnoredModels = form.watch(
     'upstream_model_update_ignored_models'
   )
+  const currentRateLimitEnabled = form.watch('rate_limit_enabled')
   const shouldPreviewUnsavedModels =
     !isEditing ||
     (currentType === CHANNEL_TYPE_ADVANCED_CUSTOM && canEditSensitive)
@@ -1025,6 +1032,7 @@ export function ChannelMutateDrawer({
     currentProxy?.trim() ||
     currentSystemPrompt?.trim() ||
     currentSystemPromptOverride ||
+    currentRateLimitEnabled ||
     (currentHttpProtocol && currentHttpProtocol !== 'auto') ||
     (currentHttp2ConnectionShards != null && currentHttp2ConnectionShards > 1)
   )
@@ -4201,7 +4209,97 @@ export function ChannelMutateDrawer({
                                   </FormItem>
                                 )}
                               />
+
+                              <FormField
+                                control={form.control}
+                                name='rate_limit_enabled'
+                                render={({ field }) => (
+                                  <FormItem className='flex items-center justify-between px-4 py-3'>
+                                    <div className='space-y-0.5'>
+                                      <FormLabel>
+                                        {t('Channel Rate Limit')}
+                                      </FormLabel>
+                                      <FormDescription>
+                                        {t(
+                                          'Throttle upstream requests to this channel. When the limit is reached, requests fall back to another channel or fail with 429.'
+                                        )}
+                                      </FormDescription>
+                                    </div>
+                                    <FormControl>
+                                      <Switch
+                                        checked={field.value}
+                                        onCheckedChange={field.onChange}
+                                      />
+                                    </FormControl>
+                                  </FormItem>
+                                )}
+                              />
                             </div>
+
+                            {currentRateLimitEnabled && (
+                              <div className='grid grid-cols-1 gap-4 sm:grid-cols-2'>
+                                <FormField
+                                  control={form.control}
+                                  name='rate_limit_requests'
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>{t('Requests')}</FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          type='number'
+                                          min={1}
+                                          max={MAX_CHANNEL_RATE_LIMIT_REQUESTS}
+                                          {...field}
+                                          onChange={(e) =>
+                                            field.onChange(
+                                              Number(e.target.value)
+                                            )
+                                          }
+                                        />
+                                      </FormControl>
+                                      <FormDescription>
+                                        {t(
+                                          'Maximum requests allowed within the window'
+                                        )}
+                                      </FormDescription>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+
+                                <FormField
+                                  control={form.control}
+                                  name='rate_limit_window_seconds'
+                                  render={({ field }) => (
+                                    <FormItem>
+                                      <FormLabel>
+                                        {t('Window (seconds)')}
+                                      </FormLabel>
+                                      <FormControl>
+                                        <Input
+                                          type='number'
+                                          min={1}
+                                          max={MAX_CHANNEL_RATE_LIMIT_WINDOW_SECONDS}
+                                          placeholder='60'
+                                          {...field}
+                                          onChange={(e) =>
+                                            field.onChange(
+                                              Number(e.target.value)
+                                            )
+                                          }
+                                        />
+                                      </FormControl>
+                                      <FormDescription>
+                                        {t(
+                                          'Sliding window length. Combined, the channel allows Requests every Window seconds.'
+                                        )}
+                                      </FormDescription>
+                                      <FormMessage />
+                                    </FormItem>
+                                  )}
+                                />
+                              </div>
+                            )}
 
                             <FormField
                               control={form.control}

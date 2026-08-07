@@ -313,6 +313,9 @@ func getChannel(c *gin.Context, info *relaycommon.RelayInfo, retryParam *service
 	}
 	channel, selectGroup, err := service.CacheGetRandomSatisfiedChannel(retryParam)
 	if err != nil {
+		if errors.Is(err, service.ErrChannelRateLimited) {
+			return nil, types.NewError(err, types.ErrorCodeChannelRateLimited, types.ErrOptionWithSkipRetry(), types.ErrOptionWithStatusCode(http.StatusTooManyRequests))
+		}
 		return nil, types.NewError(fmt.Errorf("获取分组 %s 下模型 %s 的可用渠道失败（retry）: %s", selectGroup, info.OriginModelName, err.Error()), types.ErrorCodeGetChannelFailed, types.ErrOptionWithSkipRetry())
 	}
 	if channel == nil {
@@ -498,6 +501,12 @@ func RelayTask(c *gin.Context) {
 
 		if lockedCh, ok := relayInfo.LockedChannel.(*model.Channel); ok && lockedCh != nil {
 			channel = lockedCh
+			if !service.AllowChannelRequest(channel) {
+				// The origin task's channel is over its rate limit. Do not
+				// retry with the same locked channel (it would fail again).
+				taskErr = service.TaskErrorWrapperLocal(fmt.Errorf("channel #%d is rate limited", channel.Id), "channel_rate_limited", http.StatusTooManyRequests)
+				break
+			}
 			if retryParam.GetRetry() > 0 {
 				if setupErr := middleware.SetupContextForSelectedChannel(c, channel, relayInfo.OriginModelName); setupErr != nil {
 					taskErr = service.TaskErrorWrapperLocal(setupErr.Err, "setup_locked_channel_failed", http.StatusInternalServerError)
@@ -509,7 +518,17 @@ func RelayTask(c *gin.Context) {
 			channel, channelErr = getChannel(c, relayInfo, retryParam)
 			if channelErr != nil {
 				logger.LogError(c, channelErr.Error())
-				taskErr = service.TaskErrorWrapperLocal(channelErr.Err, "get_channel_failed", http.StatusInternalServerError)
+				// Keep the upstream decision visible to the client: a
+				// rate-limited selection must surface as 429, not 500.
+				code := "get_channel_failed"
+				statusCode := http.StatusInternalServerError
+				if errors.Is(channelErr.Err, service.ErrChannelRateLimited) {
+					code = "channel_rate_limited"
+					statusCode = http.StatusTooManyRequests
+				} else if channelErr.StatusCode != 0 {
+					statusCode = channelErr.StatusCode
+				}
+				taskErr = service.TaskErrorWrapperLocal(channelErr.Err, code, statusCode)
 				break
 			}
 		}

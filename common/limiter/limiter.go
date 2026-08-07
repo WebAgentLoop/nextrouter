@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"strconv"
 	"sync"
 
 	"github.com/QuantumNous/new-api/common"
@@ -12,6 +13,9 @@ import (
 
 //go:embed lua/rate_limit.lua
 var rateLimitScript string
+
+//go:embed lua/sliding_window.lua
+var slidingWindowScript string
 
 type RedisLimiter struct {
 	client         *redis.Client
@@ -53,12 +57,13 @@ func (rl *RedisLimiter) Allow(ctx context.Context, key string, opts ...Option) (
 	}
 
 	// 执行限流
+	rateStr := strconv.FormatFloat(config.Rate, 'f', -1, 64)
 	result, err := rl.client.EvalSha(
 		ctx,
 		rl.limitScriptSHA,
 		[]string{key},
 		config.Requested,
-		config.Rate,
+		rateStr,
 		config.Capacity,
 	).Int()
 
@@ -68,10 +73,23 @@ func (rl *RedisLimiter) Allow(ctx context.Context, key string, opts ...Option) (
 	return result == 1, nil
 }
 
+// SlidingWindowAllow admits one request when fewer than maxRequests entries
+// occurred within the last window seconds, removing expired entries in the
+// same atomic script. Member must be unique per admitted request so two calls
+// in the same second both count.
+func SlidingWindowAllow(ctx context.Context, client *redis.Client, key string, windowSeconds, maxRequests int64, member string) (bool, error) {
+	script := redis.NewScript(slidingWindowScript)
+	result, err := script.Run(ctx, client, []string{key}, windowSeconds, maxRequests, member).Int()
+	if err != nil {
+		return false, fmt.Errorf("sliding window rate limit failed: %w", err)
+	}
+	return result == 1, nil
+}
+
 // Config 配置选项模式
 type Config struct {
 	Capacity  int64
-	Rate      int64
+	Rate      float64
 	Requested int64
 }
 
@@ -81,7 +99,9 @@ func WithCapacity(c int64) Option {
 	return func(cfg *Config) { cfg.Capacity = c }
 }
 
-func WithRate(r int64) Option {
+// WithRate sets the token refill rate (tokens per second). The value may be
+// fractional, e.g. 0.5 for one request every two seconds.
+func WithRate(r float64) Option {
 	return func(cfg *Config) { cfg.Rate = r }
 }
 

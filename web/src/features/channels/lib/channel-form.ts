@@ -74,6 +74,10 @@ export const HTTP_PROTOCOL_AUTO = 'auto'
 export const HTTP_PROTOCOL_HTTP1 = 'http1'
 export const MAX_HTTP2_CONNECTION_SHARDS = 8
 
+// Bounds mirror the backend ChannelRateLimit validation in relaykit/dto.
+export const MAX_CHANNEL_RATE_LIMIT_REQUESTS = 1000000
+export const MAX_CHANNEL_RATE_LIMIT_WINDOW_SECONDS = 86400
+
 export function normalizeHttpProtocol(
   value: string | undefined | null
 ): 'auto' | 'http1' {
@@ -280,6 +284,10 @@ export const channelFormSchema = z
     upstream_model_update_check_enabled: z.boolean().optional(),
     upstream_model_update_auto_sync_enabled: z.boolean().optional(),
     upstream_model_update_ignored_models: z.string().optional(),
+    // Per-channel rate limiting (stored in the settings JSON)
+    rate_limit_enabled: z.boolean().optional(),
+    rate_limit_requests: z.number().optional(),
+    rate_limit_window_seconds: z.number().optional(),
   })
   .superRefine((data, ctx) => {
     if (
@@ -391,6 +399,33 @@ export const channelFormSchema = z
         ERROR_MESSAGES.INVALID_HTTP1_WITH_SHARDS
       )
     }
+
+    if (data.rate_limit_enabled) {
+      const requests = data.rate_limit_requests ?? 0
+      if (
+        !Number.isInteger(requests) ||
+        requests <= 0 ||
+        requests > MAX_CHANNEL_RATE_LIMIT_REQUESTS
+      ) {
+        addRequiredIssue(
+          ctx,
+          'rate_limit_requests',
+          `Requests must be between 1 and ${MAX_CHANNEL_RATE_LIMIT_REQUESTS}`
+        )
+      }
+      const windowSeconds = data.rate_limit_window_seconds ?? 0
+      if (
+        !Number.isInteger(windowSeconds) ||
+        windowSeconds <= 0 ||
+        windowSeconds > MAX_CHANNEL_RATE_LIMIT_WINDOW_SECONDS
+      ) {
+        addRequiredIssue(
+          ctx,
+          'rate_limit_window_seconds',
+          `Window must be between 1 and ${MAX_CHANNEL_RATE_LIMIT_WINDOW_SECONDS} seconds`
+        )
+      }
+    }
   })
 
 export type ChannelFormValues = z.infer<typeof channelFormSchema>
@@ -453,6 +488,9 @@ export const CHANNEL_FORM_DEFAULT_VALUES: ChannelFormValues = {
   upstream_model_update_auto_sync_enabled: false,
   upstream_model_update_ignored_models: '',
   advanced_custom: '',
+  rate_limit_enabled: false,
+  rate_limit_requests: 10,
+  rate_limit_window_seconds: 60,
 }
 
 // ============================================================================
@@ -520,6 +558,9 @@ export function transformChannelToFormDefaults(
   let upstreamModelUpdateAutoSyncEnabled = false
   let upstreamModelUpdateIgnoredModels = ''
   let advancedCustom = ''
+  let rateLimitEnabled = false
+  let rateLimitRequests = 10
+  let rateLimitWindowSeconds = 60
 
   if (channel.settings) {
     try {
@@ -548,6 +589,9 @@ export function transformChannelToFormDefaults(
       if (parsed.advanced_custom) {
         advancedCustom = stringifyAdvancedCustomConfig(parsed.advanced_custom)
       }
+      rateLimitEnabled = parsed.rate_limit?.enabled === true
+      rateLimitRequests = Number(parsed.rate_limit?.requests) || 10
+      rateLimitWindowSeconds = Number(parsed.rate_limit?.window_seconds) || 60
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Failed to parse channel settings:', error)
@@ -599,6 +643,9 @@ export function transformChannelToFormDefaults(
     upstream_model_update_auto_sync_enabled: upstreamModelUpdateAutoSyncEnabled,
     upstream_model_update_ignored_models: upstreamModelUpdateIgnoredModels,
     advanced_custom: advancedCustom,
+    rate_limit_enabled: rateLimitEnabled,
+    rate_limit_requests: rateLimitRequests,
+    rate_limit_window_seconds: rateLimitWindowSeconds,
   }
 }
 
@@ -759,6 +806,16 @@ function buildSettingsJSON(formData: ChannelFormValues): string {
     }
   } else if ('advanced_custom' in settingsObj) {
     delete settingsObj.advanced_custom
+  }
+
+  if (formData.rate_limit_enabled === true) {
+    settingsObj.rate_limit = {
+      enabled: true,
+      requests: formData.rate_limit_requests ?? 10,
+      window_seconds: formData.rate_limit_window_seconds ?? 60,
+    }
+  } else if ('rate_limit' in settingsObj) {
+    delete settingsObj.rate_limit
   }
 
   return JSON.stringify(settingsObj)

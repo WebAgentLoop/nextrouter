@@ -66,6 +66,50 @@ const (
 	AwsKeyTypeApiKey AwsKeyType = "api_key"
 )
 
+// ChannelRateLimit is the per-channel upstream rate limit configuration.
+// Semantics: at most Requests upstream calls per WindowSeconds. When Enabled is
+// false (or the object is nil) no rate limiting is applied.
+type ChannelRateLimit struct {
+	Enabled       bool  `json:"enabled,omitempty"`
+	Requests      int64 `json:"requests,omitempty"`
+	WindowSeconds int64 `json:"window_seconds,omitempty"`
+}
+
+const (
+	// MaxChannelRateLimitRequests caps the requests allowed per window. It must
+	// stay small enough that the in-memory sliding window (which pre-allocates a
+	// slice per active key) cannot exhaust server memory with a single channel.
+	// 1000000 requests per window is far beyond any realistic per-channel rate.
+	MaxChannelRateLimitRequests = 1000000
+	// MaxChannelRateLimitWindowSeconds caps the window length to one day.
+	MaxChannelRateLimitWindowSeconds = 86400
+)
+
+// IsEnabled reports whether a rate limit is configured and active.
+func (r *ChannelRateLimit) IsEnabled() bool {
+	return r != nil && r.Enabled && r.Requests > 0 && r.WindowSeconds > 0
+}
+
+// Validate enforces the config bounds. It returns nil when not enabled.
+func (r *ChannelRateLimit) Validate() error {
+	if r == nil || !r.Enabled {
+		return nil
+	}
+	if r.Requests <= 0 {
+		return fmt.Errorf("channel rate limit requests must be > 0")
+	}
+	if r.Requests > MaxChannelRateLimitRequests {
+		return fmt.Errorf("channel rate limit requests must be <= %d", MaxChannelRateLimitRequests)
+	}
+	if r.WindowSeconds <= 0 {
+		return fmt.Errorf("channel rate limit window_seconds must be > 0")
+	}
+	if r.WindowSeconds > MaxChannelRateLimitWindowSeconds {
+		return fmt.Errorf("channel rate limit window_seconds must be <= %d", MaxChannelRateLimitWindowSeconds)
+	}
+	return nil
+}
+
 type ChannelOtherSettings struct {
 	AzureResponsesVersion                 string                `json:"azure_responses_version,omitempty"`
 	VertexKeyType                         VertexKeyType         `json:"vertex_key_type,omitempty"` // "json" or "api_key"
@@ -86,6 +130,7 @@ type ChannelOtherSettings struct {
 	UpstreamModelUpdateLastRemovedModels  []string              `json:"upstream_model_update_last_removed_models,omitempty"`  // 上次检测到的可删除模型
 	UpstreamModelUpdateIgnoredModels      []string              `json:"upstream_model_update_ignored_models,omitempty"`       // 手动忽略的模型
 	AdvancedCustom                        *AdvancedCustomConfig `json:"advanced_custom,omitempty"`
+	RateLimit                             *ChannelRateLimit     `json:"rate_limit,omitempty"` // 渠道级上游请求速率限制（整个渠道共享额度）
 }
 
 func (s *ChannelOtherSettings) IsOpenRouterEnterprise() bool {
