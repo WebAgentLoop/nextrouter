@@ -90,7 +90,7 @@ func SubmitAsyncImageGeneration(c *gin.Context) {
 		respondAsyncImageError(c, http.StatusBadRequest, "read_request_failed", err.Error())
 		return
 	}
-	requestJSON, err := io.ReadAll(common.ReaderOnly(storage))
+	requestJSON, err := io.ReadAll(storage)
 	if err != nil {
 		respondAsyncImageError(c, http.StatusInternalServerError, "read_request_failed", err.Error())
 		return
