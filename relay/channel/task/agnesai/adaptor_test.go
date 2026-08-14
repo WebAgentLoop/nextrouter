@@ -81,12 +81,33 @@ func TestBuildRequestBodyMapsModelAndPreservesProviderFields(t *testing.T) {
 }
 
 func TestParseTaskResultUsesAgnesVideoURL(t *testing.T) {
-	result, err := (&TaskAdaptor{}).ParseTaskResult([]byte(`{"video_id":"vid_123","status":"completed","progress":100,"metadata":{"url":"https://cdn.agnes-ai.com/video.mp4"}}`))
-	require.NoError(t, err)
-	assert.Equal(t, model.TaskStatusSuccess, result.Status)
-	assert.Equal(t, "vid_123", result.TaskID)
-	assert.Equal(t, "https://cdn.agnes-ai.com/video.mp4", result.Url)
-	assert.Equal(t, "100%", result.Progress)
+	tests := []struct {
+		name string
+		body string
+		url  string
+	}{
+		{
+			name: "metadata url",
+			body: `{"video_id":"vid_123","status":"completed","progress":100,"metadata":{"url":"https://cdn.agnes-ai.com/video.mp4"}}`,
+			url:  "https://cdn.agnes-ai.com/video.mp4",
+		},
+		{
+			name: "top level url",
+			body: `{"video_id":"vid_123","status":"completed","progress":100,"url":"https://cdn.agnes-ai.com/video.mp4"}`,
+			url:  "https://cdn.agnes-ai.com/video.mp4",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := (&TaskAdaptor{}).ParseTaskResult([]byte(tt.body))
+			require.NoError(t, err)
+			assert.Equal(t, model.TaskStatusSuccess, result.Status)
+			assert.Equal(t, "vid_123", result.TaskID)
+			assert.Equal(t, tt.url, result.Url)
+			assert.Equal(t, "100%", result.Progress)
+		})
+	}
 }
 
 func TestFetchTaskUsesAgnesVideoIDEndpoint(t *testing.T) {

@@ -57,6 +57,7 @@ type videoResponse struct {
 	CompletedAt int64  `json:"completed_at,omitempty"`
 	Seconds     string `json:"seconds,omitempty"`
 	Size        string `json:"size,omitempty"`
+	URL         string `json:"url,omitempty"`
 	Metadata    struct {
 		URL string `json:"url,omitempty"`
 	} `json:"metadata,omitempty"`
@@ -265,6 +266,9 @@ func (a *TaskAdaptor) ParseTaskResult(respBody []byte) (*relaycommon.TaskInfo, e
 	case "completed":
 		result.Status = model.TaskStatusSuccess
 		result.Url = upstream.Metadata.URL
+		if result.Url == "" {
+			result.Url = upstream.URL
+		}
 	case "failed", "cancelled":
 		result.Status = model.TaskStatusFailure
 		if upstream.Error != nil {
