@@ -95,6 +95,24 @@ func TestNewAPIChannelRegistration(t *testing.T) {
 	assert.Empty(t, constant.ChannelBaseURLs[constant.ChannelTypeNewAPI])
 }
 
+func TestAgnesAIChannelRegistration(t *testing.T) {
+	apiType, ok := common.ChannelType2APIType(constant.ChannelTypeAgnesAI)
+
+	require.True(t, ok)
+	assert.Equal(t, constant.APITypeAgnesAI, apiType)
+	assert.Equal(t, "AgnesAI", constant.GetChannelTypeName(constant.ChannelTypeAgnesAI))
+	require.Greater(t, len(constant.ChannelBaseURLs), constant.ChannelTypeAgnesAI)
+	assert.Equal(t, "https://apihub.agnes-ai.com", constant.ChannelBaseURLs[constant.ChannelTypeAgnesAI])
+	assert.False(t, common.SupportsResponsesCompact(constant.ChannelTypeAgnesAI, apiType))
+	assert.Equal(t, []constant.EndpointType{
+		constant.EndpointTypeOpenAI,
+		constant.EndpointTypeOpenAIResponse,
+		constant.EndpointTypeAnthropic,
+	}, common.GetEndpointTypesByChannelType(constant.ChannelTypeAgnesAI, "agnes-2.5-pro"))
+	assert.Equal(t, []constant.EndpointType{constant.EndpointTypeImageGeneration, constant.EndpointTypeOpenAI, constant.EndpointTypeOpenAIResponse, constant.EndpointTypeAnthropic}, common.GetEndpointTypesByChannelType(constant.ChannelTypeAgnesAI, "agnes-image-2.1-flash"))
+	assert.Equal(t, []constant.EndpointType{constant.EndpointTypeOpenAIVideo}, common.GetEndpointTypesByChannelType(constant.ChannelTypeAgnesAI, "agnes-video-v2.0"))
+}
+
 func TestResponsesCompactChannelSupport(t *testing.T) {
 	tests := []struct {
 		name        string

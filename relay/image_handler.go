@@ -11,6 +11,7 @@ import (
 	"github.com/QuantumNous/new-api/constant"
 	"github.com/QuantumNous/new-api/logger"
 	relaycommon "github.com/QuantumNous/new-api/relay/common"
+	relayconstant "github.com/QuantumNous/new-api/relay/constant"
 	"github.com/QuantumNous/new-api/relay/helper"
 	"github.com/QuantumNous/new-api/relaykit/dto"
 	"github.com/QuantumNous/new-api/relaykit/types"
@@ -55,6 +56,14 @@ func ImageHelper(c *gin.Context, info *relaycommon.RelayInfo) (newAPIError *type
 // channel conversion and response handling.
 func ExecuteImage(c *gin.Context, info *relaycommon.RelayInfo) (*dto.Usage, *types.NewAPIError) {
 	info.InitChannelMeta(c)
+	if info.ChannelType == constant.ChannelTypeAgnesAI && info.RelayMode == relayconstant.RelayModeImagesEdits {
+		return nil, types.NewErrorWithStatusCode(
+			fmt.Errorf("AgnesAI only supports /v1/images/generations; use extra_body.image for image-guided generation"),
+			types.ErrorCodeInvalidRequest,
+			http.StatusBadRequest,
+			types.ErrOptionWithSkipRetry(),
+		)
+	}
 
 	imageReq, ok := info.Request.(*dto.ImageRequest)
 	if !ok {
