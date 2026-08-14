@@ -42,6 +42,57 @@ export interface ChannelTypeConfig {
   }
 }
 
+// Mirrors constant.ChannelBaseURLs in the backend. An empty Base URL for one
+// of these channel types resolves to the corresponding address at runtime.
+const CHANNEL_DEFAULT_BASE_URLS: Record<number, string> = {
+  1: 'https://api.openai.com',
+  2: 'https://oa.api2d.net',
+  4: 'http://localhost:11434',
+  5: 'https://api.openai-sb.com',
+  6: 'https://api.openaimax.com',
+  7: 'https://api.ohmygpt.com',
+  9: 'https://api.caipacity.com',
+  10: 'https://api.aiproxy.io',
+  12: 'https://api.api2gpt.com',
+  13: 'https://api.aigc2d.com',
+  14: 'https://api.anthropic.com',
+  15: 'https://aip.baidubce.com',
+  16: 'https://open.bigmodel.cn',
+  17: 'https://dashscope.aliyuncs.com',
+  19: 'https://api.360.cn',
+  20: 'https://openrouter.ai/api',
+  21: 'https://api.aiproxy.io',
+  22: 'https://fastgpt.run/api/openapi',
+  23: 'https://hunyuan.tencentcloudapi.com',
+  24: 'https://generativelanguage.googleapis.com',
+  25: 'https://api.moonshot.cn',
+  26: 'https://open.bigmodel.cn',
+  27: 'https://api.perplexity.ai',
+  31: 'https://api.lingyiwanwu.com',
+  34: 'https://api.cohere.ai',
+  35: 'https://api.minimax.chat',
+  37: 'https://api.dify.ai',
+  38: 'https://api.jina.ai',
+  39: 'https://api.cloudflare.com',
+  40: 'https://api.siliconflow.cn',
+  42: 'https://api.mistral.ai',
+  43: 'https://api.deepseek.com',
+  44: 'https://api.moka.ai',
+  45: 'https://ark.cn-beijing.volces.com',
+  46: 'https://qianfan.baidubce.com',
+  48: 'https://api.x.ai',
+  49: 'https://api.coze.cn',
+  50: 'https://api.klingai.com',
+  51: 'https://visual.volcengineapi.com',
+  52: 'https://api.vidu.cn',
+  53: 'https://llm.submodel.ai',
+  54: 'https://ark.cn-beijing.volces.com',
+  55: 'https://api.openai.com',
+  56: 'https://api.replicate.com',
+  57: 'https://chatgpt.com',
+  61: 'https://apihub.agnes-ai.com',
+}
+
 /**
  * Configuration for each channel type
  */
@@ -208,7 +259,11 @@ export function requiresRegion(type: number): boolean {
  * Get default base URL for channel type
  */
 export function getDefaultBaseUrl(type: number): string {
-  return CHANNEL_TYPE_CONFIGS[type]?.defaultBaseUrl || ''
+  return (
+    CHANNEL_TYPE_CONFIGS[type]?.defaultBaseUrl ||
+    CHANNEL_DEFAULT_BASE_URLS[type] ||
+    ''
+  )
 }
 
 /**

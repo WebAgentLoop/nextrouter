@@ -153,6 +153,7 @@ import {
   channelFormSchema,
   channelsQueryKeys,
   getAdvancedCustomStats,
+  getDefaultBaseUrl,
   transformChannelToFormDefaults,
   type ChannelFormValues,
   deduplicateKeys,
@@ -776,6 +777,7 @@ export function ChannelMutateDrawer({
     'upstream_model_update_ignored_models'
   )
   const currentRateLimitEnabled = form.watch('rate_limit_enabled')
+  const defaultBaseUrl = getDefaultBaseUrl(currentType)
   const shouldPreviewUnsavedModels =
     !isEditing ||
     (currentType === CHANNEL_TYPE_ADVANCED_CUSTOM && canEditSensitive)
@@ -2399,16 +2401,13 @@ export function ChannelMutateDrawer({
                                     </FormLabel>
                                     <FormControl>
                                       <Input
-                                        placeholder={t(
-                                          'e.g., https://fastgpt.run/api/openapi'
-                                        )}
+                                        placeholder={defaultBaseUrl}
                                         {...field}
                                       />
                                     </FormControl>
                                     <FormDescription>
-                                      {t(
-                                        'For private deployments, format: https://fastgpt.run/api/openapi'
-                                      )}
+                                      {t(FIELD_PLACEHOLDERS.BASE_URL)}:{' '}
+                                      <code>{defaultBaseUrl}</code>
                                     </FormDescription>
                                     <FormMessage />
                                   </FormItem>
@@ -2787,15 +2786,23 @@ export function ChannelMutateDrawer({
                                     <FormLabel>{t('Base URL')}</FormLabel>
                                     <FormControl>
                                       <Input
-                                        placeholder={t(
-                                          FIELD_PLACEHOLDERS.BASE_URL
-                                        )}
+                                        placeholder={
+                                          defaultBaseUrl ||
+                                          t(FIELD_PLACEHOLDERS.BASE_URL)
+                                        }
                                         {...field}
                                       />
                                     </FormControl>
                                     <FormDescription>
-                                      {t(
-                                        'Custom API base URL. For official channels, New API has built-in addresses. Only fill this for third-party proxy sites or special endpoints. Do not add /v1 or trailing slash.'
+                                      {defaultBaseUrl ? (
+                                        <>
+                                          {t(FIELD_PLACEHOLDERS.BASE_URL)}:{' '}
+                                          <code>{defaultBaseUrl}</code>
+                                        </>
+                                      ) : (
+                                        t(
+                                          'Custom API base URL. For official channels, New API has built-in addresses. Only fill this for third-party proxy sites or special endpoints. Do not add /v1 or trailing slash.'
+                                        )
                                       )}
                                     </FormDescription>
                                     <FormMessage />
