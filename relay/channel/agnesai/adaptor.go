@@ -93,7 +93,7 @@ func (a *Adaptor) ConvertGeminiRequest(*gin.Context, *relaycommon.RelayInfo, *dt
 	return nil, errors.New("AgnesAI does not support Gemini requests")
 }
 
-func (a *Adaptor) ConvertImageRequest(c *gin.Context, info *relaycommon.RelayInfo, _ dto.ImageRequest) (any, error) {
+func (a *Adaptor) ConvertImageRequest(c *gin.Context, info *relaycommon.RelayInfo, request dto.ImageRequest) (any, error) {
 	if info.RelayMode == relayconstant.RelayModeImagesEdits {
 		return nil, errors.New("AgnesAI does not support /v1/images/edits")
 	}
@@ -104,6 +104,10 @@ func (a *Adaptor) ConvertImageRequest(c *gin.Context, info *relaycommon.RelayInf
 	body, err := storage.Bytes()
 	if err != nil {
 		return nil, err
+	}
+	if len(body) == 0 && info.IsChannelTest {
+		request.Model = info.UpstreamModelName
+		return request, nil
 	}
 	var payload map[string]any
 	if err := common.Unmarshal(body, &payload); err != nil {

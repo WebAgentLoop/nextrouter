@@ -63,6 +63,30 @@ func TestConvertImageRequestPreservesAgnesExtraBody(t *testing.T) {
 	}, payload["extra_body"])
 }
 
+func TestConvertImageRequestUsesStructuredChannelTestRequest(t *testing.T) {
+	c, _ := gin.CreateTestContext(httptest.NewRecorder())
+	c.Request = httptest.NewRequest(http.MethodPost, "/api/channel/test/1", http.NoBody)
+
+	converted, err := (&Adaptor{}).ConvertImageRequest(c, &relaycommon.RelayInfo{
+		RelayMode:     relayconstant.RelayModeImagesGenerations,
+		IsChannelTest: true,
+		ChannelMeta: &relaycommon.ChannelMeta{
+			UpstreamModelName: "mapped-agnes-image",
+		},
+	}, dto.ImageRequest{
+		Model:  "agnes-image-2.1-flash",
+		Prompt: "a cute cat",
+		Size:   "1024x1024",
+	})
+	require.NoError(t, err)
+
+	request, ok := converted.(dto.ImageRequest)
+	require.True(t, ok)
+	assert.Equal(t, "mapped-agnes-image", request.Model)
+	assert.Equal(t, "a cute cat", request.Prompt)
+	assert.Equal(t, "1024x1024", request.Size)
+}
+
 func TestSetupRequestHeaderForClaude(t *testing.T) {
 	c, _ := gin.CreateTestContext(httptest.NewRecorder())
 	c.Request = httptest.NewRequest(http.MethodPost, "/v1/messages", nil)
