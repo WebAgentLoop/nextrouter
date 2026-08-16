@@ -16,20 +16,25 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import assert from 'node:assert/strict'
-import { describe, test } from 'vitest'
+function installWebStorageShim(): void {
+  const current = (globalThis as { localStorage?: Storage }).localStorage
+  if (current && typeof current.setItem === 'function') return
 
-import { getDefaultBaseUrl } from '../channel-type-config'
-
-describe('channel default Base URLs', () => {
-  test('shows the backend fallback URL for built-in channels', () => {
-    assert.equal(getDefaultBaseUrl(1), 'https://api.openai.com')
-    assert.equal(getDefaultBaseUrl(22), 'https://fastgpt.run/api/openapi')
-    assert.equal(getDefaultBaseUrl(61), 'https://apihub.agnes-ai.com')
+  const items = new Map<string, string>()
+  const storage: Storage = {
+    get length() {
+      return items.size
+    },
+    clear: () => items.clear(),
+    getItem: (key) => items.get(key) ?? null,
+    key: (index) => [...items.keys()][index] ?? null,
+    removeItem: (key) => items.delete(key),
+    setItem: (key, value) => items.set(key, String(value)),
+  }
+  Object.defineProperty(globalThis, 'localStorage', {
+    configurable: true,
+    value: storage,
   })
+}
 
-  test('keeps channels without a backend fallback URL empty', () => {
-    assert.equal(getDefaultBaseUrl(3), '')
-    assert.equal(getDefaultBaseUrl(60), '')
-  })
-})
+installWebStorageShim()

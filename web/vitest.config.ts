@@ -16,20 +16,24 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import assert from 'node:assert/strict'
-import { describe, test } from 'vitest'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-import { getDefaultBaseUrl } from '../channel-type-config'
+import { defineConfig } from 'vitest/config'
 
-describe('channel default Base URLs', () => {
-  test('shows the backend fallback URL for built-in channels', () => {
-    assert.equal(getDefaultBaseUrl(1), 'https://api.openai.com')
-    assert.equal(getDefaultBaseUrl(22), 'https://fastgpt.run/api/openapi')
-    assert.equal(getDefaultBaseUrl(61), 'https://apihub.agnes-ai.com')
-  })
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
-  test('keeps channels without a backend fallback URL empty', () => {
-    assert.equal(getDefaultBaseUrl(3), '')
-    assert.equal(getDefaultBaseUrl(60), '')
-  })
+export default defineConfig({
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['./src/test-setup.ts', './src/test-storage-shim.ts'],
+    clearMocks: true,
+    restoreMocks: true,
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+  },
 })

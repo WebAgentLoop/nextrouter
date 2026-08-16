@@ -58,7 +58,7 @@ For the full feature set, model support, API formats, and configuration, refer t
 NextRouter is **based on [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api)** (AGPLv3), which is itself based on [One API](https://github.com/songquanpeng/one-api) (MIT). This fork:
 
 - Continuously tracks upstream `main`. The fork-specific changes are self-contained and listed below.
-- Current upstream sync point: `0ab02020` (2026-08-01).
+- Current upstream sync point: `e2c7aa7b` (2026-08-15).
 - Takes responsibility for its own modifications and marks them per AGPLv3 Section 7(c).
 - **Preserves the required attribution notice:** `Frontend design and development by New API contributors.`
 - **Preserves a visible link to the original project:** <https://github.com/QuantumNous/new-api>
@@ -70,7 +70,7 @@ See [License](#-license) and [`NOTICE`](./NOTICE) for the complete terms.
 <!-- FORK-DELTA: NextRouter changes vs upstream QuantumNous/new-api.
      Update after merging any fork-only branch.
      Completeness check: git log --oneline --no-merges upstream/main..HEAD
-     Last verified: 2026-08-06 -->
+     Last verified: 2026-08-16 -->
 
 ## ✨ What's new in NextRouter
 
