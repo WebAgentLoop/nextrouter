@@ -48,14 +48,11 @@ describe('New API channel', () => {
       value: CHANNEL_TYPE_NEW_API,
       label: 'New API',
     })
-    expect(
-      CHANNEL_TYPE_OPTIONS.findIndex(
-        (item) => item.value === CHANNEL_TYPE_NEW_API
-      )
-    ).toBeGreaterThanOrEqual(0)
-    expect(
-      CHANNEL_TYPE_OPTIONS.findIndex((item) => item.value === CHANNEL_TYPE_NEW_API)
-    ).toBeLessThan(CHANNEL_TYPE_OPTIONS.findIndex((item) => item.value === 58))
+      expect(
+        CHANNEL_TYPE_OPTIONS.findIndex(
+          (item) => item.value === CHANNEL_TYPE_NEW_API
+        ) + 1
+      ).toBe(CHANNEL_TYPE_OPTIONS.findIndex((item) => item.value === 58))
     expect(MODEL_FETCHABLE_TYPES.has(CHANNEL_TYPE_NEW_API)).toBe(true)
     expect(getChannelTypeIcon(CHANNEL_TYPE_NEW_API)).toBe('NewAPI')
     expect(getKeyPromptForType(CHANNEL_TYPE_NEW_API)).toBe(
