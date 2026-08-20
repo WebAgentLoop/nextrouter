@@ -233,6 +233,22 @@ func SetApiRouter(router *gin.Engine) {
 			ratioSyncRoute.GET("/channels", controller.GetSyncableChannels)
 			ratioSyncRoute.POST("/fetch", controller.FetchUpstreamRatios)
 		}
+		ticketRoute := apiRouter.Group("/ticket")
+		ticketRoute.Use(middleware.UserAuth(), middleware.TicketEnabledRequired())
+		{
+			ticketRoute.GET("/", middleware.SearchRateLimit(), controller.ListTickets)
+			ticketRoute.GET("/:id", middleware.SearchRateLimit(), controller.GetTicket)
+			ticketRoute.POST("/", middleware.CriticalRateLimit(), controller.CreateTicket)
+			ticketRoute.POST("/:id/reply", middleware.CriticalRateLimit(), controller.ReplyTicket)
+			ticketRoute.POST("/:id/close", controller.CloseTicket)
+		}
+		ticketAdminRoute := apiRouter.Group("/ticket/admin")
+		ticketAdminRoute.Use(middleware.AdminAuth(), middleware.TicketEnabledRequired())
+		{
+			ticketAdminRoute.GET("/list", middleware.SearchRateLimit(), controller.AdminListTickets)
+			ticketAdminRoute.POST("/:id/reply", controller.AdminReplyTicket)
+			ticketAdminRoute.PUT("/:id/status", controller.AdminUpdateTicketStatus)
+		}
 		registerChannelRoutes(apiRouter)
 		registerAuthzRoutes(apiRouter)
 		tokenRoute := apiRouter.Group("/token")

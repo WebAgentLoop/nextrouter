@@ -23,6 +23,7 @@ import {
   CreditCard,
   FileText,
   FlaskConical,
+  Headset,
   Key,
   LayoutDashboard,
   ListTodo,
@@ -35,9 +36,11 @@ import {
   Users,
   Wallet,
 } from 'lucide-react'
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import type { SidebarData } from '@/components/layout/types'
+import { useStatus } from '@/hooks/use-status'
 import { ROLE } from '@/lib/roles'
 
 /**
@@ -48,9 +51,12 @@ import { ROLE } from '@/lib/roles'
  */
 export function useSidebarData(): SidebarData {
   const { t } = useTranslation()
+  const { status } = useStatus()
+  const ticketEnabled = (status as Record<string, unknown> | null)?.ticket_enabled === true
 
-  return {
-    navGroups: [
+  return useMemo(
+    () => ({
+      navGroups: [
       {
         id: 'chat',
         title: t('Chat'),
@@ -103,6 +109,15 @@ export function useSidebarData(): SidebarData {
             configUrls: ['/usage-logs/drawing', '/usage-logs/task'],
             icon: ListTodo,
           },
+          ...(ticketEnabled
+            ? [
+                {
+                  title: t('Support Tickets'),
+                  url: '/tickets',
+                  icon: Headset,
+                },
+              ]
+            : []),
         ],
       },
       {
@@ -165,5 +180,7 @@ export function useSidebarData(): SidebarData {
         ],
       },
     ],
-  }
+    }),
+    [t, ticketEnabled]
+  )
 }
