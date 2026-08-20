@@ -541,6 +541,12 @@ export const STATIC_I18N_KEYS = [
   'OpenAI Models upstream path must not contain {model}',
   'OpenAI Models route is required to enable upstream model checks',
 
+  // Ticket
+  'Support Tickets',
+  'Enable support tickets',
+  'When enabled, users can create and manage support tickets. Admins can view and reply to tickets.',
+  'When disabled, support tickets are hidden and related APIs will return a disabled response.',
+
   // Dashboard flow stages (labels/descriptions passed to t at runtime)
   'User',
   'Node',

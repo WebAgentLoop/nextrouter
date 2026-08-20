@@ -24,6 +24,7 @@ import { ChatSettingsSection } from './chat-settings-section'
 import { DashboardSection } from './dashboard-section'
 import { DrawingSettingsSection } from './drawing-settings-section'
 import { FAQSection } from './faq-section'
+import { TicketSection } from './ticket-section'
 import { UptimeKumaSection } from './uptime-kuma-section'
 
 /**
@@ -81,6 +82,13 @@ const CONTENT_SECTIONS = [
         enabled={settings['console_setting.faq_enabled']}
         data={settings['console_setting.faq']}
       />
+    ),
+  },
+  {
+    id: 'ticket',
+    titleKey: 'Support Tickets',
+    build: (settings: ContentSettings) => (
+      <TicketSection enabled={settings['ticket_setting.enabled']} />
     ),
   },
   {
