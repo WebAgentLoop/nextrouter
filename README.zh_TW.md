@@ -58,7 +58,7 @@
 NextRouter **基於 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-api)**（AGPLv3），後者又基於 [One API](https://github.com/songquanpeng/one-api)（MIT）。本 Fork：
 
 - 持續追蹤上游 `main`。Fork 獨有的改動自成一套，列於下方。
-- 目前上游同步點：`e2c7aa7b`（2026-08-15）。
+- 目前上游同步點：`67a0585`（2026-08-31）。
 - 對自身修改負責，並依 AGPLv3 第 7(c) 條標註修改。
 - **保留必要的署名聲明：** `Frontend design and development by New API contributors.`
 - **保留指向原始專案的可見連結：** <https://github.com/QuantumNous/new-api>
@@ -70,7 +70,7 @@ NextRouter **基於 [`QuantumNous/new-api`](https://github.com/QuantumNous/new-a
 <!-- FORK-DELTA: NextRouter changes vs upstream QuantumNous/new-api.
      Update after merging any fork-only branch.
      Completeness check: git log --oneline --no-merges upstream/main..HEAD
-     Last verified: 2026-08-16 -->
+     Last verified: 2026-09-01 -->
 
 ## ✨ NextRouter 相比上游的改進
 

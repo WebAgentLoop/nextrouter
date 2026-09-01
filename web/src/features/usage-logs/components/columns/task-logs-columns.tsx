@@ -16,10 +16,12 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { ViewIcon } from '@hugeicons/core-free-icons'
+import { HugeiconsIcon } from '@hugeicons/react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { Eye, Music } from 'lucide-react'
 /* eslint-disable react-refresh/only-export-components */
-import { useState, useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { StatusBadge } from '@/components/status-badge'
@@ -36,6 +38,8 @@ import {
   type AudioClip,
 } from '../dialogs/audio-preview-dialog'
 import { TaskDetailsDialog } from '../dialogs/task-details-dialog'
+import { PluginAuthorLink } from '../plugin-author-link'
+import { TaskArtifactsCell } from '../task-artifacts'
 import { useUsageLogsContext } from '../usage-logs-provider'
 import {
   createDurationColumn,
@@ -90,7 +94,10 @@ function AudioPreviewCell({ log }: { log: TaskLog }) {
   )
 }
 
-export function useTaskLogsColumns(isAdmin: boolean): ColumnDef<TaskLog>[] {
+export function useTaskLogsColumns(
+  isAdmin: boolean,
+  isRoot: boolean = false
+): ColumnDef<TaskLog>[] {
   const { t } = useTranslation()
   const columns: ColumnDef<TaskLog>[] = [
     {
@@ -120,46 +127,80 @@ export function useTaskLogsColumns(isAdmin: boolean): ColumnDef<TaskLog>[] {
   ]
 
   if (isAdmin) {
-    columns.push(createChannelColumn<TaskLog>({ headerLabel: t('Channel') }), {
-      id: 'user',
-      header: t('User'),
-      accessorFn: (row) => row.username || row.user_id,
-      cell: function UserCell({ row }) {
-        const { sensitiveVisible, setSelectedUserId, setUserInfoDialogOpen } =
-          useUsageLogsContext()
-        const log = row.original
-        const displayName = log.username || String(log.user_id || '?')
+    columns.push(
+      createChannelColumn<TaskLog>({ headerLabel: t('Channel') }),
+      {
+        id: 'user',
+        header: t('User'),
+        accessorFn: (row) => row.username || row.user_id,
+        cell: function UserCell({ row }) {
+          const { sensitiveVisible, setSelectedUserId, setUserInfoDialogOpen } =
+            useUsageLogsContext()
+          const log = row.original
+          const displayName = log.username || String(log.user_id || '?')
 
-        return (
-          <button
-            type='button'
-            className='flex items-center gap-1.5 text-left'
-            onClick={(e) => {
-              e.stopPropagation()
-              setSelectedUserId(log.user_id)
-              setUserInfoDialogOpen(true)
-            }}
-          >
-            <Avatar className='ring-border/60 size-6 ring-1 max-sm:hidden'>
-              <AvatarFallback
-                className={cn(
-                  'text-[11px] font-semibold',
-                  !sensitiveVisible && 'bg-muted text-muted-foreground'
-                )}
-                style={
-                  sensitiveVisible ? getUserAvatarStyle(displayName) : undefined
-                }
-              >
-                {sensitiveVisible ? getUserAvatarFallback(displayName) : '•'}
-              </AvatarFallback>
-            </Avatar>
-            <span className='text-muted-foreground truncate text-sm hover:underline'>
-              {sensitiveVisible ? displayName : '••••'}
-            </span>
-          </button>
-        )
+          return (
+            <button
+              type='button'
+              className='flex items-center gap-1.5 text-left'
+              onClick={(e) => {
+                e.stopPropagation()
+                setSelectedUserId(log.user_id)
+                setUserInfoDialogOpen(true)
+              }}
+            >
+              <Avatar className='ring-border/60 size-6 ring-1 max-sm:hidden'>
+                <AvatarFallback
+                  className={cn(
+                    'text-[11px] font-semibold',
+                    !sensitiveVisible && 'bg-muted text-muted-foreground'
+                  )}
+                  style={
+                    sensitiveVisible
+                      ? getUserAvatarStyle(displayName)
+                      : undefined
+                  }
+                >
+                  {sensitiveVisible ? getUserAvatarFallback(displayName) : '•'}
+                </AvatarFallback>
+              </Avatar>
+              <span className='text-muted-foreground truncate text-sm hover:underline'>
+                {sensitiveVisible ? displayName : '••••'}
+              </span>
+            </button>
+          )
+        },
       },
-    })
+      {
+        id: 'plugin',
+        header: t('Plugin'),
+        accessorFn: (row) => row.admin_info?.task_plugin?.key ?? '',
+        cell: ({ row }) => {
+          const plugin = row.original.admin_info?.task_plugin
+          if (!plugin) {
+            return <span className='text-muted-foreground/60 text-xs'>-</span>
+          }
+          return (
+            <div className='flex max-w-[170px] flex-col gap-0.5'>
+              <span className='truncate text-xs font-medium'>
+                {plugin.name || plugin.key}
+              </span>
+              <span className='text-muted-foreground truncate font-mono text-[11px]'>
+                {plugin.key}
+                {plugin.version ? ` @ ${plugin.version}` : ''}
+              </span>
+              {plugin.author ? (
+                <PluginAuthorLink
+                  author={plugin.author}
+                  showUrl
+                  className='text-muted-foreground text-[11px]'
+                />
+              ) : null}
+            </div>
+          )
+        },
+      }
+    )
   }
 
   columns.push(
@@ -214,6 +255,15 @@ export function useTaskLogsColumns(isAdmin: boolean): ColumnDef<TaskLog>[] {
     },
     createProgressColumn<TaskLog>({ headerLabel: t('Progress') }),
     {
+      id: 'artifacts',
+      header: t('Artifacts'),
+      cell: ({ row }) => (
+        <TaskArtifactsCell key={row.original.task_id} log={row.original} />
+      ),
+      size: 120,
+      maxSize: 140,
+    },
+    {
       accessorKey: 'fail_reason',
       header: t('Details'),
       cell: function DetailsCell({ row }) {
@@ -225,12 +275,31 @@ export function useTaskLogsColumns(isAdmin: boolean): ColumnDef<TaskLog>[] {
         const detailsDialog = (
           <TaskDetailsDialog
             log={log}
+            isAdmin={isAdmin}
+            isRoot={isRoot}
             open={detailsOpen}
             onOpenChange={setDetailsOpen}
           />
         )
 
         const detailsButton = (
+          <button
+            type='button'
+            className='text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs'
+            onClick={() => setDetailsOpen(true)}
+          >
+            <HugeiconsIcon
+              icon={ViewIcon}
+              className='size-3'
+              strokeWidth={2}
+              aria-hidden='true'
+            />
+            {t('View details')}
+          </button>
+        )
+
+        // Fallback button using Eye icon for audio/video contexts (keeps HEAD visuals available)
+        const legacyDetailsButton = (
           <button
             type='button'
             className='text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs'
@@ -284,7 +353,7 @@ export function useTaskLogsColumns(isAdmin: boolean): ColumnDef<TaskLog>[] {
               >
                 {t('Click to preview video')}
               </a>
-              {detailsButton}
+              {legacyDetailsButton}
               {detailsDialog}
             </div>
           )
@@ -311,12 +380,13 @@ export function useTaskLogsColumns(isAdmin: boolean): ColumnDef<TaskLog>[] {
                 {failReason}
               </span>
             </button>
+            <div className='mt-1'>{detailsButton}</div>
             {detailsDialog}
           </>
         )
       },
-      size: 200,
-      maxSize: 220,
+      size: 220,
+      maxSize: 240,
     }
   )
 

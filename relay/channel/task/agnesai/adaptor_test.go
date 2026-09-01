@@ -29,7 +29,7 @@ func TestValidateRequestAndEstimateBilling(t *testing.T) {
 	adaptor := &TaskAdaptor{}
 
 	require.Nil(t, adaptor.ValidateRequestAndSetAction(c, info))
-	assert.Equal(t, constant.TaskActionTextGenerate, info.Action)
+	assert.Equal(t, constant.TaskActionTextToVideo, info.Action)
 	assert.Equal(t, map[string]float64{"seconds": 121.0 / 24.0}, adaptor.EstimateBilling(c, info))
 }
 

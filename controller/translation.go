@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/QuantumNous/new-api/common"
+	taskdto "github.com/QuantumNous/new-api/dto"
 	"github.com/QuantumNous/new-api/logger"
 	"github.com/QuantumNous/new-api/middleware"
 	"github.com/QuantumNous/new-api/model"
@@ -379,7 +380,7 @@ func callLLMTranslate(ctx context.Context, userID int, source, sourceLanguage, t
 }
 
 func internalTranslationChatComplete(ctx context.Context, userID int, group, modelName string, messages []dto.Message) (string, error) {
-	channel, err := model.GetRandomSatisfiedChannel(group, modelName, 0, "/v1/chat/completions")
+	channel, err := model.GetRandomSatisfiedChannel(group, modelName, 0, []taskdto.ChannelFilter{{Kind: taskdto.FilterRequestPath, RequestPath: "/v1/chat/completions"}})
 	if err != nil {
 		return "", fmt.Errorf("select translation channel for model %q in group %q: %w", modelName, group, err)
 	}

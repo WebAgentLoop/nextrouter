@@ -30,6 +30,7 @@ const OBFUSCATED_KEYS = [
 ]
 
 const BRAND_AND_LITERAL_KEYS = new Set([
+  '1M token',
   'AgnesAI',
   'AI Proxy',
   'AIGC2D',
@@ -48,6 +49,7 @@ const BRAND_AND_LITERAL_KEYS = new Set([
   'Client Secret',
   'Cloudflare',
   'Cohere',
+  'credit',
   'DeepSeek',
   'Discord',
   'DoubaoVideo',

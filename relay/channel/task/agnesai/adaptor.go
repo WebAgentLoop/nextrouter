@@ -116,16 +116,16 @@ func (a *TaskAdaptor) ValidateRequestAndSetAction(c *gin.Context, info *relaycom
 		return taskError(fmt.Sprintf("video duration must be between 1 and %d seconds", relaycommon.MaxTaskDurationSeconds), "invalid_duration")
 	}
 
-	action := constant.TaskActionTextGenerate
+	action := constant.TaskActionTextToVideo
 	if strings.TrimSpace(req.Image) != "" {
-		action = constant.TaskActionGenerate
+		action = constant.TaskActionImageToVideo
 	}
 	if len(req.ExtraBody) > 0 {
 		var extraBody struct {
 			Image []string `json:"image"`
 		}
 		if err := common.Unmarshal(req.ExtraBody, &extraBody); err == nil && len(extraBody.Image) > 0 {
-			action = constant.TaskActionGenerate
+			action = constant.TaskActionImageToVideo
 		}
 	}
 	if info.TaskRelayInfo == nil {
@@ -185,16 +185,16 @@ func (a *TaskAdaptor) DoRequest(c *gin.Context, info *relaycommon.RelayInfo, req
 	return channel.DoTaskApiRequest(a, c, info, requestBody)
 }
 
-func (a *TaskAdaptor) DoResponse(c *gin.Context, resp *http.Response, info *relaycommon.RelayInfo) (string, []byte, *taskdto.TaskError) {
+func (a *TaskAdaptor) ParseResponse(c *gin.Context, resp *http.Response, info *relaycommon.RelayInfo) (*channel.TaskSubmitResponse, *taskdto.TaskError) {
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", nil, service.TaskErrorWrapper(err, "read_response_body_failed", http.StatusInternalServerError)
+		return nil, service.TaskErrorWrapper(err, "read_response_body_failed", http.StatusInternalServerError)
 	}
 	_ = resp.Body.Close()
 
 	var upstream videoResponse
 	if err := common.Unmarshal(body, &upstream); err != nil {
-		return "", nil, service.TaskErrorWrapper(err, "unmarshal_response_failed", http.StatusInternalServerError)
+		return nil, service.TaskErrorWrapper(err, "unmarshal_response_failed", http.StatusInternalServerError)
 	}
 	upstreamID := upstream.VideoID
 	if upstreamID == "" {
@@ -204,7 +204,7 @@ func (a *TaskAdaptor) DoResponse(c *gin.Context, resp *http.Response, info *rela
 		upstreamID = upstream.ID
 	}
 	if upstreamID == "" {
-		return "", nil, service.TaskErrorWrapper(fmt.Errorf("AgnesAI response has no video_id"), "invalid_response", http.StatusInternalServerError)
+		return nil, service.TaskErrorWrapper(fmt.Errorf("AgnesAI response has no video_id"), "invalid_response", http.StatusInternalServerError)
 	}
 
 	result := dto.NewOpenAIVideo()
@@ -216,8 +216,11 @@ func (a *TaskAdaptor) DoResponse(c *gin.Context, resp *http.Response, info *rela
 		result.CreatedAt = time.Now().Unix()
 	}
 	result.SetProgressStr(strconv.Itoa(upstream.Progress))
-	c.JSON(http.StatusOK, result)
-	return upstreamID, body, nil
+	return &channel.TaskSubmitResponse{
+		UpstreamTaskID: upstreamID,
+		TaskData:       body,
+		ClientResponse: result,
+	}, nil
 }
 
 func (a *TaskAdaptor) GetModelList() []string { return modelList }

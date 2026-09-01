@@ -25,7 +25,7 @@ import { toIntlLocale } from '@/i18n/languages'
 
 import { getPricing } from '../api'
 
-export function usePricingData() {
+export function usePricingData(enabled = true) {
   const { status } = useStatus()
   const { i18n } = useTranslation()
   const language = toIntlLocale(i18n.resolvedLanguage ?? i18n.language)
@@ -34,6 +34,7 @@ export function usePricingData() {
     queryKey: ['pricing', language],
     queryFn: () => getPricing(language),
     staleTime: 5 * 60 * 1000,
+    enabled,
   })
 
   // Ensure rates never reach zero to prevent division errors
