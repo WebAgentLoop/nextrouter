@@ -27,6 +27,8 @@ import type {
   SystemTaskResponse,
   UpdateOptionRequest,
   UpdateOptionResponse,
+  UpdatePasskeyDomainsRequest,
+  UpdatePasskeyDomainsResponse,
   UpstreamChannelsResponse,
   UpstreamRatiosResponse,
 } from './types'
@@ -44,6 +46,20 @@ export async function updateSystemOption(request: UpdateOptionRequest) {
 export async function getAdminGroups(): Promise<string[]> {
   const res = await api.get('/api/group/')
   return res.data?.success && Array.isArray(res.data.data) ? res.data.data : []
+}
+
+export async function updatePasskeyDomains(
+  request: UpdatePasskeyDomainsRequest
+) {
+  const res = await api.put<UpdatePasskeyDomainsResponse>(
+    '/api/option/passkey/domains',
+    request,
+    {
+      validateStatus: (status) =>
+        (status >= 200 && status < 300) || status === 409,
+    }
+  )
+  return res.data
 }
 
 export async function confirmPaymentCompliance() {

@@ -46,6 +46,8 @@ export type PerformanceMetricsData = {
   }
 }
 
+export type SuccessRatePoint = { ts: number; success_rate: number }
+
 export type PerfModelSummary = {
   model_name: string
   avg_latency_ms: number
@@ -54,6 +56,7 @@ export type PerfModelSummary = {
   avg_tps: number
   recent_success_rates?: number[]
   recent_cache_hit_rates?: (number | null)[]
+  recent_success_series?: SuccessRatePoint[]
   request_count?: number
 }
 

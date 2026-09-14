@@ -196,6 +196,7 @@ func QuerySummaryAll(hours int, groups []string) (SummaryAllResult, error) {
 			AvgTps:              math.Round(avgTps*100) / 100,
 			RecentSuccessRates:  recentSuccessRates(modelBuckets[name], 3),
 			RecentCacheHitRates: recentCacheHitRates(modelBuckets[name], 3),
+			RecentSuccessSeries: recentSuccessSeries(modelBuckets[name]),
 			RequestCount:        total.requestCount,
 		})
 	}
@@ -298,6 +299,41 @@ func cacheHitRate(value counters) *float64 {
 	}
 	rate := math.Round(float64(cachedInputTokens)/float64(value.inputTokens)*10000) / 100
 	return &rate
+}
+
+func recentSuccessSeries(buckets map[int64]counters) []SuccessRatePoint {
+	if len(buckets) == 0 {
+		return nil
+	}
+	hourly := map[int64]counters{}
+	for ts, value := range buckets {
+		hourTs := ts - ts%3600
+		merged := hourly[hourTs]
+		merged.requestCount += value.requestCount
+		merged.successCount += value.successCount
+		hourly[hourTs] = merged
+	}
+	timestamps := make([]int64, 0, len(hourly))
+	for hourTs, value := range hourly {
+		if value.requestCount == 0 {
+			continue
+		}
+		timestamps = append(timestamps, hourTs)
+	}
+	if len(timestamps) == 0 {
+		return nil
+	}
+	sort.Slice(timestamps, func(i, j int) bool {
+		return timestamps[i] < timestamps[j]
+	})
+	points := make([]SuccessRatePoint, 0, len(timestamps))
+	for _, hourTs := range timestamps {
+		points = append(points, SuccessRatePoint{
+			Ts:          hourTs,
+			SuccessRate: math.Round(successRate(hourly[hourTs])*100) / 100,
+		})
+	}
+	return points
 }
 
 func allowedGroupSet(groups []string) map[string]struct{} {

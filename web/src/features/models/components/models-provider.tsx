@@ -23,6 +23,7 @@ import type {
   Model,
   ModelTabCategory,
   SyncDiffData,
+  Vendor,
   SyncLocale,
   SyncSource,
 } from '../types'
@@ -35,9 +36,14 @@ type DialogType =
   | 'create-model'
   | 'update-model'
   | 'manage-vendors'
+  | 'price-model'
+  | 'create-vendor'
+  | 'vendors'
+  | 'price-sync'
+  | 'update-vendor'
+  | 'upstream-conflict'
   | 'missing-models'
   | 'sync-wizard'
-  | 'upstream-conflict'
   | 'prefill-groups'
   | 'description'
   | 'translations'
@@ -48,6 +54,8 @@ type ModelsContextType = {
   setOpen: (open: DialogType) => void
   currentRow: Model | null
   setCurrentRow: (model: Model | null) => void
+  currentVendor: Vendor | null
+  setCurrentVendor: (vendor: Vendor | null) => void
   selectedVendor: string | null
   setSelectedVendor: (vendor: string | null) => void
   descriptionData: { modelName: string; description: string } | null
@@ -56,12 +64,6 @@ type ModelsContextType = {
   ) => void
   upstreamConflicts: SyncDiffData['conflicts']
   setUpstreamConflicts: (conflicts: SyncDiffData['conflicts']) => void
-  syncWizardOptions: { locale: SyncLocale; source: SyncSource }
-  setSyncWizardOptions: React.Dispatch<
-    React.SetStateAction<{ locale: SyncLocale; source: SyncSource }>
-  >
-  tabCategory: ModelTabCategory
-  setTabCategory: (category: ModelTabCategory) => void
 }
 
 // ============================================================================
@@ -77,6 +79,7 @@ const ModelsContext = createContext<ModelsContextType | undefined>(undefined)
 export function ModelsProvider({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState<DialogType>(null)
   const [currentRow, setCurrentRow] = useState<Model | null>(null)
+  const [currentVendor, setCurrentVendor] = useState<Vendor | null>(null)
   const [selectedVendor, setSelectedVendor] = useState<string | null>(null)
   const [descriptionData, setDescriptionData] = useState<{
     modelName: string
@@ -101,6 +104,8 @@ export function ModelsProvider({ children }: { children: React.ReactNode }) {
         setOpen,
         currentRow,
         setCurrentRow,
+        currentVendor,
+        setCurrentVendor,
         selectedVendor,
         setSelectedVendor,
         descriptionData,

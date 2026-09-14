@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next'
 
 import { useStatus } from '@/hooks/use-status'
 import { toIntlLocale } from '@/i18n/languages'
+import { requireServerSuccess } from '@/lib/server-error-message'
 
 import { getPricing } from '../api'
 
@@ -32,7 +33,7 @@ export function usePricingData(enabled = true) {
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['pricing', language],
-    queryFn: () => getPricing(language),
+    queryFn: async () => requireServerSuccess(await getPricing(language)),
     staleTime: 5 * 60 * 1000,
     enabled,
   })

@@ -24,6 +24,8 @@ import { toast } from 'sonner'
 import { Dialog } from '@/components/dialog'
 import { Button } from '@/components/ui/button'
 import { Markdown } from '@/components/ui/markdown'
+import { SystemUpdateAction } from '@/features/system-update/system-update-action'
+import { useStatus } from '@/hooks/use-status'
 import { formatTimestamp, formatTimestampToDate } from '@/lib/format'
 
 import { SettingsSection } from '../components/settings-section'
@@ -41,17 +43,17 @@ type UpdateCheckerSectionProps = {
   startTime?: number | null
 }
 
-export function UpdateCheckerSection({
-  currentVersion,
-  startTime,
-}: UpdateCheckerSectionProps) {
+export function UpdateCheckerSection(props: UpdateCheckerSectionProps) {
   const { t } = useTranslation()
+  const { status } = useStatus()
   const [checking, setChecking] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [release, setRelease] = useState<ReleaseInfo | null>(null)
 
-  const uptime = startTime ? formatTimestamp(startTime) : t('Unknown')
-  const version = currentVersion || t('Unknown')
+  const uptime = props.startTime
+    ? formatTimestamp(props.startTime)
+    : t('Unknown')
+  const version = status?.version || props.currentVersion || t('Unknown')
 
   const handleCheckUpdates = async () => {
     setChecking(true)
@@ -75,7 +77,7 @@ export function UpdateCheckerSection({
         throw new Error(t('Unexpected release payload'))
       }
 
-      if (currentVersion && data.tag_name === currentVersion) {
+      if (version !== t('Unknown') && data.tag_name === version) {
         toast.success(
           t('You are running the latest version ({{version}}).', {
             version: data.tag_name,
@@ -112,7 +114,7 @@ export function UpdateCheckerSection({
               <div className='text-muted-foreground text-sm'>
                 {t('Current version')}
               </div>
-              <div className='text-lg font-semibold'>{version}</div>
+              <div className='text-lg font-semibold break-all'>{version}</div>
             </div>
             <div className='rounded-lg border p-4'>
               <div className='text-muted-foreground text-sm'>
@@ -121,17 +123,19 @@ export function UpdateCheckerSection({
               <div className='text-lg font-semibold'>{uptime}</div>
             </div>
           </div>
-
-          <Button onClick={handleCheckUpdates} disabled={checking}>
-            {checking ? (
-              t('Checking updates...')
-            ) : (
-              <>
-                <RefreshCcwIcon className='me-2 h-4 w-4' />
-                {t('Check for updates')}
-              </>
-            )}
-          </Button>
+          <div className='flex flex-wrap items-center gap-3'>
+            <Button onClick={handleCheckUpdates} disabled={checking}>
+              {checking ? (
+                t('Checking updates...')
+              ) : (
+                <>
+                  <RefreshCcwIcon className='me-2 h-4 w-4' />
+                  {t('Check for updates')}
+                </>
+              )}
+            </Button>
+            <SystemUpdateAction compact={false} />
+          </div>
         </div>
       </SettingsSection>
 

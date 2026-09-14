@@ -20,21 +20,38 @@ import { DescriptionDialog } from './dialogs/description-dialog'
 import { MissingModelsDialog } from './dialogs/missing-models-dialog'
 import { ModelTranslationsSheet } from './dialogs/model-translations-sheet'
 import { PrefillGroupManagement } from './dialogs/prefill-group-management'
+import { PriceSyncDialog } from './dialogs/price-sync-dialog'
 import { SyncWizardDialog } from './dialogs/sync-wizard-dialog'
 import { UpstreamConflictDialog } from './dialogs/upstream-conflict-dialog'
+import { VendorMutateDialog } from './dialogs/vendor-mutate-dialog'
 import { VendorsManagement } from './dialogs/vendors-management'
 import { ModelMutateDrawer } from './drawers/model-mutate-drawer'
 import { useModels } from './models-provider'
 
 export function ModelsDialogs() {
-  const { open, setOpen, currentRow, descriptionData, setDescriptionData } =
-    useModels()
+  const {
+    open,
+    setOpen,
+    currentRow,
+    currentVendor,
+    descriptionData,
+    setDescriptionData,
+  } = useModels()
 
   return (
     <>
+      <PriceSyncDialog
+        open={open === 'price-sync'}
+        onOpenChange={(value) => !value && setOpen(null)}
+      />
       {/* Model Create/Update Drawer */}
       <ModelMutateDrawer
-        open={open === 'create-model' || open === 'update-model'}
+        open={
+          open === 'create-model' ||
+          open === 'update-model' ||
+          open === 'price-model'
+        }
+        initialSection={open === 'price-model' ? 'pricing' : 'metadata'}
         onOpenChange={(v) => !v && setOpen(null)}
         currentRow={currentRow}
       />
@@ -42,6 +59,14 @@ export function ModelsDialogs() {
       {/* Vendors Management (list + create/edit) */}
       <VendorsManagement
         open={open === 'manage-vendors'}
+        onOpenChange={(v) => !v && setOpen(null)}
+      />
+
+      {/* Vendor Create/Update Dialog */}
+      <VendorMutateDialog
+        key={`${open}-${currentVendor?.id ?? 'new'}`}
+        open={open === 'create-vendor' || open === 'update-vendor'}
+        currentVendor={open === 'update-vendor' ? currentVendor : null}
         onOpenChange={(v) => !v && setOpen(null)}
       />
 

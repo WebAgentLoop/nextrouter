@@ -97,7 +97,7 @@ type Properties struct {
 	OriginModelName   string `json:"origin_model_name,omitempty"`
 }
 
-func (m *Properties) Scan(val interface{}) error {
+func (m *Properties) Scan(val any) error {
 	bytesValue := jsonScanBytes(val)
 	if len(bytesValue) == 0 {
 		*m = Properties{}
@@ -143,6 +143,11 @@ type TaskPrivateData struct {
 	// disconnect regardless; this only echoes the protocol-level request
 	// attribute back on retrieval snapshots.
 	ResponsesBackground bool `json:"responses_background,omitempty"`
+	// PluginState is plugin-owned cross-round data. Unlike Task.Data it is
+	// only replaced when a hook explicitly returns state.
+	PluginState json.RawMessage `json:"plugin_state,omitempty"`
+	// PollFailures counts consecutive unrecognized or transient poll outcomes.
+	PollFailures int `json:"poll_failures,omitempty"`
 }
 
 // AsyncImageRoutingSnapshot preserves submission-time routing constraints for
@@ -232,7 +237,7 @@ func GenerateAsyncImageTaskID() string {
 	return "imgtask_" + key
 }
 
-func (p *TaskPrivateData) Scan(val interface{}) error {
+func (p *TaskPrivateData) Scan(val any) error {
 	bytesValue := jsonScanBytes(val)
 	if len(bytesValue) == 0 {
 		return nil
@@ -515,13 +520,15 @@ func (Task *Task) InsertWithContext(ctx context.Context) error {
 }
 
 type taskSnapshot struct {
-	Status     TaskStatus
-	Progress   string
-	StartTime  int64
-	FinishTime int64
-	FailReason string
-	ResultURL  string
-	Data       json.RawMessage
+	Status       TaskStatus
+	Progress     string
+	StartTime    int64
+	FinishTime   int64
+	FailReason   string
+	ResultURL    string
+	Data         json.RawMessage
+	PluginState  json.RawMessage
+	PollFailures int
 }
 
 func (s taskSnapshot) Equal(other taskSnapshot) bool {
@@ -531,18 +538,22 @@ func (s taskSnapshot) Equal(other taskSnapshot) bool {
 		s.FinishTime == other.FinishTime &&
 		s.FailReason == other.FailReason &&
 		s.ResultURL == other.ResultURL &&
-		bytes.Equal(s.Data, other.Data)
+		bytes.Equal(s.Data, other.Data) &&
+		bytes.Equal(s.PluginState, other.PluginState) &&
+		s.PollFailures == other.PollFailures
 }
 
 func (t *Task) Snapshot() taskSnapshot {
 	return taskSnapshot{
-		Status:     t.Status,
-		Progress:   t.Progress,
-		StartTime:  t.StartTime,
-		FinishTime: t.FinishTime,
-		FailReason: t.FailReason,
-		ResultURL:  t.PrivateData.ResultURL,
-		Data:       t.Data,
+		Status:       t.Status,
+		Progress:     t.Progress,
+		StartTime:    t.StartTime,
+		FinishTime:   t.FinishTime,
+		FailReason:   t.FailReason,
+		ResultURL:    t.PrivateData.ResultURL,
+		Data:         t.Data,
+		PluginState:  t.PrivateData.PluginState,
+		PollFailures: t.PrivateData.PollFailures,
 	}
 }
 
